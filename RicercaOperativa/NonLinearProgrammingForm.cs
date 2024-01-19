@@ -97,7 +97,6 @@ namespace RicercaOperativa
         {
             try
             {
-
                 EquationsCount = (int)numberOfEquationsInput.Value;
                 VariablesCount = (int)dimensionOfSpaceInput.Value;
                 GenerateGrid();
@@ -126,20 +125,36 @@ namespace RicercaOperativa
         private async void solveButton_Click(object sender, EventArgs e)
         {
             solveButton.Enabled = false;
-            var dialogForm = new ProblemForm();
-            FormClosedEventHandler closeFormCallback = (object? sender, FormClosedEventArgs e) =>
+            string[][]? mainGrid = MainGridStr();
+            if (mainGrid is null || mainGrid.Length == 0)
             {
                 solveButton.Enabled = true;
+                return;
+            }
+            var dialogForm1 = new ProblemForm("Projected Gradient");
+            var dialogForm2 = new ProblemForm("Franke-Wolfe");
+            bool OneFormDisposed = false;
+            void closeFormCallback (object? sender, FormClosedEventArgs e)
+            {
+                if (OneFormDisposed)
+                {
+                    solveButton.Enabled = true;
+                }
+                OneFormDisposed = true;
             };
-            dialogForm.FormClosed += closeFormCallback;
-            dialogForm.Show();
+            dialogForm1.FormClosed += new FormClosedEventHandler(closeFormCallback);
+            dialogForm1.Show();
+            dialogForm2.FormClosed += new FormClosedEventHandler(closeFormCallback);
+            dialogForm2.Show();
 
             Problem p = new(
                 solver: new NonLinearProgramming(pythonInput.Text, GetStartingPoint()),
-                sMatrixAndB: MainGridStr(),
+                sMatrixAndB: mainGrid,
                 sVecC: []);
 
-            if (await p.Solve(dialogForm.Writer))
+            if (await p.Solve(
+                new StreamWriter[] { dialogForm1.Writer, dialogForm2.Writer }
+                ))
             {
                 MessageBox.Show(
                     "Non Linear Programming problem solved",
@@ -154,17 +169,34 @@ namespace RicercaOperativa
                     MessageBoxIcon.Error);
             }
         }
-        private string[][] MainGridStr()
+        private string[][]? MainGridStr()
         {
             var list = new List<string[]>();
+            bool containsBlank = false;
             for (int row = 0; row < matrix.RowCount; row++)
             {
                 List<string> currRow = [];
                 for (int col = 0; col < matrix.ColumnCount; col++)
                 {
+                    containsBlank = containsBlank || string.IsNullOrWhiteSpace((string)matrix[col, row].Value);
                     currRow.Add((string)matrix[col, row].Value);
                 }
                 list.Add([.. currRow]);
+            }
+            if (containsBlank)
+            {
+                if (DialogResult.Yes != MessageBox.Show(
+                    "There are blank cells in the input," + Environment.NewLine +
+                    "The algorithms cannot run with unknown values." + Environment.NewLine +
+                    "Do you want to fill in with zeros?",
+                    "Blank cells", 
+                    MessageBoxButtons.YesNo, 
+                    MessageBoxIcon.Warning))
+                {
+                    return null;
+                }
+                list = list.Select(
+                    row => row.Select(x => string.IsNullOrWhiteSpace(x) ? "0" : x).ToArray()).ToList();
             }
             return [.. list];
         }

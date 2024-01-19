@@ -114,18 +114,18 @@
             // solveButton
             // 
             solveButton.Cursor = Cursors.Hand;
-            solveButton.Location = new Point(12, 400);
+            solveButton.Location = new Point(12, 388);
             solveButton.Name = "solveButton";
             solveButton.Size = new Size(115, 65);
             solveButton.TabIndex = 7;
-            solveButton.Text = "Solve with Projected Gradient";
+            solveButton.Text = "Solve with all methods";
             solveButton.UseVisualStyleBackColor = true;
             solveButton.Click += solveButton_Click;
             // 
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(133, 425);
+            label3.Location = new Point(141, 424);
             label3.Name = "label3";
             label3.Size = new Size(79, 15);
             label3.TabIndex = 8;
@@ -138,14 +138,14 @@
             startPointInput.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             startPointInput.Location = new Point(234, 400);
             startPointInput.Name = "startPointInput";
-            startPointInput.Size = new Size(554, 65);
+            startPointInput.Size = new Size(554, 53);
             startPointInput.TabIndex = 9;
             // 
             // NonLinearProgrammingForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 478);
+            ClientSize = new Size(800, 466);
             Controls.Add(startPointInput);
             Controls.Add(label3);
             Controls.Add(solveButton);

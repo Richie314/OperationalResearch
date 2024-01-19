@@ -13,13 +13,22 @@ namespace RicercaOperativa
 {
     public partial class ProblemForm : Form
     {
-        public ProblemForm()
+        private readonly string methodName;
+        public ProblemForm(string? methodName = null)
         {
             InitializeComponent();
-            MemoryStream stream = new MemoryStream();
+            MemoryStream stream = new();
             Writer = new ConcurrentStreamWriter(stream, textBox);
+            this.methodName = methodName ?? string.Empty;
         }
         public ConcurrentStreamWriter Writer { get; private set; }
 
+        private void ProblemForm_Load(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(methodName))
+            {
+                Text = $"Solving problem with {methodName} method";
+            }
+        }
     }
 }

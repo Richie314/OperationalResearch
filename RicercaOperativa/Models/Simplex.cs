@@ -16,7 +16,7 @@ namespace RicercaOperativa.Models
         private readonly Vector b;
         private readonly Vector c;
 
-        public Simplex(Fraction[,] A, Vector b, Vector c)
+        public Simplex(Fraction[,] A, Vector b, Vector c, bool AddXPositiveOrZeroCostraint = true)
         {
             ArgumentNullException.ThrowIfNull(A);
             ArgumentNullException.ThrowIfNull(b);
@@ -30,16 +30,19 @@ namespace RicercaOperativa.Models
                 throw new ArgumentException("A must have col number equal to the size of c");
             }
 
-            // x >= 0 constarint (-x <= 0)
-            for (int i = 0; i < A.Columns(); i++)
+            if (AddXPositiveOrZeroCostraint)
             {
-                Fraction[] rowToAdd = 
-                    Enumerable.Repeat(Fraction.Zero, i)
-                    .Concat(new Fraction[1] { new(-1) })
-                    .Concat(Enumerable.Repeat(Fraction.Zero, A.Columns() - i - 1))
-                    .ToArray();
-                A = A.InsertRow(rowToAdd);
-                b = b.Get.Concat(new Fraction[1] { Fraction.Zero }).ToArray();
+                // x >= 0 constarint (-x <= 0)
+                for (int i = 0; i < A.Columns(); i++)
+                {
+                    Fraction[] rowToAdd =
+                        Enumerable.Repeat(Fraction.Zero, i)
+                        .Concat(new Fraction[1] { new(-1) })
+                        .Concat(Enumerable.Repeat(Fraction.Zero, A.Columns() - i - 1))
+                        .ToArray();
+                    A = A.InsertRow(rowToAdd);
+                    b = b.Get.Concat(new Fraction[1] { Fraction.Zero }).ToArray();
+                }
             }
             this.A = new Matrix(A);
             this.b = b;
@@ -76,7 +79,7 @@ namespace RicercaOperativa.Models
                 }
             } while (true);
         }
-        public async Task<Vector?> SolvePrimal(
+        public async Task<Vector?> SolvePrimalMax(
             StreamWriter Writer, 
             int[]? startBase = null,
             int? maxIterations = null)
@@ -128,7 +131,8 @@ namespace RicercaOperativa.Models
                 if (!((A[N] * x) <= b_N))
                 {
                     // Non acceptable solution
-                    throw new DataMisalignedException($"Solution x = {x}  of base B = {Function.Print(B)} is not acceptable");
+                    throw new DataMisalignedException(
+                        $"Solution x = {x}  of base B = {Function.Print(B)} is not acceptable");
                 }
                 await Writer.WriteLineAsync();
 
@@ -178,6 +182,7 @@ namespace RicercaOperativa.Models
             }
 
         }
+        
         public string CalculatePrimal(Vector? primalSolution)
         {
             if (primalSolution is null || primalSolution.Size == 0)
@@ -208,13 +213,13 @@ namespace RicercaOperativa.Models
             return k;
         }
 
-        public async Task<bool> SolvePrimalFlow(int[]? startBase = null, StreamWriter? Writer = null)
+        public async Task<bool> SolvePrimalMaxFlow(int[]? startBase = null, StreamWriter? Writer = null)
         {
             Writer ??= StreamWriter.Null;
             bool exitValue = true;
             try
             {
-                Vector? x = await SolvePrimal(
+                Vector? x = await SolvePrimalMax(
                     startBase: startBase, 
                     Writer: Writer, 
                     maxIterations: 100);
@@ -230,5 +235,6 @@ namespace RicercaOperativa.Models
             }
             return exitValue;
         }
+        
     }
 }

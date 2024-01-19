@@ -88,21 +88,27 @@ namespace RicercaOperativa
         private async void startSimplexBtn_Click(object sender, EventArgs e)
         {
             startSimplexBtn.Enabled = false;
+            string[][]? mainGridStr = MainGridStr();
+            if (mainGridStr is null || mainGridStr.Length == 0)
+            {
+                startSimplexBtn.Enabled = true;
+                return;
+            }
             var dialogForm = new ProblemForm();
-            FormClosedEventHandler closeFormCallback = (object? sender, FormClosedEventArgs e) =>
-                        {
-                            startSimplexBtn.Enabled = true;
-                        };
-            dialogForm.FormClosed += closeFormCallback;
+            void closeFormCallback (object? sender, FormClosedEventArgs e)
+            {
+                startSimplexBtn.Enabled = true;
+            };
+            dialogForm.FormClosed += new FormClosedEventHandler(closeFormCallback);
             dialogForm.Show();
             int[]? startBase = GetStartBase();
  
-            Problem p = new Problem(
+            Problem p = new(
                 solver: new LinearProgramming(startBase),
-                sMatrixAndB: MainGridStr(),
+                sMatrixAndB: mainGridStr,
                 sVecC: MainVectorStr());
 
-            if (await p.Solve(dialogForm.Writer))
+            if (await p.Solve(new StreamWriter[] { dialogForm.Writer }))
             {
                 MessageBox.Show(
                     "Linear Programming problem solved", 
@@ -119,26 +125,43 @@ namespace RicercaOperativa
         }
         private string[] MainVectorStr()
         {
-            List<string> list = new List<string>();
+            List<string> list = [];
             for (int i = 0; i < functionGrid.ColumnCount; i++)
             {
                 list.Add((string)functionGrid[i, 0].Value);
             }
-            return list.ToArray();
+            return [.. list];
         }
-        private string[][] MainGridStr()
+        private string[][]? MainGridStr()
         {
             var list = new List<string[]>();
+            bool containsBlank = false;
             for (int row = 0; row < matrix.RowCount; row++)
             {
-                List<string> currRow = new List<string>();
+                List<string> currRow = [];
                 for (int col = 0; col < matrix.ColumnCount; col++)
                 {
+                    containsBlank = containsBlank || string.IsNullOrWhiteSpace((string)matrix[col, row].Value);
                     currRow.Add((string)matrix[col, row].Value);
                 }
-                list.Add(currRow.ToArray());
+                list.Add([.. currRow]);
             }
-            return list.ToArray();
+            if (containsBlank)
+            {
+                if (DialogResult.Yes != MessageBox.Show(
+                    "There are blank cells in the input," + Environment.NewLine +
+                    "The algorithms cannot run with unknown values." + Environment.NewLine +
+                    "Do you want to fill in with zeros?",
+                    "Blank cells",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning))
+                {
+                    return null;
+                }
+                list = list.Select(
+                    row => row.Select(x => string.IsNullOrWhiteSpace(x) ? "0" : x).ToArray()).ToList();
+            }
+            return [.. list];
         }
         private int[]? GetStartBase()
         {

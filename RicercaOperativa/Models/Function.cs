@@ -1,6 +1,7 @@
 ﻿using Fractions;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,6 +38,36 @@ namespace RicercaOperativa.Models
             }
             return MinT;
         }
+
+        public static Fraction FindArgMax(
+            Func<Fraction, Fraction> func,
+            Fraction t_start, Fraction t_end, int steps)
+        {
+            if (t_start == t_end)
+            {
+                return t_start;
+            }
+
+            Fraction MaxY = func(t_start);
+            Fraction MaxT = t_start;
+
+            Fraction dt = (t_end - t_start) / steps;
+            Fraction currT = t_start + dt;
+
+            while (currT <= t_end)
+            {
+                Fraction CurrY = func(currT);
+                if (CurrY > MaxY)
+                {
+                    MaxY = CurrY;
+                    MaxT = currT;
+                }
+
+                currT += dt;
+            }
+            return MaxT;
+        }
+
         public static string Print(Fraction? x)
         {
             if (!x.HasValue)
@@ -46,7 +77,7 @@ namespace RicercaOperativa.Models
             string s = x.Value.ToString();
             if (s.Length < 15)
                 return s;
-            return x.Value.ToDecimal().ToString("N5");
+            return x.Value.ToDouble().ToString("N5", CultureInfo.InvariantCulture);
         }
         public static string Print(IEnumerable<int> x, bool addOne = true)
         {

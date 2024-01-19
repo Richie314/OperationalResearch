@@ -9,7 +9,7 @@ namespace RicercaOperativa.Models
 {
     public interface IProgrammingInterface
     {
-        public Task<bool> SolveAsync(StreamWriter? logger);
+        public Task<bool> SolveAsync(IEnumerable<StreamWriter?> loggers);
         public void SetMainMatrix(Fraction[,] m);
         public void SetFirstVector(Vector v);
         public void SetSecondVector(Vector v);

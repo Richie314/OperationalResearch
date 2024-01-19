@@ -5,109 +5,11 @@ using System.Reflection.Metadata.Ecma335;
 
 namespace RicercaOperativa.Models
 {
-    internal class ProjectedGradient
+    internal sealed class ProjectedGradient : PythonFunctionAnalyzer
     {
-        private readonly Matrix A;
-        private readonly Vector B;
-        private readonly dynamic function;
-        private readonly dynamic gradFunction;
-        private Vector Grad(Vector x)
-        {
-            var outPut = (IronPython.Runtime.PythonList) gradFunction( x.ToDouble().ToList()  );
-            if (outPut.Count != x.Size)
-            {
-                throw new Exception(
-                    $"Gradient function returned {outPut.Count} values but {x.Size} were expected");
-            }
-            foreach (var valueToCheck in outPut)
-            {
-                if (valueToCheck is null)
-                {
-                    throw new Exception(
-                        $"Gradient function returned null values");
-                }
-            }
-            return outPut.Select(r => Fraction.FromDouble(value: (double)(r ?? 0))).ToArray();
-        }
-        private Fraction Function(Vector x)
-        {
-            var outPut = (double)function( x.ToDouble().ToList() );
-            return Fraction.FromDouble(outPut);
-        }
-        /// <summary>
-        /// Finds the t between t_start and t_end that has the min value of
-        /// f(x + dt)
-        /// </summary>
-        /// <param name="t_start">The left bound of the time</param>
-        /// <param name="t_end">The right bound of the time</param>
-        /// <param name="steps">How many steps to do</param>
-        /// <param name="x">The vector x</param>
-        /// <param name="d">The vector d</param>
-        /// <returns>The first t that takes the function to its min value</returns>
-        private Fraction FindArgMinTofFunction(
-            Fraction t_start, Fraction t_end, int steps, 
-            Vector x, Vector d)
-        {
-            return Models.Function.FindArgMin(
-                t => Function(x + (d * t)), // Phi(t)
-                t_start, t_end, steps);
-        }
-        public ProjectedGradient(Fraction[,] A, Vector b, string python)
-        {
-            ArgumentNullException.ThrowIfNull(A);
-            ArgumentNullException.ThrowIfNull(b);
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(python);
-            if (A.Rows() != b.Size)
-            {
-                throw new ArgumentException("A must have row number equal to the length of b");
-            }
-            this.A = new Matrix(A);
-            this.B = b;
-            var list = GetFunctions(python);
-            this.function = list[0];
-            this.gradFunction = list[1];
-        }
-        private static List<dynamic> GetFunctions(string functionString)
-        {
-            var eng = IronPython.Hosting.Python.CreateEngine();
-            var scope = eng.CreateScope();
-            string functionCaller = 
-                "def gradFunctionWrapper(x_array):" +       Environment.NewLine + // Do not add type list[float] to it
-                "    result = list(gradF(*x_array))" +      Environment.NewLine +
-                "    return [float(r) for r in result]" +   Environment.NewLine +
-                                                            Environment.NewLine +
-                "def FunctionWrapper(x_array):" +           Environment.NewLine + // Do not add type list[float] to it
-                "    return float(f(*x_array))" +           Environment.NewLine;
-            try
-            {
-                string wholeScript =
-                    functionString +
-                    Environment.NewLine +
-                    functionCaller +
-                    Environment.NewLine;
-                wholeScript = wholeScript.Trim().Replace("\t", "    ");
-                eng.Execute(wholeScript, scope);
+        public ProjectedGradient(Fraction[,] A, Vector b, string python) : base(A, b, python) { }
 
-                dynamic testFunction = scope.GetVariable("f") ?? 
-                    throw new MissingMemberException("Invalid f definition"); // Test if f exists
-                dynamic testGrad = scope.GetVariable("gradF") ?? 
-                    throw new MissingMemberException("Invalid gradF definition"); // Test if gradF exists
-
-                dynamic f = scope.GetVariable("FunctionWrapper") ?? 
-                    throw new MissingMemberException("Could not retrieve FunctionWrapper body");
-                dynamic g = scope.GetVariable("gradFunctionWrapper") ?? 
-                    throw new MissingMemberException("Could not retrieve gradFunctionWrapper body");
-                return [f, g];
-            } catch (MissingMemberException)
-            {
-                throw;
-            } catch (Exception ex)
-            {
-                throw new Exception("Something has gone wrong: " + ex.Message);
-            }
-        }
-        
-        public async Task<Vector?> Solve(Vector? startX = null, StreamWriter? Writer = null, int? maxK = null)
+        public override async Task<Vector?> Solve(Vector? startX = null, StreamWriter? Writer = null, int? maxK = null)
         {
             Writer ??= StreamWriter.Null;
             Matrix a = A;
@@ -164,7 +66,7 @@ namespace RicercaOperativa.Models
             await Writer.WriteLineAsync(
                 $"Finding min value of f(x{k} + t d{k}) inside [0, {Models.Function.Print(tMax)}]. {PointsToPlot} points considered");
             
-            Fraction tk = FindArgMinTofFunction(0, tMax, PointsToPlot, xk, dk);
+            Fraction tk = FindArgMinOfFunction(0, tMax, PointsToPlot, xk, dk);
             await Writer.WriteLineAsync($"t{k} = {Models.Function.Print(tk)}");
 
             xk += tk * dk; // implict operator overloading
@@ -212,37 +114,7 @@ namespace RicercaOperativa.Models
             goto step3;
         }
         
-        public async Task<bool> SolveFlow(StreamWriter? Writer = null, Vector? startingPoint = null)
-        {
-            try
-            {
-                var result = await Solve(Writer: Writer, maxK: 100, startX: startingPoint);
-                if (result is not null)
-                {
-                    if (Writer != null)
-                    {
-                        await Writer.WriteLineAsync();
-                        await Writer.WriteLineAsync();
-                        await Writer.WriteLineAsync($"Best value = {result}");
-                    }
-                    return true;
-                }
-                return false;
-            }
-            catch (Exception ex)
-            {
-                if (Writer != null)
-                {
-                    await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
-                    if (ex.StackTrace is not null)
-                    {
-                        await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
-                    }
-                }
-                return false;
-            }
-        }
-        public static async Task<Matrix> GetHMatrix(Matrix M, int xLength, StreamWriter? Writer = null)
+        private static async Task<Matrix> GetHMatrix(Matrix M, int xLength, StreamWriter? Writer = null)
         {
             if (M.Rows == 0)
             {
@@ -284,7 +156,7 @@ namespace RicercaOperativa.Models
         /// <param name="d">The vector d</param>
         /// <param name="b">The vector b</param>
         /// <returns>the highest possible value of t according to all equations</returns>
-        public static Fraction FindTMax(Matrix a, Vector x, Vector d, Vector b)
+        private static Fraction FindTMax(Matrix a, Vector x, Vector d, Vector b)
         {
             Vector ax = a * x, ad = a * d;
             Vector b_ax = b - ax;
@@ -326,36 +198,6 @@ namespace RicercaOperativa.Models
                 throw new Exception($"No acceptable value of t found ({tMax} < t < {tMin})");
             }
             return tMin.Value;
-        }
-        public static Vector GetRandomStartPoint(Matrix A, Vector b)
-        {
-            if (A.Rows != b.Size)
-            {
-                throw new ArgumentException($"Columns of a must be equal to size of b ({A.Rows} != {b.Size})");
-            }
-
-            // if point 0 is acceptable we return it
-            if (b.IsPositiveOrZero) // b >= 0
-            {
-                return Enumerable.Repeat(Fraction.Zero, A.Cols).ToArray();
-            }
-
-            Random rnd = new();
-            int guesses = 0;
-            while (guesses < 3000)
-            {
-                guesses++;
-                Fraction[] x = new Fraction[A.Cols];
-                for (int i = 0; i < x.Length; i++)
-                {
-                    x[i] = new Fraction(rnd.Next(), rnd.Next() + 1);
-                }
-                if (A * x <= b)
-                {
-                    return x;
-                }
-            }
-            throw new Exception($"It was impossible to find a starting x, {guesses} possible vectors considered");
         }
     }
 }

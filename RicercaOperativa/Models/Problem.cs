@@ -44,12 +44,12 @@ namespace RicercaOperativa.Models
             solver)
         {            
         }
-        public async Task<bool> Solve(StreamWriter? logger)
+        public async Task<bool> Solve(IEnumerable<StreamWriter?> loggers)
         {
             Solver.SetMainMatrix(matrix);
             Solver.SetFirstVector(vecB);
             Solver.SetSecondVector(vecC);
-            Task<bool> Solving = Solver.SolveAsync(logger);
+            Task<bool> Solving = Solver.SolveAsync(loggers);
             return await Solving.WaitAsync(CancellationToken.None);
         }
     }
