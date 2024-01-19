@@ -102,7 +102,8 @@ namespace RicercaOperativa
             }
             catch (Exception err)
             {
-                MessageBox.Show(err.Message);
+                MessageBox.Show(
+                    err.Message, "An error happened", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
         }
 
@@ -117,7 +118,8 @@ namespace RicercaOperativa
             }
             catch (Exception err)
             {
-                MessageBox.Show(err.Message);
+                MessageBox.Show(
+                    err.Message, "An error happened", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
         }
 
