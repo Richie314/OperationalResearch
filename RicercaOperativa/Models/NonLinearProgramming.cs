@@ -52,17 +52,23 @@ namespace RicercaOperativa.Models
         {
             ProjectedGradient s1 = new(A, b, python);
             FrankWolfe s2 = new(A, b, python);
-            bool res1 = await s1.SolveMinFlow(streams.FirstOrDefault(), startingPoint);
-            bool res2 = await s2.SolveMinFlow(streams.ElementAtOrDefault(1), startingPoint);
-            return res1 || res2;
+            var results = await Task.WhenAll(
+                new[] {
+                    s1.SolveMinFlow(streams.FirstOrDefault(), startingPoint),
+                    s2.SolveMinFlow(streams.ElementAtOrDefault(1), startingPoint)
+                });
+            return results.Any(x => x); // At least one succeded
         }
         public async Task<bool> SolveMaxAsync(IEnumerable<StreamWriter?> streams)
         {
             ProjectedGradient s1 = new(A, b, python);
             FrankWolfe s2 = new(A, b, python);
-            bool res1 = await s1.SolveMaxFlow(streams.FirstOrDefault(), startingPoint);
-            bool res2 = await s2.SolveMaxFlow(streams.ElementAtOrDefault(1), startingPoint);
-            return res1 || res2;
+            var results = await Task.WhenAll(
+                new[] { 
+                    s1.SolveMaxFlow(streams.FirstOrDefault(), startingPoint), 
+                    s2.SolveMaxFlow(streams.ElementAtOrDefault(1), startingPoint)
+                });
+            return results.Any(x => x); // At least one succeded
         }
     }
 }

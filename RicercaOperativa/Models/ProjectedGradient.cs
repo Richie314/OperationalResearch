@@ -27,6 +27,13 @@ namespace RicercaOperativa.Models
             Matrix a = A;
             Vector b = B;
             int k = 0;
+            if (IsMin)
+            {
+                await Writer.WriteLineAsync($"Solving for minimum value...");
+            } else
+            {
+                await Writer.WriteLineAsync($"Solving for minimum value...");
+            }
             //step1:
 
             Vector xk = startX ?? GetRandomStartPoint(A, B);
@@ -71,7 +78,7 @@ namespace RicercaOperativa.Models
                 goto step5;
             }
 
-            Fraction tMax = FindTMaxMin(a, xk, dk, b, IsMin);
+            Fraction tMax = FindTMaxMin(a, xk, dk, b, true);
             await Writer.WriteLineAsync($"t{k}^ = {Models.Function.Print(tMax)}");
 
             const int PointsToPlot = 5000;
@@ -96,7 +103,7 @@ namespace RicercaOperativa.Models
                 await Writer.WriteLineAsync($"Exit with unknown (unexpected) result.");
                 return xk;
             }
-            Vector lambda = (-1) * (((M * M.T).Inv * M) * gradXk);
+            Vector lambda = (IsMin ? (-1) : Fraction.One) * (((M * M.T).Inv * M) * gradXk);
             await Writer.WriteLineAsync($"lambda = {lambda}");
             if (lambda.IsPositiveOrZero) // lambda >= 0
             {
