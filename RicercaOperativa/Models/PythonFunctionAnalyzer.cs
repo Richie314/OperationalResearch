@@ -148,7 +148,8 @@ namespace RicercaOperativa.Models
                     {
                         await Writer.WriteLineAsync();
                         await Writer.WriteLineAsync();
-                        await Writer.WriteLineAsync($"Best (lesser) value = {result}");
+                        await Writer.WriteLineAsync($" x = {result}");
+                        await Writer.WriteLineAsync($"Best (lesser) f(x) = {Function(result)}");
                     }
                     return true;
                 }
@@ -178,7 +179,8 @@ namespace RicercaOperativa.Models
                     {
                         await Writer.WriteLineAsync();
                         await Writer.WriteLineAsync();
-                        await Writer.WriteLineAsync($"Best (greater) value = {result}");
+                        await Writer.WriteLineAsync($" x = {result}");
+                        await Writer.WriteLineAsync($"Best (greater) f(x) = {Function(result)}");
                     }
                     return true;
                 }

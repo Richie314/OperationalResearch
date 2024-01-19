@@ -29,11 +29,12 @@ namespace RicercaOperativa.Models
             int k = 0;
             if (IsMin)
             {
-                await Writer.WriteLineAsync($"Solving for minimum value...");
+                await Writer.WriteLineAsync($"Solving for min value...");
             } else
             {
-                await Writer.WriteLineAsync($"Solving for minimum value...");
+                await Writer.WriteLineAsync($"Solving for max value...");
             }
+            await Writer.WriteLineAsync();
             //step1:
 
             Vector xk = startX ?? GetRandomStartPoint(A, B);
