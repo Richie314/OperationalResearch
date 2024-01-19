@@ -108,7 +108,7 @@ namespace RicercaOperativa
                 sMatrixAndB: mainGridStr,
                 sVecC: MainVectorStr());
 
-            if (await p.Solve(new StreamWriter[] { dialogForm.Writer }))
+            if (await p.SolveMax(new StreamWriter[] { dialogForm.Writer }))
             {
                 MessageBox.Show(
                     "Linear Programming problem solved", 

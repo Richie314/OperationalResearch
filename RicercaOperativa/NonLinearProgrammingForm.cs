@@ -9,7 +9,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Serialization;
-using static IronPython.SQLite.PythonSQLite;
 
 namespace RicercaOperativa
 {
@@ -42,7 +41,7 @@ namespace RicercaOperativa
 
                     startPointInput.Columns[i].Width = 50;
                     startPointInput.Columns[i].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-                    startPointInput.Columns[i]. Name = "x" + (i + 1).ToString();
+                    startPointInput.Columns[i].Name = "x" + (i + 1).ToString();
                 }
                 else
                 {
@@ -66,23 +65,23 @@ namespace RicercaOperativa
             pythonInput.Clear();
             string libs = "import math" + Environment.NewLine;
             string comment =
-                "# Expect input to be made of floats. Return the same number of floats as a tuple" +    Environment.NewLine +
-                "# Return a single float in the main function" +                                        Environment.NewLine +
-                "# Return the same number of floats as a tuple in the gradient function" +              Environment.NewLine +
-                "# Use 4 spaces instead of tabs!" +                                                     Environment.NewLine +
-                "# Do not import strange libraries" +                                                   Environment.NewLine;
+                "# Expect input to be made of floats. Return the same number of floats as a tuple" + Environment.NewLine +
+                "# Return a single float in the main function" + Environment.NewLine +
+                "# Return the same number of floats as a tuple in the gradient function" + Environment.NewLine +
+                "# Use 4 spaces instead of tabs!" + Environment.NewLine +
+                "# Do not import strange libraries" + Environment.NewLine;
 
             IEnumerable<string> xArray = Enumerable.Range(1, VariablesCount).Select(i => $"x{i}");
             IEnumerable<string> xFloatArray = xArray.Select(x => $"{x}: float");
             IEnumerable<string> xSquareArray = xArray.Select(x => $"{x}**2");
             string f =
-                "def f(" + string.Join(", ", xFloatArray.ToArray()) + "):" +                        Environment.NewLine +
-                "    # The function to minimize, remember to use 4 spaces instead of tabs" +        Environment.NewLine +
-                "    return (" + string.Join(" + ", xSquareArray.ToArray()) + ") / 2" +             Environment.NewLine;
+                "def f(" + string.Join(", ", xFloatArray.ToArray()) + "):" + Environment.NewLine +
+                "    # The function to minimize, remember to use 4 spaces instead of tabs" + Environment.NewLine +
+                "    return (" + string.Join(" + ", xSquareArray.ToArray()) + ") / 2" + Environment.NewLine;
             string grad =
-                "def gradF(" + string.Join(", ", xFloatArray.ToArray()) + "):" +                    Environment.NewLine +
-                "    # Code here, remember to use 4 spaces instead of tabs" +                       Environment.NewLine +
-                "    return " + string.Join(", ", xArray.ToArray()) +                               Environment.NewLine;
+                "def gradF(" + string.Join(", ", xFloatArray.ToArray()) + "):" + Environment.NewLine +
+                "    # Code here, remember to use 4 spaces instead of tabs" + Environment.NewLine +
+                "    return " + string.Join(", ", xArray.ToArray()) + Environment.NewLine;
             string wholeScript =
                 libs +
                 comment +
@@ -90,7 +89,7 @@ namespace RicercaOperativa
                 f +
                 Environment.NewLine +
                 grad;
-                
+
             pythonInput.Text = wholeScript;
         }
         private void button1_Click(object sender, EventArgs e)
@@ -122,23 +121,23 @@ namespace RicercaOperativa
             }
         }
 
-        private async void solveButton_Click(object sender, EventArgs e)
+        private async void solveMinButton_Click(object sender, EventArgs e)
         {
-            solveButton.Enabled = false;
+            solveMinButton.Enabled = false;
             string[][]? mainGrid = MainGridStr();
             if (mainGrid is null || mainGrid.Length == 0)
             {
-                solveButton.Enabled = true;
+                solveMinButton.Enabled = true;
                 return;
             }
             var dialogForm1 = new ProblemForm("Projected Gradient");
             var dialogForm2 = new ProblemForm("Franke-Wolfe");
             bool OneFormDisposed = false;
-            void closeFormCallback (object? sender, FormClosedEventArgs e)
+            void closeFormCallback(object? sender, FormClosedEventArgs e)
             {
                 if (OneFormDisposed)
                 {
-                    solveButton.Enabled = true;
+                    solveMinButton.Enabled = true;
                 }
                 OneFormDisposed = true;
             };
@@ -152,7 +151,7 @@ namespace RicercaOperativa
                 sMatrixAndB: mainGrid,
                 sVecC: []);
 
-            if (await p.Solve(
+            if (await p.SolveMin(
                 new StreamWriter[] { dialogForm1.Writer, dialogForm2.Writer }
                 ))
             {
@@ -189,8 +188,8 @@ namespace RicercaOperativa
                     "There are blank cells in the input," + Environment.NewLine +
                     "The algorithms cannot run with unknown values." + Environment.NewLine +
                     "Do you want to fill in with zeros?",
-                    "Blank cells", 
-                    MessageBoxButtons.YesNo, 
+                    "Blank cells",
+                    MessageBoxButtons.YesNo,
                     MessageBoxIcon.Warning))
                 {
                     return null;
@@ -212,6 +211,54 @@ namespace RicercaOperativa
                 }
             }
             return arr;
+        }
+
+        private async void solveMaxButton_Click(object sender, EventArgs e)
+        {
+            solveMinButton.Enabled = false;
+            string[][]? mainGrid = MainGridStr();
+            if (mainGrid is null || mainGrid.Length == 0)
+            {
+                solveMinButton.Enabled = true;
+                return;
+            }
+            var dialogForm1 = new ProblemForm("Projected Gradient");
+            var dialogForm2 = new ProblemForm("Franke-Wolfe");
+            bool OneFormDisposed = false;
+            void closeFormCallback(object? sender, FormClosedEventArgs e)
+            {
+                if (OneFormDisposed)
+                {
+                    solveMinButton.Enabled = true;
+                }
+                OneFormDisposed = true;
+            };
+            dialogForm1.FormClosed += new FormClosedEventHandler(closeFormCallback);
+            dialogForm1.Show();
+            dialogForm2.FormClosed += new FormClosedEventHandler(closeFormCallback);
+            dialogForm2.Show();
+
+            Problem p = new(
+                solver: new NonLinearProgramming(pythonInput.Text, GetStartingPoint()),
+                sMatrixAndB: mainGrid,
+                sVecC: []);
+
+            if (await p.SolveMax(
+                new StreamWriter[] { dialogForm1.Writer, dialogForm2.Writer }
+                ))
+            {
+                MessageBox.Show(
+                    "Non Linear Programming problem solved",
+                    "Problem solved", MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show(
+                    "Non Linear Programming problem could not be solved",
+                    "Error", MessageBoxButtons.OKCancel,
+                    MessageBoxIcon.Error);
+            }
         }
     }
 }

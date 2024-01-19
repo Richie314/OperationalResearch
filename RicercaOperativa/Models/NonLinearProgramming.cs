@@ -48,12 +48,20 @@ namespace RicercaOperativa.Models
         {
             // Do nothing
         }
-        public async Task<bool> SolveAsync(IEnumerable<StreamWriter?> streams)
+        public async Task<bool> SolveMinAsync(IEnumerable<StreamWriter?> streams)
         {
             ProjectedGradient s1 = new(A, b, python);
             FrankWolfe s2 = new(A, b, python);
-            bool res1 = await s1.SolveFlow(streams.FirstOrDefault(), startingPoint);
-            bool res2 = await s2.SolveFlow(streams.ElementAtOrDefault(1), startingPoint);
+            bool res1 = await s1.SolveMinFlow(streams.FirstOrDefault(), startingPoint);
+            bool res2 = await s2.SolveMinFlow(streams.ElementAtOrDefault(1), startingPoint);
+            return res1 || res2;
+        }
+        public async Task<bool> SolveMaxAsync(IEnumerable<StreamWriter?> streams)
+        {
+            ProjectedGradient s1 = new(A, b, python);
+            FrankWolfe s2 = new(A, b, python);
+            bool res1 = await s1.SolveMaxFlow(streams.FirstOrDefault(), startingPoint);
+            bool res2 = await s2.SolveMaxFlow(streams.ElementAtOrDefault(1), startingPoint);
             return res1 || res2;
         }
     }

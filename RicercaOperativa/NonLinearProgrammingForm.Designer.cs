@@ -36,9 +36,10 @@
             matrix = new DataGridView();
             label2 = new Label();
             numberOfEquationsInput = new NumericUpDown();
-            solveButton = new Button();
+            solveMinButton = new Button();
             label3 = new Label();
             startPointInput = new DataGridView();
+            solveMaxButton = new Button();
             ((System.ComponentModel.ISupportInitialize)dimensionOfSpaceInput).BeginInit();
             ((System.ComponentModel.ISupportInitialize)matrix).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numberOfEquationsInput).BeginInit();
@@ -111,44 +112,56 @@
             numberOfEquationsInput.TabIndex = 6;
             numberOfEquationsInput.Value = new decimal(new int[] { 4, 0, 0, 0 });
             // 
-            // solveButton
+            // solveMinButton
             // 
-            solveButton.Cursor = Cursors.Hand;
-            solveButton.Location = new Point(12, 388);
-            solveButton.Name = "solveButton";
-            solveButton.Size = new Size(115, 65);
-            solveButton.TabIndex = 7;
-            solveButton.Text = "Solve with all methods";
-            solveButton.UseVisualStyleBackColor = true;
-            solveButton.Click += solveButton_Click;
+            solveMinButton.Cursor = Cursors.Hand;
+            solveMinButton.Location = new Point(12, 396);
+            solveMinButton.Name = "solveMinButton";
+            solveMinButton.Size = new Size(187, 34);
+            solveMinButton.TabIndex = 7;
+            solveMinButton.Text = "Minimize with all methods";
+            solveMinButton.UseVisualStyleBackColor = true;
+            solveMinButton.Click += solveMinButton_Click;
             // 
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(141, 424);
+            label3.Location = new Point(212, 393);
             label3.Name = "label3";
-            label3.Size = new Size(79, 15);
+            label3.Size = new Size(289, 15);
             label3.TabIndex = 8;
-            label3.Text = "Starting Point";
+            label3.Text = "Starting Point, if empty a random one will be guessed";
             // 
             // startPointInput
             // 
             startPointInput.AllowUserToAddRows = false;
             startPointInput.AllowUserToDeleteRows = false;
             startPointInput.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            startPointInput.Location = new Point(234, 400);
+            startPointInput.Location = new Point(205, 416);
             startPointInput.Name = "startPointInput";
-            startPointInput.Size = new Size(554, 53);
+            startPointInput.Size = new Size(583, 53);
             startPointInput.TabIndex = 9;
+            // 
+            // solveMaxButton
+            // 
+            solveMaxButton.Cursor = Cursors.Hand;
+            solveMaxButton.Location = new Point(12, 438);
+            solveMaxButton.Name = "solveMaxButton";
+            solveMaxButton.Size = new Size(187, 34);
+            solveMaxButton.TabIndex = 10;
+            solveMaxButton.Text = "Maximize with all methods";
+            solveMaxButton.UseVisualStyleBackColor = true;
+            solveMaxButton.Click += solveMaxButton_Click;
             // 
             // NonLinearProgrammingForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 466);
+            ClientSize = new Size(800, 483);
+            Controls.Add(solveMaxButton);
             Controls.Add(startPointInput);
             Controls.Add(label3);
-            Controls.Add(solveButton);
+            Controls.Add(solveMinButton);
             Controls.Add(numberOfEquationsInput);
             Controls.Add(label2);
             Controls.Add(matrix);
@@ -177,8 +190,9 @@
         private DataGridView matrix;
         private Label label2;
         private NumericUpDown numberOfEquationsInput;
-        private Button solveButton;
+        private Button solveMinButton;
         private Label label3;
         private DataGridView startPointInput;
+        private Button solveMaxButton;
     }
 }

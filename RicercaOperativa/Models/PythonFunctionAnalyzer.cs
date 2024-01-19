@@ -60,6 +60,17 @@ namespace RicercaOperativa.Models
                 t => Function(x + (d * t)), // Phi(t)
                 t_start, t_end, steps);
         }
+        protected Fraction FindArgOfFunction(
+            bool FindMin,
+            Fraction t_start, Fraction t_end, int steps,
+            Vector x, Vector d)
+        {
+            if (FindMin)
+            {
+                return FindArgMinOfFunction(t_start, t_end, steps, x, d);
+            }
+            return FindArgMaxOfFunction(t_start, t_end, steps, x, d);
+        }
         public PythonFunctionAnalyzer(Fraction[,] A, Vector b, string python)
         {
             ArgumentNullException.ThrowIfNull(A);
@@ -117,23 +128,57 @@ namespace RicercaOperativa.Models
             }
         }
 
-        public abstract Task<Vector?> Solve(
+        public abstract Task<Vector?> SolveMin(
+            Vector? startX = null,
+            StreamWriter? Writer = null,
+            int? maxK = null);
+        public abstract Task<Vector?> SolveMax(
             Vector? startX = null,
             StreamWriter? Writer = null,
             int? maxK = null);
 
-        public async Task<bool> SolveFlow(StreamWriter? Writer = null, Vector? startingPoint = null)
+        public async Task<bool> SolveMinFlow(StreamWriter? Writer = null, Vector? startingPoint = null)
         {
             try
             {
-                var result = await Solve(Writer: Writer, maxK: 100, startX: startingPoint);
+                var result = await SolveMin(Writer: Writer, maxK: 100, startX: startingPoint);
                 if (result is not null)
                 {
                     if (Writer != null)
                     {
                         await Writer.WriteLineAsync();
                         await Writer.WriteLineAsync();
-                        await Writer.WriteLineAsync($"Best value = {result}");
+                        await Writer.WriteLineAsync($"Best (lesser) value = {result}");
+                    }
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                if (Writer != null)
+                {
+                    await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
+                    if (ex.StackTrace is not null)
+                    {
+                        await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
+                    }
+                }
+                return false;
+            }
+        }
+        public async Task<bool> SolveMaxFlow(StreamWriter? Writer = null, Vector? startingPoint = null)
+        {
+            try
+            {
+                var result = await SolveMax(Writer: Writer, maxK: 100, startX: startingPoint);
+                if (result is not null)
+                {
+                    if (Writer != null)
+                    {
+                        await Writer.WriteLineAsync();
+                        await Writer.WriteLineAsync();
+                        await Writer.WriteLineAsync($"Best (greater) value = {result}");
                     }
                     return true;
                 }

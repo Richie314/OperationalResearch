@@ -8,7 +8,22 @@ namespace RicercaOperativa.Models
     internal sealed class FrankWolfe : PythonFunctionAnalyzer
     {
         public FrankWolfe(Fraction[,] A, Vector b, string python) : base(A, b, python) { }
-        public override async Task<Vector?> Solve(
+        public override async Task<Vector?> SolveMin(
+            Vector? startX = null,
+            StreamWriter? Writer = null,
+            int? maxK = null)
+        {
+            return await Solve(true, startX, Writer, maxK);
+        }
+        public override async Task<Vector?> SolveMax(
+            Vector? startX = null,
+            StreamWriter? Writer = null,
+            int? maxK = null)
+        {
+            return await Solve(false, startX, Writer, maxK);
+        }
+        private async Task<Vector?> Solve(
+            bool IsMin,
             Vector? startX = null,
             StreamWriter? Writer = null,
             int? maxK = null)
@@ -44,7 +59,10 @@ namespace RicercaOperativa.Models
                 Vector gradF = Grad(xk);
                 await Writer.WriteLineAsync($"gradF(x{k}) = {gradF}");
 
-                Simplex s = new(a.M, b, gradF * (-1), false);
+                Simplex s = new(
+                    a.M, b, 
+                    gradF * (IsMin ? (-1) : Fraction.One), // If we want a max of the simplex we have to multiply its c coefficients by -1 
+                    false);
                 Vector? yk = await s.SolvePrimalMax(StreamWriter.Null, null, null);
                 if (yk is null)
                 {
@@ -64,7 +82,7 @@ namespace RicercaOperativa.Models
                     return xk;
                 }
 
-                Fraction tk = FindArgMinOfFunction(
+                Fraction tk = FindArgOfFunction(IsMin,
                     Fraction.Zero, Fraction.One, 5000, xk, dk);
                 await Writer.WriteLineAsync($"t{k} = {Models.Function.Print(tk)}");
 

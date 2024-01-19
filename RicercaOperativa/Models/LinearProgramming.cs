@@ -13,9 +13,14 @@ namespace RicercaOperativa.Models
         private Vector b = Array.Empty<Fraction>();
         private Vector c = Array.Empty<Fraction>();
         private readonly int[]? startBase = startBase;
-        public async Task<bool> SolveAsync(IEnumerable<StreamWriter?> loggers)
+        public async Task<bool> SolveMaxAsync(IEnumerable<StreamWriter?> loggers)
         {
             Simplex s = new(A, b, c);
+            return await s.SolvePrimalMaxFlow(startBase, loggers.FirstOrDefault());
+        }
+        public async Task<bool> SolveMinAsync(IEnumerable<StreamWriter?> loggers)
+        {
+            Simplex s = new(A, b, c * (-1));
             return await s.SolvePrimalMaxFlow(startBase, loggers.FirstOrDefault());
         }
 

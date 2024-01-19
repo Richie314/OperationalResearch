@@ -9,13 +9,25 @@ namespace RicercaOperativa.Models
     {
         public ProjectedGradient(Fraction[,] A, Vector b, string python) : base(A, b, python) { }
 
-        public override async Task<Vector?> Solve(Vector? startX = null, StreamWriter? Writer = null, int? maxK = null)
+        public override async Task<Vector?> SolveMin(
+            Vector? startX = null, StreamWriter? Writer = null, int? maxK = null)
+        {
+            return await Solve(true, startX, Writer, maxK);
+        }
+        public override async Task<Vector?> SolveMax(
+            Vector? startX = null, StreamWriter? Writer = null, int? maxK = null)
+        {
+            return await Solve(false, startX, Writer, maxK);
+        }
+        public async Task<Vector?> Solve(
+            bool IsMin,
+            Vector? startX = null, StreamWriter? Writer = null, int? maxK = null)
         {
             Writer ??= StreamWriter.Null;
             Matrix a = A;
             Vector b = B;
             int k = 0;
-        //step1:
+            //step1:
 
             Vector xk = startX ?? GetRandomStartPoint(A, B);
         step2:
@@ -51,7 +63,7 @@ namespace RicercaOperativa.Models
             Vector gradXk = Grad(xk);
             await Writer.WriteLineAsync($"gradF(x{k}) = {gradXk}");
 
-            Vector dk = ((-1) * H) * gradXk;
+            Vector dk = H * gradXk * (IsMin ? (-1) : Fraction.One);
             await Writer.WriteLineAsync($"d{k} = {dk}");
             if (dk.IsZero) // dk == 0
             {
@@ -59,14 +71,14 @@ namespace RicercaOperativa.Models
                 goto step5;
             }
 
-            Fraction tMax = FindTMax(a, xk, dk, b);
+            Fraction tMax = FindTMaxMin(a, xk, dk, b, IsMin);
             await Writer.WriteLineAsync($"t{k}^ = {Models.Function.Print(tMax)}");
 
             const int PointsToPlot = 5000;
             await Writer.WriteLineAsync(
                 $"Finding min value of f(x{k} + t d{k}) inside [0, {Models.Function.Print(tMax)}]. {PointsToPlot} points considered");
-            
-            Fraction tk = FindArgMinOfFunction(0, tMax, PointsToPlot, xk, dk);
+
+            Fraction tk = FindArgOfFunction(IsMin, 0, tMax, PointsToPlot, xk, dk);
             await Writer.WriteLineAsync($"t{k} = {Models.Function.Print(tk)}");
 
             xk += tk * dk; // implict operator overloading
@@ -91,7 +103,8 @@ namespace RicercaOperativa.Models
                 await Writer.WriteLineAsync($"lambda >= 0.");
                 await Writer.WriteLineAsync($"Exit with success.");
                 return xk;
-            } else
+            }
+            else
             {
                 await Writer.WriteLineAsync($"lambda has at least one component below zero.");
             }
@@ -102,7 +115,7 @@ namespace RicercaOperativa.Models
             // argmin == 0 -> min is the first element of J
             // argmin == 1 -> min is the second element of J
             // and so on
-            int argmin = lambda.ArgMin; 
+            int argmin = lambda.ArgMin;
             await Writer.WriteLineAsync($"Argmin{{lambda}} = {argmin + 1}");
             int jToRemove = J.ElementAt(argmin);
             await Writer.WriteLineAsync($"Removing equation {jToRemove + 1} from A|b.");
@@ -113,7 +126,7 @@ namespace RicercaOperativa.Models
             await Writer.WriteLineAsync($"(A|b)' = {a | b}");
             goto step3;
         }
-        
+
         private static async Task<Matrix> GetHMatrix(Matrix M, int xLength, StreamWriter? Writer = null)
         {
             if (M.Rows == 0)
@@ -156,12 +169,12 @@ namespace RicercaOperativa.Models
         /// <param name="d">The vector d</param>
         /// <param name="b">The vector b</param>
         /// <returns>the highest possible value of t according to all equations</returns>
-        private static Fraction FindTMax(Matrix a, Vector x, Vector d, Vector b)
+        private static Fraction FindTMaxMin(Matrix a, Vector x, Vector d, Vector b, bool WantRight)
         {
             Vector ax = a * x, ad = a * d;
             Vector b_ax = b - ax;
 
-            Fraction? tMin = null, tMax = null;
+            Fraction? tRight = null, tLeft = null;
             int[] PositiveIndexes = ad.PositiveIndexes;
             if (PositiveIndexes.Length > 0)
             {
@@ -169,7 +182,7 @@ namespace RicercaOperativa.Models
                     b_ax[PositiveIndexes],
                     ad[PositiveIndexes]);
                 // Return the max{t} : t < (b - ax) / ad => return min { (b - ax) / ad }
-                tMin = b_ax_over_ad.Min;
+                tRight = b_ax_over_ad.Min;
             }
             int[] NegativeIndexes = ad.NegativeIndexes;
             if (NegativeIndexes.Length > 0)
@@ -178,26 +191,47 @@ namespace RicercaOperativa.Models
                     b_ax[NegativeIndexes],
                     ad[NegativeIndexes]);
                 // Return the max{t} : t > (b - ax) / ad => return max { (b - ax) / ad } ad < 0
-                tMax = b_ax_over_ad.Max;
+                tLeft = b_ax_over_ad.Max;
             }
-            // tMax < t < tMin
-            if (!tMin.HasValue)
-            {
-                if (!tMax.HasValue)
-                {
-                    // -Inf < t < +Inf
-                    throw new ArgumentException("a * d must at least have one non-zero component");
-                }
 
-                // tMax < t < +Inf
-                throw new Exception($"t -> +Inf, unbounded ({tMax} < t)");
-            }
-            if (tMax.HasValue && tMax > tMin)
+            // This should be always valid: tLeft < t < tRight
+
+            if (tLeft.HasValue && tRight.HasValue && tLeft.Value > tRight.Value)
             {
-                // tMax < t < tMin but tMax > tMin!
-                throw new Exception($"No acceptable value of t found ({tMax} < t < {tMin})");
+                // tLeft < t < tRight but tLeft > tRight!
+                throw new Exception(
+                    $"No acceptable value of t found ({Models.Function.Print(tLeft)} < t < {Models.Function.Print(tRight)})");
             }
-            return tMin.Value;
+
+            if (!tLeft.HasValue && !tRight.HasValue)
+            {
+                // -Inf < t < +Inf
+                // No bound found
+                throw new ArgumentException("a * d must at least have one non-zero component");
+            }
+            // At least one has value from now on
+
+            if (WantRight)
+            {
+                // We want tRight
+                if (!tRight.HasValue)
+                {
+                    // Impossible to get the right bound
+                    // tLeft < t < +Inf
+                    throw new Exception($"t -> +Inf, unbounded ({Models.Function.Print(tLeft)} < t)");
+                }
+                return tRight.Value;
+            }
+
+            // We want tLeft
+
+            if (!tLeft.HasValue)
+            {
+                // Impossible to get the left bound
+                // -Inf < t < tRight
+                throw new Exception($"t -> -Inf, unbounded (t < {Models.Function.Print(tRight)})");
+            }
+            return tLeft.Value;
         }
     }
 }

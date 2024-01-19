@@ -11,7 +11,7 @@ using System.Windows.Input.Manipulations;
 
 namespace RicercaOperativa.Models
 {
-    public class Matrix
+    public sealed class Matrix
     {
         private readonly Fraction[,] m;
         public Matrix()
