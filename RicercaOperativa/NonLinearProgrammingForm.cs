@@ -134,10 +134,10 @@ namespace RicercaOperativa
             dialogForm.FormClosed += closeFormCallback;
             dialogForm.Show();
 
-            Problem p = new Problem(
+            Problem p = new(
                 solver: new NonLinearProgramming(pythonInput.Text, GetStartingPoint()),
                 sMatrixAndB: MainGridStr(),
-                sVecC: new string[0]);
+                sVecC: []);
 
             if (await p.Solve(dialogForm.Writer))
             {
@@ -159,14 +159,14 @@ namespace RicercaOperativa
             var list = new List<string[]>();
             for (int row = 0; row < matrix.RowCount; row++)
             {
-                List<string> currRow = new List<string>();
+                List<string> currRow = [];
                 for (int col = 0; col < matrix.ColumnCount; col++)
                 {
                     currRow.Add((string)matrix[col, row].Value);
                 }
-                list.Add(currRow.ToArray());
+                list.Add([.. currRow]);
             }
-            return list.ToArray();
+            return [.. list];
         }
         private string[]? GetStartingPoint()
         {

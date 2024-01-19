@@ -13,21 +13,21 @@ namespace RicercaOperativa.Models
     internal class Simplex
     {
         private readonly Matrix A;
-        private readonly Fraction[] b;
-        private readonly Fraction[] c;
+        private readonly Vector b;
+        private readonly Vector c;
 
-        public Simplex(Fraction[,] A, Fraction[] b, Fraction[] c)
+        public Simplex(Fraction[,] A, Vector b, Vector c)
         {
             ArgumentNullException.ThrowIfNull(A);
             ArgumentNullException.ThrowIfNull(b);
             ArgumentNullException.ThrowIfNull(c);
-            if (A.Rows() != b.Length)
+            if (A.Rows() != b.Size)
             {
-                throw new ArgumentException("A must have row number equal to the length of b");
+                throw new ArgumentException("A must have row number equal to the size of b");
             }
-            if (A.Columns() != c.Length)
+            if (A.Columns() != c.Size)
             {
-                throw new ArgumentException("A must have col number equal to the length of c");
+                throw new ArgumentException("A must have col number equal to the size of c");
             }
 
             // x >= 0 constarint (-x <= 0)
@@ -35,11 +35,11 @@ namespace RicercaOperativa.Models
             {
                 Fraction[] rowToAdd = 
                     Enumerable.Repeat(Fraction.Zero, i)
-                    .Concat(new Fraction[1] { new Fraction(-1) })
+                    .Concat(new Fraction[1] { new(-1) })
                     .Concat(Enumerable.Repeat(Fraction.Zero, A.Columns() - i - 1))
                     .ToArray();
                 A = A.InsertRow(rowToAdd);
-                b = b.Concat(new Fraction[1] { Fraction.Zero }).ToArray();
+                b = b.Get.Concat(new Fraction[1] { Fraction.Zero }).ToArray();
             }
             this.A = new Matrix(A);
             this.b = b;
@@ -60,11 +60,11 @@ namespace RicercaOperativa.Models
                 }
                 Matrix A_B_inv = A_B.Inv;
 
-                Fraction[] b_B = ExtractRows(b, B);
-                Fraction[] b_N = ExtractRows(b, N);
+                Vector b_B = b[B];
+                Vector b_N = b[N];
 
-                Fraction[] x = A_B_inv * b_B;
-                if (LessOrEqual(A[N] * x, b_N))
+                Vector x = A_B_inv * b_B;
+                if ((A[N] * x) <= b_N)
                 {
                     // Solution is acceptable => Base is acceptable
                     return B;
@@ -76,8 +76,8 @@ namespace RicercaOperativa.Models
                 }
             } while (true);
         }
-        public async Task<Fraction[]?> SolvePrimal(
-            StreamWriter? Writer, 
+        public async Task<Vector?> SolvePrimal(
+            StreamWriter Writer, 
             int[]? startBase = null,
             int? maxIterations = null)
         {
@@ -86,13 +86,13 @@ namespace RicercaOperativa.Models
             int[] B = startBase ?? FindStartBase(); B.Sort();
             int[] N = Enumerable.Range(0, A.Rows).Where(i => !B.Contains(i)).ToArray();
             await Writer.WriteLineAsync("Start:");
-            await Writer.WriteLineAsync($"c = {Print(c)}");
+            await Writer.WriteLineAsync($"c = {c}");
             await Writer.WriteLineAsync($"A = {A}");
-            await Writer.WriteLineAsync($"b = {Print(b)}");
+            await Writer.WriteLineAsync($"b = {b}");
             await Writer.WriteLineAsync();
 
-            await Writer.WriteLineAsync($"B = {Print(B)}");
-            await Writer.WriteLineAsync($"N = {Print(N)}");
+            await Writer.WriteLineAsync($"B = {Function.Print(B)}");
+            await Writer.WriteLineAsync($"N = {Function.Print(N)}");
             Debug.Assert(B.Length + N.Length == A.Rows);
             Trace.Assert(B.Length + N.Length == A.Rows);
 
@@ -111,32 +111,32 @@ namespace RicercaOperativa.Models
                 await Writer.WriteLineAsync($"A_N = {A_N}");
                 if (A_B.Det.IsZero)
                 {
-                    throw new ArgumentException($"Base {Print(B)} is invalid");
+                    throw new ArgumentException($"Base {Function.Print(B)} is invalid: Det(A_B) = 0");
                 }
                 Matrix A_B_inv = A_B.Inv;
                 await Writer.WriteLineAsync($"A_B^-1 = {A_B_inv}");
                 await Writer.WriteLineAsync();
 
-                Fraction[] b_B = ExtractRows(b, B);
-                Fraction[] b_N = ExtractRows(b, N);
-                await Writer.WriteLineAsync($"b_B = {Print(b_B)}");
-                await Writer.WriteLineAsync($"b_N = {Print(b_N)}");
+                Vector b_B = b[B];
+                Vector b_N = b[N];
+                await Writer.WriteLineAsync($"b_B = {b_B}");
+                await Writer.WriteLineAsync($"b_N = {b_N}");
                 await Writer.WriteLineAsync();
 
-                Fraction[] x = A_B_inv * b_B;
-                await Writer.WriteLineAsync($"x = {Print(x)}");
-                if (!LessOrEqual(A[N] * x, b_N))
+                Vector x = A_B_inv * b_B;
+                await Writer.WriteLineAsync($"x = {x}");
+                if (!((A[N] * x) <= b_N))
                 {
                     // Non acceptable solution
-                    throw new DataMisalignedException($"Solution x = {Print(x)}  of base B = {Print(B)} is not acceptable");
+                    throw new DataMisalignedException($"Solution x = {x}  of base B = {Function.Print(B)} is not acceptable");
                 }
                 await Writer.WriteLineAsync();
 
 
-                Fraction[] Y_B = c * A_B_inv;
-                await Writer.WriteLineAsync($"Y_B = {Print(Y_B)}");
+                Vector Y_B = (c.Row * A_B_inv)[0]; // Get first row of one row matrix
+                await Writer.WriteLineAsync($"Y_B = {Y_B}");
                 await Writer.WriteLineAsync();
-                if (Y_B.All(yi => !yi.IsNegative)) // y_b >= 0
+                if (Y_B.IsPositiveOrZero) // y_b >= 0
                 {
                     // Optimal value
                     return x;
@@ -145,16 +145,14 @@ namespace RicercaOperativa.Models
                 }
                 //Fraction[] Y = [.. Y_B, .. Enumerable.Repeat(Fraction.Zero, N.Length)];
 
-                int h = findExitIndex(Y_B, B);
+                int h = FindExitIndex(Y_B, B);
                 await Writer.WriteLineAsync($"h = {h + 1}");
 
-                Fraction[] Wh = A_B_inv.Col(
-                    B.Find(i => i == h).First())
-                    .Select(wh => wh * (-1)).ToArray(); // Wh is the h-th column of -A_b_inv
-                await Writer.WriteLineAsync($"Wh = {Print(Wh)}");
+                Vector Wh = A_B_inv.Col( B.Find(i => i == h).First() ) * (-1); // Wh is the h-th column of -A_b_inv
+                await Writer.WriteLineAsync($"Wh = {Wh}");
                 await Writer.WriteLineAsync();
 
-                if (N.All(i => !Matrix.Scalar(A[i], Wh).IsPositive))
+                if (N.All(i => !(A[i] * Wh).IsPositive))
                 {
                     // optimal value is +inf
                     await Writer.WriteLineAsync($"A[i] * Wh <= 0 for each i inside N");
@@ -162,14 +160,14 @@ namespace RicercaOperativa.Models
                 }
 
 
-                int k = findEnteringIndex(A, Wh, b, x, N, out Fraction Theta);
+                int k = FindEnteringIndex(A, Wh, b, x, N, out Fraction Theta);
                 await Writer.WriteLineAsync($"Theta = {Theta}");
                 await Writer.WriteLineAsync($"k = {k + 1}");
                 await Writer.WriteLineAsync();
 
                 B = B.Where(i => i != h).Append(k).ToArray(); B.Sort();
                 N = N.Where(i => i != k).Append(h).ToArray(); N.Sort();
-                await Writer.WriteLineAsync($"B = B - {{ {h + 1} }} U {{ {k + 1} }} = {Print(B)}");
+                await Writer.WriteLineAsync($"B = B - {{ {h + 1} }} U {{ {k + 1} }} = {Function.Print(B)}");
                 await Writer.WriteLineAsync();
                 step++;
 
@@ -180,27 +178,33 @@ namespace RicercaOperativa.Models
             }
 
         }
-        public string CalculatePrimal(Fraction[]? primalSolution)
+        public string CalculatePrimal(Vector? primalSolution)
         {
-            if (primalSolution is null || primalSolution.Length == 0)
+            if (primalSolution is null || primalSolution.Size == 0)
             {
                 return "Infinity: problem unbounded";
             }
-            return $"c * x = {Matrix.Scalar(c, primalSolution)}";
+            return $"c * x = {Function.Print(c * primalSolution)}";
         }
-        private static int findExitIndex(Fraction[] Y_B, int[] B)
+        private static int FindExitIndex(Vector Y_B, int[] B)
         {
-            int vecIndex = Y_B.Find(y => y.IsNegative).First();
+            int vecIndex = Y_B.NegativeIndexes.First();
             return B[vecIndex];
         }
-        private static int findEnteringIndex(Matrix A, Fraction[] Wh, Fraction[] b, Fraction[] x, int[] N, out Fraction Theta)
+        private static int FindEnteringIndex(
+            Matrix A, 
+            Vector Wh, 
+            Vector b, 
+            Vector x, 
+            int[] N, 
+            out Fraction Theta)
         {
-            int[] PositiveRowsInN = N.Where(i => Matrix.Scalar(A[i], Wh) > 0).ToArray();
+            int[] PositiveRowsInN = N.Where(i => (A[i] * Wh).IsPositive).ToArray();
             Fraction ThetaCopy = Theta = PositiveRowsInN.Min(
-                    i => (b[i] - Matrix.Scalar(A[i], x)) / Matrix.Scalar(A[i], Wh));
+                    i => (b[i] - (A[i] * x)) / (A[i] * Wh));
 
             int k = PositiveRowsInN.Where(i =>
-                    (b[i] - Matrix.Scalar(A[i], x)) / Matrix.Scalar(A[i], Wh) == ThetaCopy).Min();
+                    (b[i] - (A[i] * x)) / (A[i] * Wh) == ThetaCopy).Min();
             return k;
         }
 
@@ -210,7 +214,7 @@ namespace RicercaOperativa.Models
             bool exitValue = true;
             try
             {
-                Fraction[] x = await SolvePrimal(
+                Vector? x = await SolvePrimal(
                     startBase: startBase, 
                     Writer: Writer, 
                     maxIterations: 100);
@@ -224,93 +228,7 @@ namespace RicercaOperativa.Models
                 }
                 exitValue = false;
             }
-            //await Writer.FlushAsync();
             return exitValue;
-        }
-
-
-        public static bool LessOrEqual(Fraction[] a, Fraction[] b)
-        {
-            if (a.Length != b.Length)
-            {
-                throw new ArgumentException($"a and b have different lengths ({a.Length} != {b.Length})");
-            }
-            for (int i = 0; i < a.Length; i++)
-            {
-                if (a[i] > b[i])
-                    return false;
-            }
-            return true;
-        }
-        public static Fraction[] ExtractRows(Fraction[] A, int[] Base)
-        {
-            List<Fraction> rows = [];
-            for (int i = 0; i < A.Length; i++)
-            {
-                if (Base.Contains(i))
-                {
-                    rows.Add(A[i]);
-                }
-            }
-            return [.. rows];
-        }
-        public static string Print(Fraction[] A)
-        {
-            if (A is null || A.Length == 0)
-                return "{ }";
-            return "{ " + string.Join(", ", A.Select(x => x.ToString())) + " }";
-        }
-        public static string Print(IEnumerable<int> A)
-        {
-            if (A is null || !A.Any())
-                return "{ }";
-            return "{ " + string.Join(", ", A.Select(x => (x + 1).ToString())) + " }";
-        }
-        public static Fraction[] Sum(Fraction[] a, Fraction[] b)
-        {
-            ArgumentNullException.ThrowIfNull(a);
-            ArgumentNullException.ThrowIfNull(b);
-            if (a.Length != b.Length)
-            {
-                throw new ArgumentException($"Length of vectors must be equal ({a.Length} != {b.Length})");
-            }
-            return Enumerable.Range(0, a.Length).Select(i => a[i] + b[i]).ToArray();
-        }
-        public static Fraction[] Sub(Fraction[] a, Fraction[] b)
-        {
-            ArgumentNullException.ThrowIfNull(a);
-            ArgumentNullException.ThrowIfNull(b);
-            if (a.Length != b.Length)
-            {
-                throw new ArgumentException($"Length of vectors must be equal ({a.Length} != {b.Length})");
-            }
-            return Enumerable.Range(0, a.Length).Select(i => a[i] - b[i]).ToArray();
-        }
-        public static Fraction[] Mult(Fraction[] a, Fraction[] b)
-        {
-            ArgumentNullException.ThrowIfNull(a);
-            ArgumentNullException.ThrowIfNull(b);
-            if (a.Length != b.Length)
-            {
-                throw new ArgumentException($"Length of vectors must be equal ({a.Length} != {b.Length})");
-            }
-            return Enumerable.Range(0, a.Length).Select(i => a[i] * b[i]).ToArray();
-        }
-        public static Fraction[] Mult(Fraction a, Fraction[] b)
-        {
-            ArgumentNullException.ThrowIfNull(a);
-            ArgumentNullException.ThrowIfNull(b);
-            return Enumerable.Range(0, b.Length).Select(i => a * b[i]).ToArray();
-        }
-        public static Fraction[] Div(Fraction[] a, Fraction[] b)
-        {
-            ArgumentNullException.ThrowIfNull(a);
-            ArgumentNullException.ThrowIfNull(b);
-            if (a.Length != b.Length)
-            {
-                throw new ArgumentException($"Length of vectors must be equal ({a.Length} != {b.Length})");
-            }
-            return Enumerable.Range(0, a.Length).Select(i => a[i] / b[i]).ToArray();
         }
     }
 }

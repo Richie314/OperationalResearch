@@ -11,7 +11,7 @@ namespace RicercaOperativa.Models
     {
         public Task<bool> SolveAsync(StreamWriter? logger);
         public void SetMainMatrix(Fraction[,] m);
-        public void SetFirstVector(Fraction[] v);
-        public void SetSecondVector(Fraction[] v);
+        public void SetFirstVector(Vector v);
+        public void SetSecondVector(Vector v);
     }
 }

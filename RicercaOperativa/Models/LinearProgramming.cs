@@ -7,33 +7,27 @@ using System.Threading.Tasks;
 
 namespace RicercaOperativa.Models
 {
-    internal class LinearProgramming : IProgrammingInterface
+    internal class LinearProgramming(int[]? startBase = null) : IProgrammingInterface
     {
-        private Fraction[,] A;
-        private Fraction[] b;
-        private Fraction[] c;
-        private readonly int[]? startBase;
+        private Fraction[,] A = new Fraction[0, 0];
+        private Vector b = Array.Empty<Fraction>();
+        private Vector c = Array.Empty<Fraction>();
+        private readonly int[]? startBase = startBase;
         public async Task<bool> SolveAsync(StreamWriter? outStream = null)
         {
-            Simplex s = new Simplex(A, b, c);
+            Simplex s = new(A, b, c);
             return await s.SolvePrimalFlow(startBase, outStream);
         }
-        public LinearProgramming(int[]? startBase = null)
-        {
-            this.startBase = startBase;
-            A = new Fraction[0, 0];
-            b = new Fraction[0];
-            c = new Fraction[0];
-        }
+
         public void SetMainMatrix(Fraction[,] matrix)
         {
             A = matrix;
         }
-        public void SetFirstVector(Fraction[] v)
+        public void SetFirstVector(Vector v)
         {
             b = v;
         }
-        public void SetSecondVector(Fraction[] v)
+        public void SetSecondVector(Vector v)
         {
             c = v;
         }

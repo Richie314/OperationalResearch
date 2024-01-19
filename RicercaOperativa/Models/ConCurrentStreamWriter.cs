@@ -10,9 +10,9 @@ namespace RicercaOperativa.Models
 {
     public class ConcurrentStreamWriter : StreamWriter
     {
-        private ConcurrentQueue<string> _stringQueue = new ConcurrentQueue<string>();
+        private readonly ConcurrentQueue<string> _stringQueue = new();
         private bool _disposing;
-        private RichTextBox _textBox;
+        private readonly RichTextBox _textBox;
 
 
         public ConcurrentStreamWriter(Stream stream, RichTextBox textBox)
@@ -59,11 +59,11 @@ namespace RicercaOperativa.Models
             {
                 while (!_disposing)
                 {
-                    if (_stringQueue.Count == 0 || _textBox is null)
+                    if (_stringQueue.IsEmpty || _textBox is null)
                     {
                         continue;
                     }
-                    string value = string.Empty;
+                    string? value = string.Empty;
                     if (!_stringQueue.TryDequeue(out value))
                     {
                         continue;

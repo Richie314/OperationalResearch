@@ -11,7 +11,7 @@ using System.Windows.Input.Manipulations;
 
 namespace RicercaOperativa.Models
 {
-    internal class Matrix
+    public class Matrix
     {
         private readonly Fraction[,] m;
         public Matrix()
@@ -125,12 +125,12 @@ namespace RicercaOperativa.Models
         {
             return new Matrix(T.m.GetColumns(indexes)).T;
         }
-        public Fraction[] this[int rowIndex]
+        public Vector this[int rowIndex]
         {
             get => m.GetRow(rowIndex);
-            set => m.SetRow(rowIndex, value);
+            set => m.SetRow(rowIndex, value.Get);
         }
-        public Fraction[] Col(int colIndex)
+        public Vector Col(int colIndex)
         {
             return m.GetColumn(colIndex);
         }
@@ -155,16 +155,16 @@ namespace RicercaOperativa.Models
             {
                 for (int j = 0; j < b.Cols; j++)
                 {
-                    m2[i, j] = Scalar(a[i], b.Col(j)); // i-th row of a * j-th col of b
+                    m2[i, j] = a[i] * b.Col(j); // i-th row of a * j-th col of b
                 }
             }
             return new Matrix(m2);
         }
-        public static Matrix operator *(Fraction a, Matrix b)
+        public static Matrix operator * (Fraction a, Matrix b)
         {
             return new Matrix(b.m.Convert(x => a * x));
         }
-        public static Matrix operator *(Matrix a, Fraction b)
+        public static Matrix operator * (Matrix a, Fraction b)
         {
             return new Matrix(a.m.Convert(x => b * x));
         }
@@ -174,54 +174,21 @@ namespace RicercaOperativa.Models
         /// <param name="a">matrix</param>
         /// <param name="b">column vector</param>
         /// <returns></returns>
-        public static Fraction[] operator *(Matrix a, Fraction[] b)
+        public static Vector operator *(Matrix a, Vector b)
         {
-            if (a.Cols != b.Length)
+            if (a.Cols != b.Size)
             {
-                throw new ArgumentException($"Columns of a must be equal to length of b ({a.Cols} != {b.Length})");
+                throw new ArgumentException($"Columns of a must be equal to length of b ({a.Cols} != {b.Size})");
             }
 
-            Fraction[] c = new Fraction[a.Rows];
+            Vector c = new Fraction[a.Rows];
             for (int i = 0; i < a.Rows; i++)
             {
-                c[i] = Scalar(a[i], b);
+                c[i] = a[i] * b;
             }
             return c;
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="a">row vector</param>
-        /// <param name="b">matrix</param>
-        /// <returns></returns>
-        public static Fraction[] operator *(Fraction[] a, Matrix b)
-        {
-            if (a.Length != b.Rows)
-            {
-                throw new ArgumentException($"Length of a must be equal to rows of b ({a.Length} != {b.Rows})");
-            }
-
-            Fraction[] c = new Fraction[b.Cols];
-            for (int i = 0; i < b.Cols; i++)
-            {
-                c[i] = Scalar(a, b.Col(i));
-            }
-            return c;
-        }
-        public static Fraction Scalar(Fraction[] a, Fraction[] b)
-        {
-            if (a.Length != b.Length)
-            {
-                throw new ArgumentException($"Lengths of the vector must be equal ({a.Length} != {b.Length})");
-            }
-
-            Fraction sum = 0;
-            for (int i = 0; i < a.Length; i++)
-            {
-                sum += a[i] * b[i];
-            }
-            return sum;
-        }
+        
         public override string ToString()
         {
             if (m.GetNumberOfElements() == 0)
@@ -240,7 +207,7 @@ namespace RicercaOperativa.Models
                 maxLength = int.Max(maxLength, s.Length);
                 return s;
             });
-            List<string> lines = new List<string>();
+            List<string> lines = [];
             for (int i = 0; i < Rows; i++)
             {
                 string line = string.Join(' ', 
@@ -259,16 +226,9 @@ namespace RicercaOperativa.Models
                     lines.Add($"\t| {line} |");
                 }
             }
-            return Environment.NewLine + string.Join(Environment.NewLine, lines.ToArray());
+            return Environment.NewLine + string.Join(Environment.NewLine, [.. lines]);
         }
-        public Fraction[][] GetRows()
-        {
-            return RowsIndeces.Select(i => m.GetRow(i)).ToArray();
-        }
-        public Fraction[][] GetCols()
-        {
-            return ColsIndeces.Select(i => m.GetColumn(i)).ToArray();
-        }
+        
         public IEnumerable<int> RowsIndeces { get => Enumerable.Range(0, Rows); }
         public IEnumerable<int> ColsIndeces { get => Enumerable.Range(0, Cols); }
         public static Matrix Identity(int rows)
@@ -310,36 +270,17 @@ namespace RicercaOperativa.Models
         {
             return a + ((-1) * b);
         }
-        public static Matrix operator | (Matrix a, Fraction[] b)
+        public static Matrix operator | (Matrix a, Vector b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);
-            if (a.Rows != b.Length)
+            if (a.Rows != b.Size)
             {
-                throw new ArgumentException($"Matrixes and vector have incompatible sizes ({a.Rows} != {b.Length})");
+                throw new ArgumentException($"Matrixes and vector have incompatible sizes ({a.Rows} != {b.Size})");
             }
-            Matrix c = a;
-            c.m.InsertColumn();
-            c.m.SetColumn(c.Cols - 1, b);
-            return c;
+            return new(a.m.InsertColumn(b.Get));
         }
-        public static Matrix operator |(Fraction[] a, Matrix b)
-        {
-            ArgumentNullException.ThrowIfNull(a);
-            ArgumentNullException.ThrowIfNull(b);
-            if (a.Length != b.Rows)
-            {
-                throw new ArgumentException($"Matrixes and vector have incompatible sizes ({a.Length} != {b.Rows})");
-            }
-            Matrix c = b | a;
-            for (int i = c.Cols; i > 1; i--)
-            {
-                // Shift all columns to the right
-                c.m.SetColumn(i, c.Col(i - 1));
-            }
-            c.m.SetColumn(0, a);
-            return c;
-        }
+        
         public Fraction[,] M { get => m; } 
     }
 }

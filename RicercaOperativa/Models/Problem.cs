@@ -9,11 +9,11 @@ namespace RicercaOperativa.Models
 {
     class Problem
     {
-        private Fraction[,] matrix;
-        private Fraction[] vecB;
-        private Fraction[] vecC;
-        public IProgrammingInterface Solver;
-        public Problem(Fraction[,] matrix, Fraction[] vecB, Fraction[] vecC, IProgrammingInterface solver)
+        private readonly Fraction[,] matrix;
+        private readonly Vector vecB;
+        private readonly Vector vecC;
+        public readonly IProgrammingInterface Solver;
+        public Problem(Fraction[,] matrix, Vector vecB, Vector vecC, IProgrammingInterface solver)
         {
             this.matrix = matrix;
             this.vecB = vecB;

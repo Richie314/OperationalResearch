@@ -7,19 +7,17 @@ namespace RicercaOperativa.Models
 {
     internal class ProjectedGradient
     {
-        private Matrix A;
-        private Fraction[] b;
-        private dynamic function;
-        private dynamic gradFunction;
-        private Fraction[] Grad(Fraction[] x)
+        private readonly Matrix A;
+        private readonly Vector B;
+        private readonly dynamic function;
+        private readonly dynamic gradFunction;
+        private Vector Grad(Vector x)
         {
-            var outPut = (IronPython.Runtime.PythonList) gradFunction(
-                x.Select(xi => xi.ToDouble()).ToList()
-                );
-            if (outPut.Count != x.Length)
+            var outPut = (IronPython.Runtime.PythonList) gradFunction( x.ToDouble().ToList()  );
+            if (outPut.Count != x.Size)
             {
                 throw new Exception(
-                    $"Gradient function returned {outPut.Count} values but {x.Length} were expected");
+                    $"Gradient function returned {outPut.Count} values but {x.Size} were expected");
             }
             foreach (var valueToCheck in outPut)
             {
@@ -31,9 +29,9 @@ namespace RicercaOperativa.Models
             }
             return outPut.Select(r => Fraction.FromDouble(value: (double)(r ?? 0))).ToArray();
         }
-        private Fraction Function(Fraction[] x)
+        private Fraction Function(Vector x)
         {
-            var outPut = (double)function(  x.Select(xi => xi.ToDouble()).ToList() );
+            var outPut = (double)function( x.ToDouble().ToList() );
             return Fraction.FromDouble(outPut);
         }
         /// <summary>
@@ -48,49 +46,28 @@ namespace RicercaOperativa.Models
         /// <returns>The first t that takes the function to its min value</returns>
         private Fraction FindArgMinTofFunction(
             Fraction t_start, Fraction t_end, int steps, 
-            Fraction[] x, Fraction[] d)
+            Vector x, Vector d)
         {
-            if (t_start == t_end)
-            {
-                return t_start;
-            }
-            Fraction MinY = Function(
-                Simplex.Sum(x, Simplex.Mult(t_start, d)));
-            Fraction MinT = t_start;
-
-            Fraction dt = (t_end - t_start) / steps;
-            Fraction currT = t_start + dt;
-
-            while (currT <= t_end)
-            {
-                Fraction CurrY = Function(
-                    Simplex.Sum(x, Simplex.Mult(currT, d)));
-                if (CurrY < MinY)
-                {
-                    MinY = CurrY;
-                    MinT = currT;
-                }
-
-                currT += dt;
-            }
-            return MinT;
+            return Models.Function.FindArgMin(
+                t => Function(x + (d * t)), // Phi(t)
+                t_start, t_end, steps);
         }
-        public ProjectedGradient(Fraction[,] A, Fraction[] b, string python)
+        public ProjectedGradient(Fraction[,] A, Vector b, string python)
         {
             ArgumentNullException.ThrowIfNull(A);
             ArgumentNullException.ThrowIfNull(b);
             ArgumentNullException.ThrowIfNullOrWhiteSpace(python);
-            if (A.Rows() != b.Length)
+            if (A.Rows() != b.Size)
             {
                 throw new ArgumentException("A must have row number equal to the length of b");
             }
             this.A = new Matrix(A);
-            this.b = b;
-            var list = getFunctions(python);
+            this.B = b;
+            var list = GetFunctions(python);
             this.function = list[0];
             this.gradFunction = list[1];
         }
-        private static List<dynamic> getFunctions(string functionString)
+        private static List<dynamic> GetFunctions(string functionString)
         {
             var eng = IronPython.Hosting.Python.CreateEngine();
             var scope = eng.CreateScope();
@@ -111,28 +88,16 @@ namespace RicercaOperativa.Models
                 wholeScript = wholeScript.Trim().Replace("\t", "    ");
                 eng.Execute(wholeScript, scope);
 
-                dynamic testFunction = scope.GetVariable("f"); // Test if f exists
-                if (testFunction is null)
-                {
-                    throw new MissingMemberException("Invalid f definition");
-                }
-                dynamic testGrad = scope.GetVariable("gradF"); // Test if gradF exists
-                if (testGrad is null)
-                {
-                    throw new MissingMemberException("Invalid gradF definition");
-                }
+                dynamic testFunction = scope.GetVariable("f") ?? 
+                    throw new MissingMemberException("Invalid f definition"); // Test if f exists
+                dynamic testGrad = scope.GetVariable("gradF") ?? 
+                    throw new MissingMemberException("Invalid gradF definition"); // Test if gradF exists
 
-                dynamic f = scope.GetVariable("FunctionWrapper");
-                if (f is null)
-                {
+                dynamic f = scope.GetVariable("FunctionWrapper") ?? 
                     throw new MissingMemberException("Could not retrieve FunctionWrapper body");
-                }
-                dynamic g = scope.GetVariable("gradFunctionWrapper");
-                if (g is null)
-                {
+                dynamic g = scope.GetVariable("gradFunctionWrapper") ?? 
                     throw new MissingMemberException("Could not retrieve gradFunctionWrapper body");
-                }
-                return new List<dynamic>(){ f, g };
+                return [f, g];
             } catch (MissingMemberException)
             {
                 throw;
@@ -142,14 +107,15 @@ namespace RicercaOperativa.Models
             }
         }
         
-        public async Task<Fraction[]?> Solve(Fraction[]? startX = null, StreamWriter? Writer = null, int? maxK = null)
+        public async Task<Vector?> Solve(Vector? startX = null, StreamWriter? Writer = null, int? maxK = null)
         {
-            Writer = Writer ?? StreamWriter.Null;
+            Writer ??= StreamWriter.Null;
             Matrix a = A;
+            Vector b = B;
             int k = 0;
         //step1:
 
-            Fraction[] xk = startX ?? getRandomStartPoint(A, b);
+            Vector xk = startX ?? GetRandomStartPoint(A, B);
         step2:
             await Writer.WriteLineAsync($"Iteration {k}:");
             if (maxK.HasValue && maxK.Value < k)
@@ -159,10 +125,10 @@ namespace RicercaOperativa.Models
                 return null;
             }
             await Writer.WriteLineAsync($"A = {a}");
-            await Writer.WriteLineAsync($"b = {Simplex.Print(b)}");
-            await Writer.WriteLineAsync($"x{k} = {Simplex.Print(xk)}");
+            await Writer.WriteLineAsync($"b = {b}");
+            await Writer.WriteLineAsync($"x{k} = {xk}");
 
-            if (!Simplex.LessOrEqual(a * xk, b)) // Check if A * xk > b. In that case stop (an error has appened)
+            if ((a * xk) > b) // Check if A * xk > b. In that case stop (an error has appened)
             {
                 await Writer.WriteLineAsync();
                 await Writer.WriteLineAsync($"Vector x{k} is out of bound!");
@@ -171,36 +137,37 @@ namespace RicercaOperativa.Models
             }
 
         step3:
-            IEnumerable<int> J = a.RowsIndeces.Where(i => Matrix.Scalar(a[i], xk) == b[i]);
-            await Writer.WriteLineAsync($"J = {Simplex.Print(J)}");
+            IEnumerable<int> J = a.RowsIndeces.Where(i => a[i] * xk == b[i]);
+            await Writer.WriteLineAsync($"J = {Models.Function.Print(J)}");
             Matrix M = a[J];
             await Writer.WriteLineAsync($"M = {M}");
 
             //step4:
-            Matrix H = await getHMatrix(M, A.Cols, null);
+            Matrix H = await GetHMatrix(M, A.Cols, null);
             await Writer.WriteLineAsync($"H = {H}");
 
-            Fraction[] gradXk = Grad(xk);
-            await Writer.WriteLineAsync($"gradF(x{k}) = {Simplex.Print(gradXk)}");
+            Vector gradXk = Grad(xk);
+            await Writer.WriteLineAsync($"gradF(x{k}) = {gradXk}");
 
-            Fraction[] dk = ((-1) * H) * gradXk;
-            await Writer.WriteLineAsync($"d{k} = {Simplex.Print(dk)}");
-            if (dk.All(dki => dki.IsZero)) // dk == 0
+            Vector dk = ((-1) * H) * gradXk;
+            await Writer.WriteLineAsync($"d{k} = {dk}");
+            if (dk.IsZero) // dk == 0
             {
                 await Writer.WriteLineAsync($"d{k} is zero!");
                 goto step5;
             }
 
-            Fraction tMax = findTMax(a, xk, dk, b);
-            await Writer.WriteLineAsync($"t{k}^ = {tMax}");
+            Fraction tMax = FindTMax(a, xk, dk, b);
+            await Writer.WriteLineAsync($"t{k}^ = {Models.Function.Print(tMax)}");
 
             const int PointsToPlot = 5000;
-            await Writer.WriteLineAsync($"Finding min value of f(x{k} + t d{k}) inside [0, {tMax}]. {PointsToPlot} points considered");
+            await Writer.WriteLineAsync(
+                $"Finding min value of f(x{k} + t d{k}) inside [0, {Models.Function.Print(tMax)}]. {PointsToPlot} points considered");
             
             Fraction tk = FindArgMinTofFunction(0, tMax, PointsToPlot, xk, dk);
-            await Writer.WriteLineAsync($"t{k} = {tk}");
+            await Writer.WriteLineAsync($"t{k} = {Models.Function.Print(tk)}");
 
-            xk = Simplex.Sum(xk, Simplex.Mult(tk, dk));
+            xk += tk * dk; // implict operator overloading
             k++;
             await Writer.WriteLineAsync($"Going to iteration {k}...");
             await Writer.WriteLineAsync();
@@ -215,13 +182,16 @@ namespace RicercaOperativa.Models
                 await Writer.WriteLineAsync($"Exit with unknown (unexpected) result.");
                 return xk;
             }
-            Fraction[] lambda = (-1) * (M * M.T).Inv * M * gradXk;
-            await Writer.WriteLineAsync($"lambda = {Simplex.Print(lambda)}");
-            if (lambda.All(l => !l.IsNegative)) // lambda >= 0
+            Vector lambda = (-1) * (((M * M.T).Inv * M) * gradXk);
+            await Writer.WriteLineAsync($"lambda = {lambda}");
+            if (lambda.IsPositiveOrZero) // lambda >= 0
             {
                 await Writer.WriteLineAsync($"lambda >= 0.");
                 await Writer.WriteLineAsync($"Exit with success.");
                 return xk;
+            } else
+            {
+                await Writer.WriteLineAsync($"lambda has at least one component below zero.");
             }
             // J has at least 1 element here
             // J == {} => dk == -gradF(xk)
@@ -230,7 +200,7 @@ namespace RicercaOperativa.Models
             // argmin == 0 -> min is the first element of J
             // argmin == 1 -> min is the second element of J
             // and so on
-            int argmin = lambda.ArgMin(); 
+            int argmin = lambda.ArgMin; 
             await Writer.WriteLineAsync($"Argmin{{lambda}} = {argmin + 1}");
             int jToRemove = J.ElementAt(argmin);
             await Writer.WriteLineAsync($"Removing equation {jToRemove + 1} from A|b.");
@@ -242,18 +212,18 @@ namespace RicercaOperativa.Models
             goto step3;
         }
         
-        public async Task<bool> SolveFlow(StreamWriter? Writer = null, Fraction[]? startingPoint = null)
+        public async Task<bool> SolveFlow(StreamWriter? Writer = null, Vector? startingPoint = null)
         {
             try
             {
                 var result = await Solve(Writer: Writer, maxK: 100, startX: startingPoint);
-                if (result != null)
+                if (result is not null)
                 {
                     if (Writer != null)
                     {
                         await Writer.WriteLineAsync();
                         await Writer.WriteLineAsync();
-                        await Writer.WriteLineAsync($"Best value = {Simplex.Print(result)}");
+                        await Writer.WriteLineAsync($"Best value = {result}");
                     }
                     return true;
                 }
@@ -272,7 +242,7 @@ namespace RicercaOperativa.Models
                 return false;
             }
         }
-        public static async Task<Matrix> getHMatrix(Matrix M, int xLength, StreamWriter? Writer = null)
+        public static async Task<Matrix> GetHMatrix(Matrix M, int xLength, StreamWriter? Writer = null)
         {
             if (M.Rows == 0)
             {
@@ -314,29 +284,29 @@ namespace RicercaOperativa.Models
         /// <param name="d">The vector d</param>
         /// <param name="b">The vector b</param>
         /// <returns>the highest possible value of t according to all equations</returns>
-        public static Fraction findTMax(Matrix a, Fraction[] x, Fraction[] d, Fraction[] b)
+        public static Fraction FindTMax(Matrix a, Vector x, Vector d, Vector b)
         {
-            Fraction[] ax = a * x, ad = a * d;
-            Fraction[] b_ax = Simplex.Sub(b, ax);
+            Vector ax = a * x, ad = a * d;
+            Vector b_ax = b - ax;
 
             Fraction? tMin = null, tMax = null;
-            int[] PositiveIndexes = ad.Find(adi => adi.IsPositive);
+            int[] PositiveIndexes = ad.PositiveIndexes;
             if (PositiveIndexes.Length > 0)
             {
-                Fraction[] b_ax_over_ad = Simplex.Div(
-                    Simplex.ExtractRows(b_ax, PositiveIndexes), 
-                    Simplex.ExtractRows(ad, PositiveIndexes));
+                Vector b_ax_over_ad = Vector.Div(
+                    b_ax[PositiveIndexes],
+                    ad[PositiveIndexes]);
                 // Return the max{t} : t < (b - ax) / ad => return min { (b - ax) / ad }
-                tMin = b_ax_over_ad.Min();
+                tMin = b_ax_over_ad.Min;
             }
-            int[] NegativeIndexes = ad.Find(adi => adi.IsNegative);
+            int[] NegativeIndexes = ad.NegativeIndexes;
             if (NegativeIndexes.Length > 0)
             {
-                Fraction[] b_ax_over_ad = Simplex.Div(
-                    Simplex.ExtractRows(b_ax, NegativeIndexes),
-                    Simplex.ExtractRows(ad, NegativeIndexes));
+                Vector b_ax_over_ad = Vector.Div(
+                    b_ax[NegativeIndexes],
+                    ad[NegativeIndexes]);
                 // Return the max{t} : t > (b - ax) / ad => return max { (b - ax) / ad } ad < 0
-                tMax = b_ax_over_ad.Max();
+                tMax = b_ax_over_ad.Max;
             }
             // tMax < t < tMin
             if (!tMin.HasValue)
@@ -357,20 +327,20 @@ namespace RicercaOperativa.Models
             }
             return tMin.Value;
         }
-        public static Fraction[] getRandomStartPoint(Matrix A, Fraction[] b)
+        public static Vector GetRandomStartPoint(Matrix A, Vector b)
         {
-            if (A.Rows != b.Length)
+            if (A.Rows != b.Size)
             {
-                throw new ArgumentException($"Columns of a must be equal to length of b ({A.Rows} != {b.Length})");
+                throw new ArgumentException($"Columns of a must be equal to size of b ({A.Rows} != {b.Size})");
             }
 
             // if point 0 is acceptable we return it
-            if (b.All(bi => !bi.IsNegative)) // b >= 0
+            if (b.IsPositiveOrZero) // b >= 0
             {
                 return Enumerable.Repeat(Fraction.Zero, A.Cols).ToArray();
             }
 
-            Random rnd = new Random();
+            Random rnd = new();
             int guesses = 0;
             while (guesses < 3000)
             {
@@ -380,7 +350,7 @@ namespace RicercaOperativa.Models
                 {
                     x[i] = new Fraction(rnd.Next(), rnd.Next() + 1);
                 }
-                if (Simplex.LessOrEqual(A * x, b))
+                if (A * x <= b)
                 {
                     return x;
                 }
