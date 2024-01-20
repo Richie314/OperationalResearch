@@ -60,6 +60,16 @@ namespace RicercaOperativa.Models
                 t => Function(x + (d * t)), // Phi(t)
                 t_start, t_end, steps);
         }
+        /// <summary>
+        /// Finds min or max of phi(t) = f(x + t * d)
+        /// </summary>
+        /// <param name="FindMin">Find min or max</param>
+        /// <param name="t_start">The starting instant to check</param>
+        /// <param name="t_end">The end instant to check</param>
+        /// <param name="steps">How many steps to do between t_end and t_start</param>
+        /// <param name="x">The x vector</param>
+        /// <param name="d">The direction vector</param>
+        /// <returns>The t where phi(t) is min or max</returns>
         protected Fraction FindArgOfFunction(
             bool FindMin,
             Fraction t_start, Fraction t_end, int steps,

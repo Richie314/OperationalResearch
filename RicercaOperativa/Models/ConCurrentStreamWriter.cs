@@ -8,14 +8,14 @@ using System.Threading.Tasks;
 
 namespace RicercaOperativa.Models
 {
-    public class ConcurrentStreamWriter : StreamWriter
+    public class ConCurrentStreamWriter : StreamWriter
     {
         private readonly ConcurrentQueue<string> _stringQueue = new();
         private bool _disposing;
         private readonly RichTextBox _textBox;
 
 
-        public ConcurrentStreamWriter(Stream stream, RichTextBox textBox)
+        public ConCurrentStreamWriter(Stream stream, RichTextBox textBox)
             : base(stream)
         {
             _textBox = textBox;
@@ -67,6 +67,10 @@ namespace RicercaOperativa.Models
                     if (!_stringQueue.TryDequeue(out value))
                     {
                         continue;
+                    }
+                    if (_textBox is null || _textBox.IsDisposed)
+                    {
+                        break;
                     }
                     if (_textBox.InvokeRequired)
                     {

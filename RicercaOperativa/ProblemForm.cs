@@ -1,4 +1,5 @@
-﻿using RicercaOperativa.Models;
+﻿using OperationalResearch.Extensions;
+using RicercaOperativa.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -18,13 +19,14 @@ namespace RicercaOperativa
         {
             InitializeComponent();
             MemoryStream stream = new();
-            Writer = new ConcurrentStreamWriter(stream, textBox);
+            Writer = new ConCurrentStreamWriter(stream, textBox);
             this.methodName = methodName ?? string.Empty;
         }
-        public ConcurrentStreamWriter Writer { get; private set; }
+        public ConCurrentStreamWriter Writer { get; private set; }
 
         private void ProblemForm_Load(object sender, EventArgs e)
         {
+            textBox.SetInnerMargins(15, 0, 5, 10);
             if (!string.IsNullOrWhiteSpace(methodName))
             {
                 Text = $"Solving problem with {methodName} method";

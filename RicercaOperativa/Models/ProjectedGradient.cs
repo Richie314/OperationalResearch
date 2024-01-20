@@ -81,13 +81,30 @@ namespace RicercaOperativa.Models
 
             Fraction tMax = FindTMaxMin(a, xk, dk, b, true);
             await Writer.WriteLineAsync($"t{k}^ = {Models.Function.Print(tMax)}");
+            if (tMax.IsNegative)
+            {
+                // We won't move
+                await Writer.WriteLineAsync($"t{k}^ is negative!");
+                await Writer.WriteLineAsync($"Unexpected value. Procedure may be compromised.");
+                await Writer.WriteLineAsync();
+                return null;
+            }
 
             const int PointsToPlot = 5000;
             await Writer.WriteLineAsync(
-                $"Finding min value of f(x{k} + t d{k}) inside [0, {Models.Function.Print(tMax)}]. {PointsToPlot} points considered");
+                $"Finding {(IsMin ? "min" : "max")} value of phi(t) = f(x{k} + t d{k}) " +
+                $"inside [0, {Models.Function.Print(tMax)}]. {PointsToPlot} points considered");
 
             Fraction tk = FindArgOfFunction(IsMin, 0, tMax, PointsToPlot, xk, dk);
             await Writer.WriteLineAsync($"t{k} = {Models.Function.Print(tk)}");
+            if (tk.IsZero)
+            {
+                // We won't move
+                await Writer.WriteLineAsync($"t{k} is zero!");
+                await Writer.WriteLineAsync($"It is impossible to move forward.");
+                await Writer.WriteLineAsync();
+                return null;
+            }
 
             xk += tk * dk; // implict operator overloading
             k++;
