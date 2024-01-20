@@ -1,6 +1,6 @@
-﻿namespace RicercaOperativa
+﻿namespace OperationalResearch
 {
-    partial class ProblemForm
+    partial class IntegerLinearProgramming
     {
         /// <summary>
         /// Required designer variable.
@@ -28,39 +28,20 @@
         /// </summary>
         private void InitializeComponent()
         {
-            textBox = new RichTextBox();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(IntegerLinearProgramming));
             SuspendLayout();
             // 
-            // textBox
-            // 
-            textBox.Dock = DockStyle.Fill;
-            textBox.Font = new Font("Tahoma", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            textBox.Location = new Point(0, 0);
-            textBox.Margin = new Padding(11, 13, 11, 13);
-            textBox.Name = "textBox";
-            textBox.ReadOnly = true;
-            textBox.ShortcutsEnabled = false;
-            textBox.Size = new Size(914, 600);
-            textBox.TabIndex = 0;
-            textBox.Text = "";
-            // 
-            // ProblemForm
+            // IntegerLinearProgramming
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(914, 600);
-            Controls.Add(textBox);
-            Margin = new Padding(3, 4, 3, 4);
-            Name = "ProblemForm";
-            ShowIcon = false;
-            StartPosition = FormStartPosition.WindowsDefaultBounds;
-            Text = "Solving problem";
-            Load += ProblemForm_Load;
+            ClientSize = new Size(800, 450);
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            Name = "IntegerLinearProgramming";
+            Text = "IntegerLinearProgramming";
             ResumeLayout(false);
         }
 
         #endregion
-
-        private RichTextBox textBox;
     }
 }

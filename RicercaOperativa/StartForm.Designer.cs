@@ -46,8 +46,8 @@
             menuStrip1.Items.AddRange(new ToolStripItem[] { problemsStripMenuItem, ToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Padding = new Padding(5, 2, 0, 2);
-            menuStrip1.Size = new Size(800, 24);
+            menuStrip1.Padding = new Padding(6, 3, 0, 3);
+            menuStrip1.Size = new Size(914, 30);
             menuStrip1.TabIndex = 2;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -55,32 +55,32 @@
             // 
             problemsStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { LinearProgrammingMenuItem, IntegerLinearProgrammingMenuItem, NetworksProgrammingMenuItem, NonlinearProgrammingMenuItem });
             problemsStripMenuItem.Name = "problemsStripMenuItem";
-            problemsStripMenuItem.Size = new Size(69, 20);
+            problemsStripMenuItem.Size = new Size(85, 24);
             problemsStripMenuItem.Text = "&Problems";
             // 
             // LinearProgrammingMenuItem
             // 
             LinearProgrammingMenuItem.Name = "LinearProgrammingMenuItem";
-            LinearProgrammingMenuItem.Size = new Size(223, 22);
+            LinearProgrammingMenuItem.Size = new Size(278, 26);
             LinearProgrammingMenuItem.Text = "Linear Programming";
             LinearProgrammingMenuItem.Click += LinearProgrammingMenuItem_Click;
             // 
             // IntegerLinearProgrammingMenuItem
             // 
             IntegerLinearProgrammingMenuItem.Name = "IntegerLinearProgrammingMenuItem";
-            IntegerLinearProgrammingMenuItem.Size = new Size(223, 22);
+            IntegerLinearProgrammingMenuItem.Size = new Size(278, 26);
             IntegerLinearProgrammingMenuItem.Text = "Integer Linear Programming";
             // 
             // NetworksProgrammingMenuItem
             // 
             NetworksProgrammingMenuItem.Name = "NetworksProgrammingMenuItem";
-            NetworksProgrammingMenuItem.Size = new Size(223, 22);
+            NetworksProgrammingMenuItem.Size = new Size(278, 26);
             NetworksProgrammingMenuItem.Text = "Network Programming";
             // 
             // NonlinearProgrammingMenuItem
             // 
             NonlinearProgrammingMenuItem.Name = "NonlinearProgrammingMenuItem";
-            NonlinearProgrammingMenuItem.Size = new Size(223, 22);
+            NonlinearProgrammingMenuItem.Size = new Size(278, 26);
             NonlinearProgrammingMenuItem.Text = "Non Linear Programming";
             NonlinearProgrammingMenuItem.Click += NonlinearProgrammingMenuItem_Click;
             // 
@@ -88,24 +88,25 @@
             // 
             ToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { CreditsToolStripMenuItem });
             ToolStripMenuItem.Name = "ToolStripMenuItem";
-            ToolStripMenuItem.Size = new Size(24, 20);
+            ToolStripMenuItem.Size = new Size(30, 24);
             ToolStripMenuItem.Text = "&?";
             // 
             // CreditsToolStripMenuItem
             // 
             CreditsToolStripMenuItem.Name = "CreditsToolStripMenuItem";
-            CreditsToolStripMenuItem.Size = new Size(111, 22);
+            CreditsToolStripMenuItem.Size = new Size(138, 26);
             CreditsToolStripMenuItem.Text = "&Credits";
             CreditsToolStripMenuItem.Click += CreditsToolStripMenuItem_Click;
             // 
             // StartForm
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(914, 600);
             Controls.Add(menuStrip1);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStrip1;
+            Margin = new Padding(3, 4, 3, 4);
             Name = "StartForm";
             Text = "Operational Research";
             menuStrip1.ResumeLayout(false);
