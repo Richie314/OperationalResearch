@@ -7,6 +7,11 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
+    <Title>Operational Research</Title>
+    <Description>Operational Research solver</Description>
+    <PackageProjectUrl></PackageProjectUrl>
+    <PackageIcon>icon_small.png</PackageIcon>
+    <RepositoryUrl>https://github.com/Richie314/OperationalResearch</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
@@ -49,6 +54,10 @@
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Update="Resources\icon_small.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
 
