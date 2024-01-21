@@ -1,27 +1,26 @@
 ﻿using Fractions;
+using RicercaOperativa.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RicercaOperativa.Models
+namespace OperationalResearch.Models
 {
-    internal class LinearProgramming(int[]? startBase = null) : IProgrammingInterface
+    internal class IntegerLinearProgramming : IProgrammingInterface
     {
         private Fraction[,] A = new Fraction[0, 0];
         private Vector b = Array.Empty<Fraction>();
         private Vector c = Array.Empty<Fraction>();
-        private readonly int[]? startBase = startBase;
+        private readonly int[]? startBase = null;
         public async Task<bool> SolveMaxAsync(IEnumerable<StreamWriter?> loggers)
         {
-            Simplex s = new(A, b, c);
-            return await s.SolvePrimalMaxFlow(startBase, loggers.FirstOrDefault());
+            throw new NotImplementedException();
         }
         public async Task<bool> SolveMinAsync(IEnumerable<StreamWriter?> loggers)
         {
-            Simplex s = new(A, b, c * (-1));
-            return await s.SolvePrimalMaxFlow(startBase, loggers.FirstOrDefault());
+            throw new NotImplementedException();
         }
 
         public void SetMainMatrix(Fraction[,] matrix)

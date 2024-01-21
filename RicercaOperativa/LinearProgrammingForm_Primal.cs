@@ -11,11 +11,11 @@ using System.Windows.Forms;
 
 namespace RicercaOperativa
 {
-    public partial class LinearProgrammingForm : Form
+    public partial class LinearProgrammingForm_Primal : Form
     {
         private int EquationsCount = 3;
         private int VariablesCount = 3;
-        public LinearProgrammingForm()
+        public LinearProgrammingForm_Primal()
         {
             InitializeComponent();
         }
@@ -60,6 +60,7 @@ namespace RicercaOperativa
         {
             try
             {
+                xNonNegativeCheckbox.Checked = true;
                 EquationsCount = (int)equationsCountInput.Value;
                 VariablesCount = (int)variablesCountInput.Value;
                 GenerateGrid();
@@ -94,30 +95,31 @@ namespace RicercaOperativa
                 startSimplexBtn.Enabled = true;
                 return;
             }
-            var dialogForm = new ProblemForm();
-            void closeFormCallback (object? sender, FormClosedEventArgs e)
+            var primalForm = new ProblemForm();
+            void closeFormCallback(object? sender, FormClosedEventArgs e)
             {
                 startSimplexBtn.Enabled = true;
             };
-            dialogForm.FormClosed += new FormClosedEventHandler(closeFormCallback);
-            dialogForm.Show();
+            primalForm.FormClosed += new FormClosedEventHandler(closeFormCallback);
+            primalForm.Show();
             int[]? startBase = GetStartBase();
- 
+
             Problem p = new(
-                solver: new LinearProgramming(startBase),
+                solver: new LinearProgrammingPrimal(startBase, xNonNegativeCheckbox.Checked),
                 sMatrixAndB: mainGridStr,
                 sVecC: MainVectorStr());
 
-            if (await p.SolveMax(new StreamWriter[] { dialogForm.Writer }))
+            if (await p.SolveMax(loggers: new StreamWriter?[] { primalForm.Writer, null }))
             {
                 MessageBox.Show(
-                    "Linear Programming problem solved", 
+                    "Linear Programming problem solved",
                     "Problem solved", MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
-            } else
+            }
+            else
             {
                 MessageBox.Show(
-                    "Linear Programming problem could not be solved", 
+                    "Linear Programming problem could not be solved",
                     "Error", MessageBoxButtons.OKCancel,
                     MessageBoxIcon.Error);
             }
@@ -175,9 +177,12 @@ namespace RicercaOperativa
                 return value.Split(
                     ",", StringSplitOptions.RemoveEmptyEntries)
                     .Select(x => Convert.ToInt32(x.Trim()) - 1).ToArray();
-            } catch {
+            }
+            catch
+            {
                 return null;
             }
         }
+
     }
 }

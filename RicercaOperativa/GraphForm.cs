@@ -19,7 +19,7 @@ namespace RicercaOperativa
             InitializeComponent();
             graphViewer = new Microsoft.Msagl.GraphViewerGdi.GViewer();
             //create a graph object 
-            Microsoft.Msagl.Drawing.Graph graph = new Microsoft.Msagl.Drawing.Graph("graph");
+            Microsoft.Msagl.Drawing.Graph graph = new("graph");
             //create the graph content 
             graph.AddEdge("A", "B");
             graph.AddEdge("B", "C");

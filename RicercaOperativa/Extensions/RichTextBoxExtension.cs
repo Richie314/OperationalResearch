@@ -28,7 +28,7 @@ namespace OperationalResearch.Extensions
 
         // Windows RECT struct
         [StructLayout(LayoutKind.Sequential)]
-        private struct RECT
+        private readonly struct RECT
         {
             public readonly int Left;
             public readonly int Top;
@@ -60,13 +60,13 @@ namespace OperationalResearch.Extensions
         private static void SetFormattingRect(this TextBoxBase textbox, Rectangle rect)
         {
             var rc = new RECT(rect);
-            SendMessageRefRect(textbox.Handle, EmSetrect, 0, ref rc);
+            _ = SendMessageRefRect(textbox.Handle, EmSetrect, 0, ref rc);
         }
 
         private static Rectangle GetFormattingRect(this TextBoxBase textbox)
         {
             var rect = new Rectangle();
-            SendMessage(textbox.Handle, EmGetrect, 0, ref rect);
+            _ = SendMessage(textbox.Handle, EmGetrect, 0, ref rect);
             return rect;
         }
     }
