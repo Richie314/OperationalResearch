@@ -1,4 +1,4 @@
-﻿using RicercaOperativa.Models;
+﻿using OperationalResearch.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

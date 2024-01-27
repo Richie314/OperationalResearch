@@ -9,7 +9,7 @@ using Accord.Math;
 using System.Drawing.Drawing2D;
 using System.Windows.Input.Manipulations;
 
-namespace RicercaOperativa.Models
+namespace OperationalResearch.Models
 {
     public sealed class Matrix
     {

@@ -1,4 +1,6 @@
+using OperationalResearch.Models;
 using System.Windows.Controls;
+using OperationalResearch;
 
 namespace RicercaOperativa
 {
@@ -36,6 +38,12 @@ namespace RicercaOperativa
         private void dualFormToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var NewForm = new LinearProgrammingForm_Dual();
+            NewForm.Show();
+        }
+
+        private void assignmentOfMinCostToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var NewForm = new MinCostAssignForm();
             NewForm.Show();
         }
     }

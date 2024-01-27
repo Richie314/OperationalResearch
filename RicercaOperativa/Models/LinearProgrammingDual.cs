@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RicercaOperativa.Models
+namespace OperationalResearch.Models
 {
     internal class LinearProgrammingDual(int[]? startBase = null, bool yPos = true) : IProgrammingInterface
     {

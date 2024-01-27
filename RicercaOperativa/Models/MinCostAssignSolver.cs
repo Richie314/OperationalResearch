@@ -7,32 +7,33 @@ using System.Threading.Tasks;
 
 namespace OperationalResearch.Models
 {
-    internal class IntegerLinearProgramming : IProgrammingInterface
+
+    internal class MinCostAssignSolver(bool isCooperative = false) : IProgrammingInterface
     {
-        private Fraction[,] A = new Fraction[0, 0];
-        private Vector b = Array.Empty<Fraction>();
-        private Vector c = Array.Empty<Fraction>();
-        private readonly int[]? startBase = null;
+        private Fraction[,] c = new Fraction[0, 0];
+        private readonly bool isCooperative = isCooperative;
+
         public async Task<bool> SolveMaxAsync(IEnumerable<StreamWriter?> loggers)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("Only min problems can be solved!");
         }
         public async Task<bool> SolveMinAsync(IEnumerable<StreamWriter?> loggers)
         {
-            throw new NotImplementedException();
+            MinCostAssign Solver = new(c);
+            return isCooperative ?
+                await Solver.SolveCooperativeFlow(loggers.FirstOrDefault()) :
+                await Solver.SolveNonCooperativeFlow(loggers.FirstOrDefault());
         }
 
         public void SetMainMatrix(Fraction[,] matrix)
         {
-            A = matrix;
+            c = matrix;
         }
         public void SetFirstVector(Vector v)
         {
-            b = v;
         }
         public void SetSecondVector(Vector v)
         {
-            c = v;
         }
     }
 }

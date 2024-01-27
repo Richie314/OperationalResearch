@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RicercaOperativa.Models
+namespace OperationalResearch.Models
 {
     internal class LinearProgrammingPrimal(int[]? startBase = null, bool xNonNegative = true) : IProgrammingInterface
     {

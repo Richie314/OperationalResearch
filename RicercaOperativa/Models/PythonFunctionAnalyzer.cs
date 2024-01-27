@@ -3,7 +3,7 @@ using Fractions;
 using System.Diagnostics;
 using System.Reflection.Metadata.Ecma335;
 
-namespace RicercaOperativa.Models
+namespace OperationalResearch.Models
 {
     public abstract class PythonFunctionAnalyzer
     {

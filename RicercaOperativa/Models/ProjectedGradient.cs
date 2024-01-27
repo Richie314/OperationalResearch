@@ -3,12 +3,10 @@ using Fractions;
 using System.Diagnostics;
 using System.Reflection.Metadata.Ecma335;
 
-namespace RicercaOperativa.Models
+namespace OperationalResearch.Models
 {
-    internal sealed class ProjectedGradient : PythonFunctionAnalyzer
+    internal sealed class ProjectedGradient(Fraction[,] A, Vector b, string python) : PythonFunctionAnalyzer(A, b, python)
     {
-        public ProjectedGradient(Fraction[,] A, Vector b, string python) : base(A, b, python) { }
-
         public override async Task<Vector?> SolveMin(
             Vector? startX = null, StreamWriter? Writer = null, int? maxK = null)
         {

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Accord.Math;
 using Fractions;
 
-namespace RicercaOperativa.Models
+namespace OperationalResearch.Models
 {
     /// <summary>
     /// Column vector
@@ -302,6 +302,10 @@ namespace RicercaOperativa.Models
         public int[] ZeroIndexes
         {
             get => v.Find(x => x.IsZero);
+        }
+        public int[] NonZeroIndeces
+        {
+            get => v.Find(x => !x.IsZero);
         }
         public int[] NegativeIndexes
         {

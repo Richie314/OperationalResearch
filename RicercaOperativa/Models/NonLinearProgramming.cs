@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using IronPython;
 
-namespace RicercaOperativa.Models
+namespace OperationalResearch.Models
 {
     internal class NonLinearProgramming : IProgrammingInterface
     {

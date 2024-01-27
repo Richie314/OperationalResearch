@@ -1,5 +1,7 @@
 ﻿using Accord.Math;
 using Fractions;
+using Microsoft.Scripting.Utils;
+using OperationalResearch.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,7 +11,7 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RicercaOperativa.Models
+namespace OperationalResearch.Models
 {
     internal class Simplex
     {
@@ -185,6 +187,16 @@ namespace RicercaOperativa.Models
                 {
                     // Optimal value
                     await Writer.WriteLineAsync($"x is optimal.");
+
+                    try
+                    {
+                        await Gomory(Writer, a, x, B);
+                    } catch (Exception ex)
+                    {
+                        await Writer.WriteLineAsync(
+                            "Error in calculating Gpmory: " + ex.Message);
+                    }
+
                     return x;
                 } else {
                     await Writer.WriteLineAsync($"x is not yet optimal.");
@@ -205,7 +217,7 @@ namespace RicercaOperativa.Models
                 }
 
 
-                int k = FindEnteringIndex(a, Wh, b, x, N, out Fraction Theta);
+                int k = FindEnteringIndex(a, Wh, GetB(), x, N, out Fraction Theta);
                 await Writer.WriteLineAsync($"Theta = {Theta}");
                 await Writer.WriteLineAsync($"k = {k + 1}");
                 await Writer.WriteLineAsync();
@@ -246,6 +258,11 @@ namespace RicercaOperativa.Models
             out Fraction Theta)
         {
             int[] PositiveRowsInN = N.Where(i => (A[i] * Wh).IsPositive).ToArray();
+            if (PositiveRowsInN.Length == 0)
+            {
+                throw new Exception(
+                    $"Impossible to find i in N : A[i] * {Wh} > 0");
+            }
             Fraction ThetaCopy = Theta = PositiveRowsInN.Min(
                     i => (b[i] - (A[i] * x)) / (A[i] * Wh));
 
@@ -431,6 +448,24 @@ namespace RicercaOperativa.Models
                 return "Infinity: problem unbounded";
             }
             return $"y^T * b = {Function.Print(dualSolution * b)}";
+        }
+        private static async Task Gomory(
+            StreamWriter Writer,
+            Matrix a, Vector Xrc, int[] BestBase)
+        {
+            IEnumerable<int> N = a.RowsIndeces.Where(i => !BestBase.Contains(i));
+            await Writer.WriteLineAsync($"Calculating Gomory plane with B = {Function.Print(BestBase)}, N = {Function.Print(N)}");
+
+            Matrix aB_Inv = a[BestBase].Inv, a_N = a[N];
+            await Writer.WriteLineAsync($"A^~ = {aB_Inv}");
+
+            Matrix aB_Inv_Frac = new(aB_Inv.M.Apply(a => a.FractionPart()));
+            await Writer.WriteLineAsync($"{{ A~ }} = {aB_Inv_Frac}");
+
+            Vector XrcFrac = Xrc.Get.Select(x => x.FractionPart()).ToArray();
+            await Writer.WriteLineAsync($"{{ A~ }} * x_N >= {{ X_rc }} = {XrcFrac}");
+
+            await Writer.WriteLineAsync();
         }
     }
 }
