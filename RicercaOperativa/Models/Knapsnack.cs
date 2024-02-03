@@ -4,6 +4,7 @@ using Microsoft.Scripting.Runtime;
 using System;
 using System.Collections.Generic;
 using Microsoft.Scripting.Utils;
+using OperationalResearch.Extensions;
 
 namespace OperationalResearch.Models
 {
@@ -230,14 +231,14 @@ namespace OperationalResearch.Models
             var v = Volumes[OrderedIndices];
             await Writer.WriteLineAsync($"Volumes = {v}");
 
-            if (w[0] > TotalVolume)
+            if (w[0] > TotalWeight || v[0] > TotalVolume)
             {
                 // Cannot insert any element
                 return null;
             }
 
             Fraction currW = Fraction.Zero, currV = Fraction.Zero;
-            List<int> x = [];
+            Vector x = Enumerable.Repeat(Fraction.Zero, N).ToArray();
             for (int i = 0; i < N; i++)
             {
                 Fraction DeltaW = TotalWeight - currW, DeltaV = TotalVolume - currV;
@@ -246,20 +247,19 @@ namespace OperationalResearch.Models
                     break;
                 }
                 int maxOfThis = Boolean ? 1 : int.MaxValue;
-                int maxW = w[i].IsZero ? (int)(DeltaW / w[i]) : int.MaxValue;
-                int maxV = v[i].IsZero ? (int)(DeltaV / v[i]) : int.MaxValue;
+                int maxW = !w[i].IsZero ? (int)(DeltaW / w[i]) : int.MaxValue;
+                int maxV = !v[i].IsZero ? (int)(DeltaV / v[i]) : int.MaxValue;
                 int numOfThis = Math.Min(maxOfThis, Math.Min(maxW, maxV));
                 currW += w[i] * numOfThis;
                 currV += v[i] * numOfThis;
-                x.Add(numOfThis);
+                x[i] = numOfThis;
             }
-            if (!x.Any() || x.Contains(int.MaxValue))
+            if (x.IsZero || x.Get.Contains(int.MaxValue))
             {
                 return null;
             }
-            Vector xToReorder = x.Select(xi => new Fraction(xi)).ToArray();
             return Enumerable.Range(0, N)
-                .Select(i => xToReorder[OrderedIndices.ElementAt(i)]).ToArray();
+                .Select(i => x[OrderedIndices.ToArray().IndexOf(i)]).ToArray();
         }
         private async Task<int[]?> LowerBound(bool Boolean)
         {
@@ -300,7 +300,7 @@ namespace OperationalResearch.Models
             Vector Ratio1LB = await LowerBoundBy(OrderCriteria.ByValueWeightRatio, null, Boolean) ?? Vector.Empty;
             await Writer.WriteLineAsync($"- By value / weight: {Ratio1LB} -> {SolutionGain(Ratio1LB)}");
 
-            Vector Ratio2LB = await LowerBoundBy(OrderCriteria.ByValueWeightRatio, null, Boolean) ?? Vector.Empty;
+            Vector Ratio2LB = await LowerBoundBy(OrderCriteria.ByValueVolumeRatio, null, Boolean) ?? Vector.Empty;
             await Writer.WriteLineAsync($"- By value / volume: {Ratio2LB} -> {SolutionGain(Ratio2LB)}");
 
             await Writer.WriteLineAsync("Upper bound (simplex): ");
@@ -309,101 +309,146 @@ namespace OperationalResearch.Models
 
             if (Boolean)
             {
-                // Do Branch and bound
-                return null;
+                await Writer.WriteLineAsync("Solving with branch and bound from left to right:");
+                var boolSol = await BooleanBranchAndBound(Array.Empty<bool>(), Writer);
+                if (boolSol is null)
+                {
+                    await Writer.WriteLineAsync("Branch and bound could not solve the problem");
+                    return null;
+                }
+                return boolSol.Select(q => q ? 1 : 0).ToArray();
             }
 
-            int[] count = new int[N], best = new int[N];
+            int[] count = Enumerable.Repeat(0, N).ToArray(), best = Enumerable.Repeat(0, N).ToArray();
             Fraction bestVal = Fraction.Zero;
             await Writer.WriteLineAsync("Recursive solver starting now...");
-            RecursiveSolver(ref count, ref best, ref bestVal, 0, Fraction.Zero, TotalWeight, TotalVolume);
-            await Writer.WriteLineAsync($"Best solution indices = {Function.Print(best)}");
+            int calls = RecursiveSolver(
+                ref count, ref best, ref bestVal, 
+                0, Fraction.Zero, TotalWeight, TotalVolume);
+            await Writer.WriteLineAsync($"{calls} recursions done.");
+            await Writer.WriteLineAsync($"Best solution = {Function.Print(best, false)}");
             await Writer.WriteLineAsync($"Best solution gain = {Function.Print(bestVal)}");
             return best;
         }
-        private void RecursiveSolver(
+        private int RecursiveSolver(
             ref int[] count, 
             ref int[] best, 
             ref Fraction best_val, 
             int i, 
             Fraction Value, Fraction Weight, Fraction Volume)
         {
+            
             if (i == N)
             {
                 if (Value > best_val)
                 {
                     best_val = Value;
-                    best = count;
+                    best = count.Copy();
                 }
-                return;
+                return 1;
             }
-            int countW = Items[i].Weight.IsZero ? int.MaxValue : (int)(Weight / Items[i].Weight);
-            int countV = Items[i].Volume.IsZero ? int.MaxValue : (int)(Volume / Items[i].Volume);
-            count[i] = Math.Min(countW, countV);
-            while (count[i] >= 0)
+            int countW = Items[i].Weight.IsZero ? 
+                int.MaxValue : (int)(Weight / Items[i].Weight).Floor();
+            int countV = Items[i].Volume.IsZero ? 
+                int.MaxValue : (int)(Volume / Items[i].Volume).Floor();
+            int callsDone = 0;
+            for (count[i] = Math.Min(countW, countV); count[i] >= 0; count[i]--)
             {
-                RecursiveSolver(
+                callsDone += RecursiveSolver(
                 ref count, ref best, ref best_val,
                     i + 1,
                     Value + count[i] * Items[i].Value,
                     Weight - count[i] * Items[i].Weight,
                     Volume - count[i] * Items[i].Volume);
-                count[i]--;
             }
+            return callsDone + 1;
+        }
+        private bool IsAcceptable(bool[] x)
+        {
+            if (x is null || x.Length != N)
+                return false;
+            Vector X = x.Select(xi => xi ? Fraction.One : Fraction.Zero).ToArray();
+            return Weights * X <= TotalWeight && Volumes * X <= TotalVolume;
+        }
+        private bool IsAcceptable(int[] x)
+        {
+            if (x is null || x.Length != N)
+                return false;
+            Vector X = x.Select(xi => new Fraction(xi)).ToArray();
+            return Weights * X <= TotalWeight && Volumes * X <= TotalVolume;
         }
         public async Task<bool[]?> BooleanBranchAndBound(
             bool[] ChosenX,
             StreamWriter? Writer = null)
         {
+            Writer ??= StreamWriter.Null;
+            string pad = string.Join("", Enumerable.Repeat("    ", ChosenX.Length));
             if (ChosenX.Length == N)
             {
-                return ChosenX;
-            }
-            Writer ??= StreamWriter.Null;
-            var X = ChosenX.Select(x => x ? 1 : 0).ToArray();
-            var SubProblem = GetSubProblem(X);
-            
-            var lb = await SubProblem.LowerBound(true);
-            if (lb is null)
-            {
-                await Writer.WriteLineAsync($"Cutting X = {X} ... for missing lower bound");
-                return null;
-            }
-
-            var ub = await SubProblem.UpperBound(null, true);
-            if (ub is null)
-            {
-                await Writer.WriteLineAsync($"Cutting X = {X} ... for missing upper bound");
-                return null;
-            }
-            // now we have bounds
-            if (SubProblem.Gain(ub) <= SubProblem.Gain(lb))
-            {
-                await Writer.WriteLineAsync($"Cutting X = {X} ... for lower bound > upper bound");
-                return null;
-            }
-
-            var Next0 = ChosenX.Append(false).ToArray();
-            var Next0Res = await BooleanBranchAndBound(Next0, Writer);
-
-            var Next1 = ChosenX.Append(true).ToArray();
-            var Next1Res = await BooleanBranchAndBound(Next1, Writer);
-
-            if (Next0 is null)
-            {
-                if (Next1 is null)
+                if (IsAcceptable(ChosenX))
                 {
-                    // Both results are null -> exit
-                    await Writer.WriteLineAsync($"Cutting X = {X} ... for being non solving leaf");
+                    await Writer.WriteLineAsync(
+                        $"{pad}X = {Function.Print(ChosenX.Select(x => x ? 1 : 0), false)} -> {Function.Print(Gain(ChosenX))} is acceptable");
+                    return ChosenX;
+                }
+                return null;
+            }
+            var X = "[ " + string.Join(", ", ChosenX.Select(x => x ? "1" : "0").Concat(Enumerable.Repeat("?", N - ChosenX.Length))) + " ]";
+            
+            try
+            {
+                var SubProblem = GetSubProblem(ChosenX.Select(x => x ? 1 : 0).ToArray());
+
+                var lb = await SubProblem.LowerBound(true);
+                if (lb is null)
+                {
+                    await Writer.WriteLineAsync($"{pad}Cutting X = {X} for missing lower bound");
                     return null;
                 }
-                return Next1;
-            }
-            if (Next1 is null)
+
+                var ub = await SubProblem.UpperBound(null, true);
+                if (ub is null)
+                {
+                    await Writer.WriteLineAsync($"{pad}Cutting X = {X} for missing upper bound");
+                    return null;
+                }
+                // now we have bounds
+                if (SubProblem.Gain(ub) < SubProblem.Gain(lb))
+                {
+                    await Writer.WriteLineAsync(
+                        $"{pad}Cutting X = {X} for lower bound > upper bound. {SubProblem.Gain(lb)} > {SubProblem.Gain(ub)}");
+                    return null;
+                }
+
+                var Next0Res = await BooleanBranchAndBound(ChosenX.Append(false).ToArray(), Writer);
+                var Next1Res = await BooleanBranchAndBound(ChosenX.Append(true).ToArray(), Writer);
+
+                if (Next0Res is null)
+                {
+                    if (Next1Res is null)
+                    {
+                        // Both results are null -> exit
+                        await Writer.WriteLineAsync(
+                            $"{pad}Cutting X = {X} for being non-solving leaf");
+                        return null;
+                    }
+                    return Next1Res;
+                }
+                if (Next1Res is null)
+                {
+                    return Next0Res;
+                }
+                if (Gain(Next0Res) > Gain(Next1Res))
+                {
+                    await Writer.WriteLineAsync($"{pad}Branch {X} -> {Function.Print(Gain(Next0Res))}");
+                    return Next0Res;
+                }
+                await Writer.WriteLineAsync($"{pad}Branch {X} -> {Function.Print(Gain(Next1Res))}");
+                return Next1Res;
+            } catch (ArgumentException)
             {
-                return Next0;
+                return null;
             }
-            return Gain(Next0Res) > Gain(Next1Res) ? Next0 : Next1;
         }
 
         public async Task<bool> SolveFlow(StreamWriter? Writer, bool isBoolean = false)

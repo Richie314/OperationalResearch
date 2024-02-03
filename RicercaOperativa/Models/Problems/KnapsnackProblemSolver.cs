@@ -15,9 +15,9 @@ namespace OperationalResearch.Models.Problems
             Knapsnack k = new(
                 volume: b[0], 
                 weight: b[1], 
-                values: w.GetRow(0), 
-                volumes: w.GetRow(1),
-                weights: w.GetRow(2));
+                values: c.GetRow(0), 
+                volumes: c.GetRow(1),
+                weights: c.GetRow(2));
             return await k.SolveFlow(loggers.FirstOrDefault(), IsBoolean);
         }
         public override Task<bool> SolveMinAsync(IEnumerable<StreamWriter?> loggers)
