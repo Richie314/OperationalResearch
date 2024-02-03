@@ -13,17 +13,17 @@ using System.Windows.Forms;
 
 namespace OperationalResearch
 {
-    public partial class MinCostAssignForm : Form
+    public partial class TSPForm : Form
     {
-        private int Number;
-        public MinCostAssignForm()
+        private int N;
+        public TSPForm()
         {
             InitializeComponent();
         }
         private void GenerateGrid()
         {
             matrix.Rows.Clear();
-            matrix.ColumnCount = Number + 1;
+            matrix.ColumnCount = N + 1;
             matrix.RowHeadersVisible = false;
 
             for (int i = 0; i < matrix.ColumnCount; i++)
@@ -31,17 +31,18 @@ namespace OperationalResearch
                 matrix.Columns[i].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
                 if (i == 0)
                 {
-                    matrix.Columns[i].Name = "Jobs\\Workers";
+                    matrix.Columns[i].Name = "From\\To";
                     matrix.Columns[i].Width = 200;
                     continue;
                 }
-                matrix.Columns[i].Name = "w" + i;
+                matrix.Columns[i].Name = i.ToString();
                 matrix.Columns[i].Width = 50;
             }
-            for (int i = 0; i < Number; i++)
+            for (int i = 0; i < N; i++)
             {
-                string[] row = new string[Number + 1];
-                row[0] = "j" + (i + 1);
+                string[] row = new string[N + 1];
+                row[0] = (i + 1).ToString();
+                row[i + 1] = "0";
                 matrix.Rows.Add(row);
                 matrix.Rows[i].Height = 20;
             }
@@ -51,7 +52,7 @@ namespace OperationalResearch
         {
             try
             {
-                Number = (int)n.Value;
+                N = (int)n.Value;
                 GenerateGrid();
             }
             catch (Exception err)
@@ -63,50 +64,50 @@ namespace OperationalResearch
             }
         }
 
-        private async void solveCooperativeBtn_Click(object sender, EventArgs e)
+        private async void findHamiltonCycleBtn_Click(object sender, EventArgs e)
         {
-            solveCooperativeBtn.Enabled = solveNonCooperativeBtn.Enabled = false;
+            findHamiltonCycleBtn.Enabled = false;
             string[][]? mainGridStr = MainGridStr();
             if (mainGridStr is null || mainGridStr.Length == 0)
             {
-                solveCooperativeBtn.Enabled = solveNonCooperativeBtn.Enabled = true;
+                findHamiltonCycleBtn.Enabled = true;
                 return;
             }
 
             var Form = new ProblemForm();
             void closeFormCallback(object? sender, FormClosedEventArgs e)
             {
-                solveCooperativeBtn.Enabled = solveNonCooperativeBtn.Enabled = true;
+                findHamiltonCycleBtn.Enabled = true;
             };
             Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
             Form.Show();
 
             Problem p = new(
-                solver: new MinCostAssignSolver(isCooperative: true),
+                solver: new TravellingSalesmanProblemSolver(),
                 sMatrix: mainGridStr,
                 sVecB: new string[0],
                 sVecC: new string[0]);
             if (await p.SolveMin(loggers: new StreamWriter?[] { Form.Writer }))
             {
                 MessageBox.Show(
-                    "Linear Programming problem solved",
+                    "TSP solved",
                     "Problem solved", MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
             }
             else
             {
                 MessageBox.Show(
-                    "Linear Programming problem could not be solved",
+                    "TSP could not be solved",
                     "Error", MessageBoxButtons.OKCancel,
                     MessageBoxIcon.Error);
             }
         }
 
-        private void MinCostAssignForm_Load(object sender, EventArgs e)
+        private void TravellingSalesmanProblemForm_Load(object sender, EventArgs e)
         {
             try
             {
-                Number = (int)n.Value;
+                N = (int)n.Value;
                 GenerateGrid();
             }
             catch (Exception err)
@@ -149,44 +150,6 @@ namespace OperationalResearch
             return [.. list];
         }
 
-        private async void solveNonCooperativeBtn_Click(object sender, EventArgs e)
-        {
-            solveCooperativeBtn.Enabled = solveNonCooperativeBtn.Enabled = false;
-            string[][]? mainGridStr = MainGridStr();
-            if (mainGridStr is null || mainGridStr.Length == 0)
-            {
-                solveCooperativeBtn.Enabled = solveNonCooperativeBtn.Enabled = true;
-                return;
-            }
-
-            var Form = new ProblemForm();
-            void closeFormCallback(object? sender, FormClosedEventArgs e)
-            {
-                solveCooperativeBtn.Enabled = solveNonCooperativeBtn.Enabled = true;
-            };
-            Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
-            Form.Show();
-
-            Problem p = new(
-                solver: new MinCostAssignSolver(isCooperative: false),
-                sMatrix: mainGridStr,
-                sVecB: new string[0],
-                sVecC: new string[0]);
-            if (await p.SolveMin(loggers: new StreamWriter?[] { Form.Writer }))
-            {
-                MessageBox.Show(
-                    "Integer Linear Programming problem solved",
-                    "Problem solved", MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show(
-                    "Integer Linear Programming problem could not be solved",
-                    "Error", MessageBoxButtons.OKCancel,
-                    MessageBoxIcon.Error);
-            }
-        }
     }
 
 }

@@ -79,6 +79,14 @@ namespace OperationalResearch.Models
                 return s;
             return x.Value.ToDouble().ToString("N5", CultureInfo.InvariantCulture);
         }
+        public static string Print(IEnumerable<Graph.Edge>? edges)
+        {
+            if (edges is null)
+            {
+                return "null";
+            }
+            return "{ " + string.Join(", ", edges.Select(e => e.ToString())) + " }";
+        }
         public static string Print(IEnumerable<int> x, bool addOne = true)
         {
             if (x is null)
@@ -91,6 +99,13 @@ namespace OperationalResearch.Models
             }
             int y = addOne ? 1 : 0;
             return "{ " + string.Join(", ", x.Select(x => (x + y).ToString())) + " }";
+        }
+
+        public static int Factorial(int n)
+        {
+            if (n <= 1)
+                return 1;
+            return n * Factorial(n - 1);
         }
     }
 }

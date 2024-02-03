@@ -3,7 +3,7 @@ using Fractions;
 using System.Diagnostics;
 using System.Reflection.Metadata.Ecma335;
 
-namespace OperationalResearch.Models
+namespace OperationalResearch.Models.Python
 {
     internal sealed class ProjectedGradient(Fraction[,] A, Vector b, string python) : PythonFunctionAnalyzer(A, b, python)
     {
@@ -28,7 +28,8 @@ namespace OperationalResearch.Models
             if (IsMin)
             {
                 await Writer.WriteLineAsync($"Solving for min value...");
-            } else
+            }
+            else
             {
                 await Writer.WriteLineAsync($"Solving for max value...");
             }
@@ -48,7 +49,7 @@ namespace OperationalResearch.Models
             await Writer.WriteLineAsync($"b = {b}");
             await Writer.WriteLineAsync($"x{k} = {xk}");
 
-            if ((a * xk) > b) // Check if A * xk > b. In that case stop (an error has appened)
+            if (a * xk > b) // Check if A * xk > b. In that case stop (an error has appened)
             {
                 await Writer.WriteLineAsync();
                 await Writer.WriteLineAsync($"Vector x{k} is out of bound!");
@@ -69,7 +70,7 @@ namespace OperationalResearch.Models
             Vector gradXk = Grad(xk);
             await Writer.WriteLineAsync($"gradF(x{k}) = {gradXk}");
 
-            Vector dk = H * gradXk * (IsMin ? (-1) : Fraction.One);
+            Vector dk = H * gradXk * (IsMin ? -1 : Fraction.One);
             await Writer.WriteLineAsync($"d{k} = {dk}");
             if (dk.IsZero) // dk == 0
             {
@@ -119,7 +120,7 @@ namespace OperationalResearch.Models
                 await Writer.WriteLineAsync($"Exit with unknown (unexpected) result.");
                 return xk;
             }
-            Vector lambda = (IsMin ? (-1) : Fraction.One) * (((M * M.T).Inv * M) * gradXk);
+            Vector lambda = (IsMin ? -1 : Fraction.One) * ((M * M.T).Inv * M * gradXk);
             await Writer.WriteLineAsync($"lambda = {lambda}");
             if (lambda.IsPositiveOrZero) // lambda >= 0
             {

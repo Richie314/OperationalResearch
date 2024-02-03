@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OperationalResearch.Models
+namespace OperationalResearch.Models.Problems
 {
     internal class LinearProgrammingDual(int[]? startBase = null, bool yPos = true) : IProgrammingInterface
     {
@@ -22,7 +22,7 @@ namespace OperationalResearch.Models
         }
         public async Task<bool> SolveMaxAsync(IEnumerable<StreamWriter?> loggers)
         {
-            Simplex s = new(A, b * (-1), c, yPos);
+            Simplex s = new(A, b * -1, c, yPos);
             return await s.SolveDualMinFlow(startBase, loggers.FirstOrDefault());
         }
 

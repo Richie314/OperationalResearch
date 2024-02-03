@@ -3,7 +3,7 @@ using Fractions;
 using System.Diagnostics;
 using System.Reflection.Metadata.Ecma335;
 
-namespace OperationalResearch.Models
+namespace OperationalResearch.Models.Python
 {
     internal sealed class FrankWolfe : PythonFunctionAnalyzer
     {
@@ -48,7 +48,7 @@ namespace OperationalResearch.Models
                 await Writer.WriteLineAsync($"b = {b}");
                 await Writer.WriteLineAsync($"x{k} = {xk}");
 
-                if ((a * xk) > b) // Check if A * xk > b. In that case stop (an error has appened)
+                if (a * xk > b) // Check if A * xk > b. In that case stop (an error has appened)
                 {
                     await Writer.WriteLineAsync();
                     await Writer.WriteLineAsync($"Vector x{k} is out of bound!");
@@ -60,8 +60,8 @@ namespace OperationalResearch.Models
                 await Writer.WriteLineAsync($"gradF(x{k}) = {gradF}");
 
                 Simplex s = new(
-                    a.M, b, 
-                    gradF * (IsMin ? (-1) : Fraction.One), // If we want a max of the simplex we have to multiply its c coefficients by -1 
+                    a.M, b,
+                    gradF * (IsMin ? -1 : Fraction.One), // If we want a max of the simplex we have to multiply its c coefficients by -1 
                     false);
                 Vector? yk = await s.SolvePrimalMax(StreamWriter.Null, null, null);
                 if (yk is null)

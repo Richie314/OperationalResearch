@@ -5,8 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using IronPython;
+using OperationalResearch.Models.Python;
 
-namespace OperationalResearch.Models
+namespace OperationalResearch.Models.Problems
 {
     internal class NonLinearProgramming : IProgrammingInterface
     {
@@ -19,11 +20,12 @@ namespace OperationalResearch.Models
             A = new Fraction[0, 0];
             b = Array.Empty<Fraction>();
             python = pythonString;
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(pythonString);
+            ArgumentException.ThrowIfNullOrWhiteSpace(pythonString);
             if (startingPointStrings is null)
             {
                 startingPoint = null;
-            } else
+            }
+            else
             {
                 try
                 {
@@ -34,7 +36,7 @@ namespace OperationalResearch.Models
                     startingPoint = null;
                 }
             }
-            
+
         }
         public void SetMainMatrix(Fraction[,] matrix)
         {
@@ -64,8 +66,8 @@ namespace OperationalResearch.Models
             ProjectedGradient s1 = new(A, b, python);
             FrankWolfe s2 = new(A, b, python);
             var results = await Task.WhenAll(
-                new[] { 
-                    s1.SolveMaxFlow(streams.FirstOrDefault(), startingPoint), 
+                new[] {
+                    s1.SolveMaxFlow(streams.FirstOrDefault(), startingPoint),
                     s2.SolveMaxFlow(streams.ElementAtOrDefault(1), startingPoint)
                 });
             return results.Any(x => x); // At least one succeded

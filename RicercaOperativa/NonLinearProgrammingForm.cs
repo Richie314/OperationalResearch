@@ -1,4 +1,5 @@
 ﻿using OperationalResearch.Models;
+using OperationalResearch.Models.Problems;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

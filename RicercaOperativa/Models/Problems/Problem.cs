@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Fractions;
+using OperationalResearch.Models.Problems;
 
 namespace OperationalResearch.Models
 {
@@ -49,16 +50,14 @@ namespace OperationalResearch.Models
             Solver.SetMainMatrix(matrix);
             Solver.SetFirstVector(vecB);
             Solver.SetSecondVector(vecC);
-            Task<bool> Solving = Solver.SolveMinAsync(loggers);
-            return await Solving.WaitAsync(CancellationToken.None);
+            return await Task.Run(() =>Solver.SolveMinAsync(loggers));
         }
         public async Task<bool> SolveMax(IEnumerable<StreamWriter?> loggers)
         {
             Solver.SetMainMatrix(matrix);
             Solver.SetFirstVector(vecB);
             Solver.SetSecondVector(vecC);
-            Task<bool> Solving = Solver.SolveMaxAsync(loggers);
-            return await Solving.WaitAsync(CancellationToken.None);
+            return await Task.Run(() => Solver.SolveMaxAsync(loggers));
         }
     }
 }

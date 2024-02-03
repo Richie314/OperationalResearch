@@ -3,7 +3,7 @@ using Fractions;
 using System.Diagnostics;
 using System.Reflection.Metadata.Ecma335;
 
-namespace OperationalResearch.Models
+namespace OperationalResearch.Models.Python
 {
     public abstract class PythonFunctionAnalyzer
     {
@@ -49,7 +49,7 @@ namespace OperationalResearch.Models
             Vector x, Vector d)
         {
             return Models.Function.FindArgMin(
-                t => Function(x + (d * t)), // Phi(t)
+                t => Function(x + d * t), // Phi(t)
                 t_start, t_end, steps);
         }
         protected Fraction FindArgMaxOfFunction(
@@ -57,7 +57,7 @@ namespace OperationalResearch.Models
             Vector x, Vector d)
         {
             return Models.Function.FindArgMax(
-                t => Function(x + (d * t)), // Phi(t)
+                t => Function(x + d * t), // Phi(t)
                 t_start, t_end, steps);
         }
         /// <summary>
@@ -85,7 +85,7 @@ namespace OperationalResearch.Models
         {
             ArgumentNullException.ThrowIfNull(A);
             ArgumentNullException.ThrowIfNull(b);
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(python);
+            ArgumentException.ThrowIfNullOrWhiteSpace(python);
             if (A.Rows() != b.Size)
             {
                 throw new ArgumentException("A must have row number equal to the length of b");

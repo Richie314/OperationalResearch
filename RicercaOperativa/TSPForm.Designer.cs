@@ -1,6 +1,6 @@
 ﻿namespace OperationalResearch
 {
-    partial class MinCostAssignForm
+    partial class TSPForm
     {
         /// <summary>
         /// Required designer variable.
@@ -28,13 +28,13 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MinCostAssignForm));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TSPForm));
             label1 = new Label();
             matrix = new DataGridView();
             n = new NumericUpDown();
             setNumBtn = new Button();
-            solveCooperativeBtn = new Button();
-            solveNonCooperativeBtn = new Button();
+            findHamiltonCycleBtn = new Button();
+            considerSymmetric = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)matrix).BeginInit();
             ((System.ComponentModel.ISupportInitialize)n).BeginInit();
             SuspendLayout();
@@ -44,9 +44,9 @@
             label1.AutoSize = true;
             label1.Location = new Point(24, 22);
             label1.Name = "label1";
-            label1.Size = new Size(152, 15);
+            label1.Size = new Size(99, 15);
             label1.TabIndex = 0;
-            label1.Text = "NumberOfWorkersAndJobs";
+            label1.Text = "Number of edges";
             // 
             // matrix
             // 
@@ -63,18 +63,18 @@
             // 
             // n
             // 
-            n.Location = new Point(208, 20);
+            n.Location = new Point(147, 20);
             n.Margin = new Padding(3, 2, 3, 2);
             n.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
             n.Name = "n";
             n.Size = new Size(131, 23);
             n.TabIndex = 2;
-            n.Value = new decimal(new int[] { 3, 0, 0, 0 });
+            n.Value = new decimal(new int[] { 5, 0, 0, 0 });
             // 
             // setNumBtn
             // 
             setNumBtn.Cursor = Cursors.Hand;
-            setNumBtn.Location = new Point(364, 12);
+            setNumBtn.Location = new Point(297, 12);
             setNumBtn.Margin = new Padding(3, 2, 3, 2);
             setNumBtn.Name = "setNumBtn";
             setNumBtn.Size = new Size(97, 35);
@@ -83,48 +83,46 @@
             setNumBtn.UseVisualStyleBackColor = true;
             setNumBtn.Click += setNumBtn_Click;
             // 
-            // solveCooperativeBtn
+            // findHamiltonCycleBtn
             // 
-            solveCooperativeBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            solveCooperativeBtn.Cursor = Cursors.Hand;
-            solveCooperativeBtn.Location = new Point(10, 300);
-            solveCooperativeBtn.Margin = new Padding(3, 2, 3, 2);
-            solveCooperativeBtn.Name = "solveCooperativeBtn";
-            solveCooperativeBtn.Size = new Size(329, 38);
-            solveCooperativeBtn.TabIndex = 4;
-            solveCooperativeBtn.Text = "Solve as Cooperative";
-            solveCooperativeBtn.UseVisualStyleBackColor = true;
-            solveCooperativeBtn.Click += solveCooperativeBtn_Click;
+            findHamiltonCycleBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            findHamiltonCycleBtn.Cursor = Cursors.Hand;
+            findHamiltonCycleBtn.Location = new Point(10, 300);
+            findHamiltonCycleBtn.Margin = new Padding(3, 2, 3, 2);
+            findHamiltonCycleBtn.Name = "findHamiltonCycleBtn";
+            findHamiltonCycleBtn.Size = new Size(329, 38);
+            findHamiltonCycleBtn.TabIndex = 4;
+            findHamiltonCycleBtn.Text = "Find Hamiltonian Cycle";
+            findHamiltonCycleBtn.UseVisualStyleBackColor = true;
+            findHamiltonCycleBtn.Click += findHamiltonCycleBtn_Click;
             // 
-            // solveNonCooperativeBtn
+            // considerSymmetric
             // 
-            solveNonCooperativeBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            solveNonCooperativeBtn.Cursor = Cursors.Hand;
-            solveNonCooperativeBtn.Location = new Point(364, 300);
-            solveNonCooperativeBtn.Margin = new Padding(3, 2, 3, 2);
-            solveNonCooperativeBtn.Name = "solveNonCooperativeBtn";
-            solveNonCooperativeBtn.Size = new Size(329, 38);
-            solveNonCooperativeBtn.TabIndex = 5;
-            solveNonCooperativeBtn.Text = "Solve as non Cooperative";
-            solveNonCooperativeBtn.UseVisualStyleBackColor = true;
-            solveNonCooperativeBtn.Click += solveNonCooperativeBtn_Click;
+            considerSymmetric.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            considerSymmetric.AutoSize = true;
+            considerSymmetric.Location = new Point(462, 312);
+            considerSymmetric.Name = "considerSymmetric";
+            considerSymmetric.Size = new Size(194, 19);
+            considerSymmetric.TabIndex = 6;
+            considerSymmetric.Text = "Consider Problem as symmetric";
+            considerSymmetric.UseVisualStyleBackColor = true;
             // 
-            // MinCostAssignForm
+            // TSPForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(700, 346);
-            Controls.Add(solveNonCooperativeBtn);
-            Controls.Add(solveCooperativeBtn);
+            Controls.Add(considerSymmetric);
+            Controls.Add(findHamiltonCycleBtn);
             Controls.Add(setNumBtn);
             Controls.Add(n);
             Controls.Add(matrix);
             Controls.Add(label1);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Margin = new Padding(3, 2, 3, 2);
-            Name = "MinCostAssignForm";
-            Text = "MinCostAssignForm";
-            Load += MinCostAssignForm_Load;
+            Name = "TSPForm";
+            Text = "Travelling Salesman's Problem";
+            Load += TravellingSalesmanProblemForm_Load;
             ((System.ComponentModel.ISupportInitialize)matrix).EndInit();
             ((System.ComponentModel.ISupportInitialize)n).EndInit();
             ResumeLayout(false);
@@ -137,7 +135,7 @@
         private DataGridView matrix;
         private NumericUpDown n;
         private Button setNumBtn;
-        private Button solveCooperativeBtn;
-        private Button solveNonCooperativeBtn;
+        private Button findHamiltonCycleBtn;
+        private CheckBox considerSymmetric;
     }
 }

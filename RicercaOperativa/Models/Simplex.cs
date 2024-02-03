@@ -1,7 +1,7 @@
 ﻿using Accord.Math;
 using Fractions;
 using Microsoft.Scripting.Utils;
-using OperationalResearch.Models;
+using OperationalResearch.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

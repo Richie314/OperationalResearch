@@ -35,11 +35,15 @@
             primalFormToolStripMenuItem = new ToolStripMenuItem();
             dualFormToolStripMenuItem = new ToolStripMenuItem();
             IntegerLinearProgrammingMenuItem = new ToolStripMenuItem();
+            productionRevenueMaximazationToolStripMenuItem = new ToolStripMenuItem();
+            assignmentOfMinCostToolStripMenuItem = new ToolStripMenuItem();
+            genericAssignmentOfMinCostToolStripMenuItem = new ToolStripMenuItem();
+            knapsnacToolStripMenuItem = new ToolStripMenuItem();
+            travellingSalesmansProblemToolStripMenuItem = new ToolStripMenuItem();
             NetworksProgrammingMenuItem = new ToolStripMenuItem();
             NonlinearProgrammingMenuItem = new ToolStripMenuItem();
             ToolStripMenuItem = new ToolStripMenuItem();
             CreditsToolStripMenuItem = new ToolStripMenuItem();
-            assignmentOfMinCostToolStripMenuItem = new ToolStripMenuItem();
             menuStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -84,10 +88,45 @@
             // 
             // IntegerLinearProgrammingMenuItem
             // 
-            IntegerLinearProgrammingMenuItem.DropDownItems.AddRange(new ToolStripItem[] { assignmentOfMinCostToolStripMenuItem });
+            IntegerLinearProgrammingMenuItem.DropDownItems.AddRange(new ToolStripItem[] { productionRevenueMaximazationToolStripMenuItem, assignmentOfMinCostToolStripMenuItem, genericAssignmentOfMinCostToolStripMenuItem, knapsnacToolStripMenuItem, travellingSalesmansProblemToolStripMenuItem });
             IntegerLinearProgrammingMenuItem.Name = "IntegerLinearProgrammingMenuItem";
             IntegerLinearProgrammingMenuItem.Size = new Size(278, 26);
             IntegerLinearProgrammingMenuItem.Text = "Integer Linear Programming";
+            // 
+            // productionRevenueMaximazationToolStripMenuItem
+            // 
+            productionRevenueMaximazationToolStripMenuItem.Name = "productionRevenueMaximazationToolStripMenuItem";
+            productionRevenueMaximazationToolStripMenuItem.Size = new Size(318, 26);
+            productionRevenueMaximazationToolStripMenuItem.Text = "Production revenue maximazation";
+            productionRevenueMaximazationToolStripMenuItem.Click += productionRevenueMaximazationToolStripMenuItem_Click;
+            // 
+            // assignmentOfMinCostToolStripMenuItem
+            // 
+            assignmentOfMinCostToolStripMenuItem.Name = "assignmentOfMinCostToolStripMenuItem";
+            assignmentOfMinCostToolStripMenuItem.Size = new Size(318, 26);
+            assignmentOfMinCostToolStripMenuItem.Text = "Assignment of min cost";
+            assignmentOfMinCostToolStripMenuItem.Click += assignmentOfMinCostToolStripMenuItem_Click;
+            // 
+            // genericAssignmentOfMinCostToolStripMenuItem
+            // 
+            genericAssignmentOfMinCostToolStripMenuItem.Name = "genericAssignmentOfMinCostToolStripMenuItem";
+            genericAssignmentOfMinCostToolStripMenuItem.Size = new Size(318, 26);
+            genericAssignmentOfMinCostToolStripMenuItem.Text = "Generic assignment of min cost";
+            genericAssignmentOfMinCostToolStripMenuItem.Click += genericAssignmentOfMinCostToolStripMenuItem_Click;
+            // 
+            // knapsnacToolStripMenuItem
+            // 
+            knapsnacToolStripMenuItem.Name = "knapsnacToolStripMenuItem";
+            knapsnacToolStripMenuItem.Size = new Size(318, 26);
+            knapsnacToolStripMenuItem.Text = "Knapsnack's Problem";
+            knapsnacToolStripMenuItem.Click += knapsnacToolStripMenuItem_Click;
+            // 
+            // travellingSalesmansProblemToolStripMenuItem
+            // 
+            travellingSalesmansProblemToolStripMenuItem.Name = "travellingSalesmansProblemToolStripMenuItem";
+            travellingSalesmansProblemToolStripMenuItem.Size = new Size(318, 26);
+            travellingSalesmansProblemToolStripMenuItem.Text = "Travelling Salesman's Problem";
+            travellingSalesmansProblemToolStripMenuItem.Click += travellingSalesmansProblemToolStripMenuItem_Click;
             // 
             // NetworksProgrammingMenuItem
             // 
@@ -115,13 +154,6 @@
             CreditsToolStripMenuItem.Size = new Size(138, 26);
             CreditsToolStripMenuItem.Text = "&Credits";
             CreditsToolStripMenuItem.Click += CreditsToolStripMenuItem_Click;
-            // 
-            // assignmentOfMinCostToolStripMenuItem
-            // 
-            assignmentOfMinCostToolStripMenuItem.Name = "assignmentOfMinCostToolStripMenuItem";
-            assignmentOfMinCostToolStripMenuItem.Size = new Size(247, 26);
-            assignmentOfMinCostToolStripMenuItem.Text = "Assignment of min cost";
-            assignmentOfMinCostToolStripMenuItem.Click += assignmentOfMinCostToolStripMenuItem_Click;
             // 
             // StartForm
             // 
@@ -153,5 +185,9 @@
         private ToolStripMenuItem primalFormToolStripMenuItem;
         private ToolStripMenuItem dualFormToolStripMenuItem;
         private ToolStripMenuItem assignmentOfMinCostToolStripMenuItem;
+        private ToolStripMenuItem travellingSalesmansProblemToolStripMenuItem;
+        private ToolStripMenuItem productionRevenueMaximazationToolStripMenuItem;
+        private ToolStripMenuItem genericAssignmentOfMinCostToolStripMenuItem;
+        private ToolStripMenuItem knapsnacToolStripMenuItem;
     }
 }

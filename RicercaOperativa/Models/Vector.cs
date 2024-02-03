@@ -43,6 +43,7 @@ namespace OperationalResearch.Models
         {
             return v.Select(v => v.ToDecimal());
         }
+        public static Vector Empty = new();
         public int Size { get { return v.Length; } }
         public bool IsEmpty { get => Size == 0; }
         public IEnumerable<int> Indices { get => Enumerable.Range(0, Size); }

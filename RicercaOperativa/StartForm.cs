@@ -1,6 +1,7 @@
 using OperationalResearch.Models;
 using System.Windows.Controls;
 using OperationalResearch;
+using OperationalResearch.Models.Problems;
 
 namespace RicercaOperativa
 {
@@ -40,11 +41,32 @@ namespace RicercaOperativa
             var NewForm = new LinearProgrammingForm_Dual();
             NewForm.Show();
         }
+        private void productionRevenueMaximazationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
 
         private void assignmentOfMinCostToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var NewForm = new MinCostAssignForm();
             NewForm.Show();
         }
+        private void genericAssignmentOfMinCostToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var NewForm = new MinCostGenericAssignForm();
+            NewForm.Show();
+        }
+
+        private void knapsnacToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var NewForm = new KnapsnackForm();
+            NewForm.Show();
+        }
+
+        private void travellingSalesmansProblemToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var NewForm = new TSPForm();
+            NewForm.Show();
+        }        
     }
 }

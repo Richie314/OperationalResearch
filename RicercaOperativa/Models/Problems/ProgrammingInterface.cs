@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Fractions;
 
-namespace OperationalResearch.Models
+namespace OperationalResearch.Models.Problems
 {
     public interface IProgrammingInterface
     {
