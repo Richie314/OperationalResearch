@@ -16,8 +16,10 @@ namespace RicercaOperativa
     {
         private int EquationsCount = 3;
         private int VariablesCount = 3;
-        public LinearProgrammingForm_Primal()
+        private bool IntSolutions = false;
+        public LinearProgrammingForm_Primal(bool IntSolutions = false)
         {
+            this.IntSolutions = IntSolutions;
             InitializeComponent();
         }
 
@@ -65,6 +67,11 @@ namespace RicercaOperativa
                 EquationsCount = (int)equationsCountInput.Value;
                 VariablesCount = (int)variablesCountInput.Value;
                 GenerateGrid();
+                if (IntSolutions)
+                {
+                    Text = "Integer Linear Programming - Primal Form";
+                    startSimplexBtn.Text = "Solve for ints";
+                }
             }
             catch (Exception err)
             {
@@ -86,8 +93,7 @@ namespace RicercaOperativa
             }
         }
 
-
-        private async void startSimplexBtn_Click(object sender, EventArgs e)
+        private async Task SolveLP()
         {
             startSimplexBtn.Enabled = false;
             string[][]? mainGridStr = MainGridStr();
@@ -123,6 +129,55 @@ namespace RicercaOperativa
                     "Linear Programming problem could not be solved",
                     "Error", MessageBoxButtons.OKCancel,
                     MessageBoxIcon.Error);
+            }
+            startSimplexBtn.Enabled = true;
+        }
+        private async Task SolveILP()
+        {
+            startSimplexBtn.Enabled = false;
+            string[][]? mainGridStr = MainGridStr();
+            if (mainGridStr is null || mainGridStr.Length == 0)
+            {
+                startSimplexBtn.Enabled = true;
+                return;
+            }
+            var primalForm = new ProblemForm();
+            void closeFormCallback(object? sender, FormClosedEventArgs e)
+            {
+                startSimplexBtn.Enabled = true;
+            };
+            primalForm.FormClosed += new FormClosedEventHandler(closeFormCallback);
+            primalForm.Show();
+
+            Problem p = new(
+                solver: new IntegerLinearProgrammingPrimal(xNonNegativeCheckbox.Checked),
+                sMatrixAndB: mainGridStr,
+                sVecC: MainVectorStr());
+
+            if (await p.SolveMax(loggers: new StreamWriter?[] { primalForm.Writer }))
+            {
+                MessageBox.Show(
+                    "Integer Linear Programming problem solved",
+                    "Problem solved", MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show(
+                    "Integer Linear Programming problem could not be solved",
+                    "Error", MessageBoxButtons.OKCancel,
+                    MessageBoxIcon.Error);
+            }
+            startSimplexBtn.Enabled = true;
+        }
+        private async void startSimplexBtn_Click(object sender, EventArgs e)
+        {
+            if (IntSolutions)
+            {
+                await SolveILP();
+            } else
+            {
+                await SolveLP();
             }
 
         }

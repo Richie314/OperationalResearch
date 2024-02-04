@@ -38,7 +38,8 @@ namespace RicercaOperativa
         }
         private void productionRevenueMaximazationToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            var NewForm = new LinearProgrammingForm_Primal(IntSolutions: true);
+            NewForm.Show();
         }
 
         private void assignmentOfMinCostToolStripMenuItem_Click(object sender, EventArgs e)
