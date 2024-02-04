@@ -53,6 +53,7 @@ namespace OperationalResearch.Models
         public int Rows { get => m.Rows(); }
         public int Cols { get => m.Columns(); }
         public Matrix T { get => new(m.Transpose()); }
+        public bool IsSquare { get => Rows > 0 && m.IsSquare(); }
         private Matrix GetSub(int excludeRow, int excludeCol)
         {
             return new Matrix(m.RemoveRow(excludeRow).RemoveColumn(excludeCol));

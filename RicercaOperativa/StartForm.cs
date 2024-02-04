@@ -19,11 +19,6 @@ namespace RicercaOperativa
             NewForm.Show();
         }
 
-        private void NonlinearProgrammingMenuItem_Click(object sender, EventArgs e)
-        {
-            var NewForm = new NonLinearProgrammingForm();
-            NewForm.Show();
-        }
 
         private void StartForm_Load(object sender, EventArgs e)
         {
@@ -67,6 +62,18 @@ namespace RicercaOperativa
         {
             var NewForm = new TSPForm();
             NewForm.Show();
-        }        
+        }
+
+        private void genericProblemToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var NewForm = new NonLinearProgrammingForm();
+            NewForm.Show();
+        }
+
+        private void quadraticProgrammingToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var NewForm = new QuadraticProgrammingForm();
+            NewForm.Show();
+        }
     }
 }

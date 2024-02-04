@@ -186,6 +186,7 @@ namespace OperationalResearch
                     "Error", MessageBoxButtons.OKCancel,
                     MessageBoxIcon.Error);
             }
+            solveCooperativeBtn.Enabled = solveNonCooperativeBtn.Enabled = true;
         }
     }
 

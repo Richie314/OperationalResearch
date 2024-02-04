@@ -42,6 +42,8 @@
             travellingSalesmansProblemToolStripMenuItem = new ToolStripMenuItem();
             NetworksProgrammingMenuItem = new ToolStripMenuItem();
             NonlinearProgrammingMenuItem = new ToolStripMenuItem();
+            genericProblemToolStripMenuItem = new ToolStripMenuItem();
+            quadraticProgrammingToolStripMenuItem = new ToolStripMenuItem();
             ToolStripMenuItem = new ToolStripMenuItem();
             CreditsToolStripMenuItem = new ToolStripMenuItem();
             menuStrip1.SuspendLayout();
@@ -53,8 +55,8 @@
             menuStrip1.Items.AddRange(new ToolStripItem[] { problemsStripMenuItem, ToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Padding = new Padding(6, 3, 0, 3);
-            menuStrip1.Size = new Size(914, 30);
+            menuStrip1.Padding = new Padding(5, 2, 0, 2);
+            menuStrip1.Size = new Size(800, 24);
             menuStrip1.TabIndex = 2;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -62,27 +64,27 @@
             // 
             problemsStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { LinearProgrammingMenuItem, IntegerLinearProgrammingMenuItem, NetworksProgrammingMenuItem, NonlinearProgrammingMenuItem });
             problemsStripMenuItem.Name = "problemsStripMenuItem";
-            problemsStripMenuItem.Size = new Size(85, 24);
+            problemsStripMenuItem.Size = new Size(69, 20);
             problemsStripMenuItem.Text = "&Problems";
             // 
             // LinearProgrammingMenuItem
             // 
             LinearProgrammingMenuItem.DropDownItems.AddRange(new ToolStripItem[] { primalFormToolStripMenuItem, dualFormToolStripMenuItem });
             LinearProgrammingMenuItem.Name = "LinearProgrammingMenuItem";
-            LinearProgrammingMenuItem.Size = new Size(278, 26);
+            LinearProgrammingMenuItem.Size = new Size(223, 22);
             LinearProgrammingMenuItem.Text = "Linear Programming";
             // 
             // primalFormToolStripMenuItem
             // 
             primalFormToolStripMenuItem.Name = "primalFormToolStripMenuItem";
-            primalFormToolStripMenuItem.Size = new Size(172, 26);
+            primalFormToolStripMenuItem.Size = new Size(139, 22);
             primalFormToolStripMenuItem.Text = "Primal Form";
             primalFormToolStripMenuItem.Click += primalFormToolStripMenuItem_Click;
             // 
             // dualFormToolStripMenuItem
             // 
             dualFormToolStripMenuItem.Name = "dualFormToolStripMenuItem";
-            dualFormToolStripMenuItem.Size = new Size(172, 26);
+            dualFormToolStripMenuItem.Size = new Size(139, 22);
             dualFormToolStripMenuItem.Text = "Dual Form";
             dualFormToolStripMenuItem.Click += dualFormToolStripMenuItem_Click;
             // 
@@ -90,80 +92,93 @@
             // 
             IntegerLinearProgrammingMenuItem.DropDownItems.AddRange(new ToolStripItem[] { productionRevenueMaximazationToolStripMenuItem, assignmentOfMinCostToolStripMenuItem, genericAssignmentOfMinCostToolStripMenuItem, knapsnacToolStripMenuItem, travellingSalesmansProblemToolStripMenuItem });
             IntegerLinearProgrammingMenuItem.Name = "IntegerLinearProgrammingMenuItem";
-            IntegerLinearProgrammingMenuItem.Size = new Size(278, 26);
+            IntegerLinearProgrammingMenuItem.Size = new Size(223, 22);
             IntegerLinearProgrammingMenuItem.Text = "Integer Linear Programming";
             // 
             // productionRevenueMaximazationToolStripMenuItem
             // 
             productionRevenueMaximazationToolStripMenuItem.Name = "productionRevenueMaximazationToolStripMenuItem";
-            productionRevenueMaximazationToolStripMenuItem.Size = new Size(318, 26);
+            productionRevenueMaximazationToolStripMenuItem.Size = new Size(256, 22);
             productionRevenueMaximazationToolStripMenuItem.Text = "Production revenue maximazation";
             productionRevenueMaximazationToolStripMenuItem.Click += productionRevenueMaximazationToolStripMenuItem_Click;
             // 
             // assignmentOfMinCostToolStripMenuItem
             // 
             assignmentOfMinCostToolStripMenuItem.Name = "assignmentOfMinCostToolStripMenuItem";
-            assignmentOfMinCostToolStripMenuItem.Size = new Size(318, 26);
+            assignmentOfMinCostToolStripMenuItem.Size = new Size(256, 22);
             assignmentOfMinCostToolStripMenuItem.Text = "Assignment of min cost";
             assignmentOfMinCostToolStripMenuItem.Click += assignmentOfMinCostToolStripMenuItem_Click;
             // 
             // genericAssignmentOfMinCostToolStripMenuItem
             // 
             genericAssignmentOfMinCostToolStripMenuItem.Name = "genericAssignmentOfMinCostToolStripMenuItem";
-            genericAssignmentOfMinCostToolStripMenuItem.Size = new Size(318, 26);
+            genericAssignmentOfMinCostToolStripMenuItem.Size = new Size(256, 22);
             genericAssignmentOfMinCostToolStripMenuItem.Text = "Generic assignment of min cost";
             genericAssignmentOfMinCostToolStripMenuItem.Click += genericAssignmentOfMinCostToolStripMenuItem_Click;
             // 
             // knapsnacToolStripMenuItem
             // 
             knapsnacToolStripMenuItem.Name = "knapsnacToolStripMenuItem";
-            knapsnacToolStripMenuItem.Size = new Size(318, 26);
+            knapsnacToolStripMenuItem.Size = new Size(256, 22);
             knapsnacToolStripMenuItem.Text = "Knapsnack's Problem";
             knapsnacToolStripMenuItem.Click += knapsnacToolStripMenuItem_Click;
             // 
             // travellingSalesmansProblemToolStripMenuItem
             // 
             travellingSalesmansProblemToolStripMenuItem.Name = "travellingSalesmansProblemToolStripMenuItem";
-            travellingSalesmansProblemToolStripMenuItem.Size = new Size(318, 26);
+            travellingSalesmansProblemToolStripMenuItem.Size = new Size(256, 22);
             travellingSalesmansProblemToolStripMenuItem.Text = "Travelling Salesman's Problem";
             travellingSalesmansProblemToolStripMenuItem.Click += travellingSalesmansProblemToolStripMenuItem_Click;
             // 
             // NetworksProgrammingMenuItem
             // 
             NetworksProgrammingMenuItem.Name = "NetworksProgrammingMenuItem";
-            NetworksProgrammingMenuItem.Size = new Size(278, 26);
+            NetworksProgrammingMenuItem.Size = new Size(223, 22);
             NetworksProgrammingMenuItem.Text = "Network Programming";
             // 
             // NonlinearProgrammingMenuItem
             // 
+            NonlinearProgrammingMenuItem.DropDownItems.AddRange(new ToolStripItem[] { genericProblemToolStripMenuItem, quadraticProgrammingToolStripMenuItem });
             NonlinearProgrammingMenuItem.Name = "NonlinearProgrammingMenuItem";
-            NonlinearProgrammingMenuItem.Size = new Size(278, 26);
+            NonlinearProgrammingMenuItem.Size = new Size(223, 22);
             NonlinearProgrammingMenuItem.Text = "Non Linear Programming";
-            NonlinearProgrammingMenuItem.Click += NonlinearProgrammingMenuItem_Click;
+            // 
+            // genericProblemToolStripMenuItem
+            // 
+            genericProblemToolStripMenuItem.Name = "genericProblemToolStripMenuItem";
+            genericProblemToolStripMenuItem.Size = new Size(203, 22);
+            genericProblemToolStripMenuItem.Text = "Generic problem";
+            genericProblemToolStripMenuItem.Click += genericProblemToolStripMenuItem_Click;
+            // 
+            // quadraticProgrammingToolStripMenuItem
+            // 
+            quadraticProgrammingToolStripMenuItem.Name = "quadraticProgrammingToolStripMenuItem";
+            quadraticProgrammingToolStripMenuItem.Size = new Size(203, 22);
+            quadraticProgrammingToolStripMenuItem.Text = "Quadratic Programming";
+            quadraticProgrammingToolStripMenuItem.Click += quadraticProgrammingToolStripMenuItem_Click;
             // 
             // ToolStripMenuItem
             // 
             ToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { CreditsToolStripMenuItem });
             ToolStripMenuItem.Name = "ToolStripMenuItem";
-            ToolStripMenuItem.Size = new Size(30, 24);
+            ToolStripMenuItem.Size = new Size(24, 20);
             ToolStripMenuItem.Text = "&?";
             // 
             // CreditsToolStripMenuItem
             // 
             CreditsToolStripMenuItem.Name = "CreditsToolStripMenuItem";
-            CreditsToolStripMenuItem.Size = new Size(138, 26);
+            CreditsToolStripMenuItem.Size = new Size(111, 22);
             CreditsToolStripMenuItem.Text = "&Credits";
             CreditsToolStripMenuItem.Click += CreditsToolStripMenuItem_Click;
             // 
             // StartForm
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(914, 600);
+            ClientSize = new Size(800, 450);
             Controls.Add(menuStrip1);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStrip1;
-            Margin = new Padding(3, 4, 3, 4);
             Name = "StartForm";
             Text = "Operational Research";
             Load += StartForm_Load;
@@ -189,5 +204,7 @@
         private ToolStripMenuItem productionRevenueMaximazationToolStripMenuItem;
         private ToolStripMenuItem genericAssignmentOfMinCostToolStripMenuItem;
         private ToolStripMenuItem knapsnacToolStripMenuItem;
+        private ToolStripMenuItem genericProblemToolStripMenuItem;
+        private ToolStripMenuItem quadraticProgrammingToolStripMenuItem;
     }
 }
