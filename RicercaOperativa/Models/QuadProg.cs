@@ -48,8 +48,8 @@ namespace OperationalResearch.Models
             A = Alin.M.Apply(a => a.ToDouble());
             b = blin.Get.Apply(bi => bi.ToDouble());
         }
-        private GoldfarbIdnani Solver { get => new GoldfarbIdnani(f, A, b); }
-        private Vector? GetSolution(GoldfarbIdnani solver)
+        private GoldfarbIdnani Solver { get => new(f, A, b); }
+        private static Vector? GetSolution(GoldfarbIdnani solver)
         {
             if (solver.Status == GoldfarbIdnaniStatus.NoPossibleSolution)
             {

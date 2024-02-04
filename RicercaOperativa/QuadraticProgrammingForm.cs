@@ -47,7 +47,7 @@ namespace RicercaOperativa
                 }
                 hessianMatrix.Columns[i].Width = 50;
                 hessianMatrix.Columns[i].Name = "x" + i;
-                string[] row = { "x" + i };
+                string[] row = ["x" + i];
                 hessianMatrix.Rows.Add(row);
 
                 linearCoeff.Columns[i - 1].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
@@ -122,9 +122,9 @@ namespace RicercaOperativa
             Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
             Form.Show();
 
-            Problem p = new Problem(
+            Problem p = new(
                 Constarints,
-                new string[0],
+                [],
                 new QuadraticProgrammingSolver(Hessian, LinearPart));
             if (await p.SolveMax(loggers: new StreamWriter?[] { Form.Writer }))
             {
@@ -212,7 +212,7 @@ namespace RicercaOperativa
                 terms.Add(
                     string.IsNullOrWhiteSpace((string)linearCoeff[i, 0].Value) ? "0" : (string)linearCoeff[i, 0].Value);
             }
-            return terms.ToArray();
+            return [.. terms];
         }
 
         private async void minimizeBtn_Click(object sender, EventArgs e)
@@ -238,9 +238,9 @@ namespace RicercaOperativa
             Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
             Form.Show();
 
-            Problem p = new Problem(
+            Problem p = new(
                 Constarints,
-                new string[0],
+                [],
                 new QuadraticProgrammingSolver(Hessian, LinearPart));
             if (await p.SolveMin(loggers: new StreamWriter?[] { Form.Writer }))
             {

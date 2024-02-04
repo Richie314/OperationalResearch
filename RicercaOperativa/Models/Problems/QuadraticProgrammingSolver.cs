@@ -22,6 +22,8 @@ namespace OperationalResearch.Models.Problems
             ArgumentNullException.ThrowIfNull(lin, nameof(lin));
             this.H = H;
             this.lin = lin;
+            A = new Fraction[0, 0];
+            b = Vector.Empty;
         }
         public QuadraticProgrammingSolver(string[][] H, string[] lin) : 
             this(new Matrix(  H.Select(  r => r.Select(Fraction.FromString).ToArray()  ).ToArray()   ), 

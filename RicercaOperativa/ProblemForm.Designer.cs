@@ -34,23 +34,22 @@
             // textBox
             // 
             textBox.Dock = DockStyle.Fill;
-            textBox.Font = new Font("Tahoma", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            textBox.Font = new Font("Cascadia Mono", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
             textBox.Location = new Point(0, 0);
-            textBox.Margin = new Padding(11, 13, 11, 13);
+            textBox.Margin = new Padding(10, 10, 10, 10);
             textBox.Name = "textBox";
             textBox.ReadOnly = true;
             textBox.ShortcutsEnabled = false;
-            textBox.Size = new Size(914, 600);
+            textBox.Size = new Size(800, 450);
             textBox.TabIndex = 0;
             textBox.Text = "";
             // 
             // ProblemForm
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(914, 600);
+            ClientSize = new Size(800, 450);
             Controls.Add(textBox);
-            Margin = new Padding(3, 4, 3, 4);
             Name = "ProblemForm";
             ShowIcon = false;
             StartPosition = FormStartPosition.WindowsDefaultBounds;

@@ -202,8 +202,8 @@ namespace OperationalResearch.Models
                     await Writer.WriteLineAsync($"x is not yet optimal.");
                 }
 
-                int h = FindExitIndex(Y_B, B);
-                await Writer.WriteLineAsync($"h = {h + 1}");
+                int h = FindExitIndex(Y_B, B, out Fraction ExitingElement);
+                await Writer.WriteLineAsync($"h = {h + 1} of element {Function.Print(ExitingElement)}");
 
                 Vector Wh = A_B_inv.Col( B.Find(i => i == h).First() ) * (-1); // Wh is the h-th column of -A_b_inv
                 await Writer.WriteLineAsync($"Wh = {Wh}");
@@ -244,9 +244,18 @@ namespace OperationalResearch.Models
             }
             return $"c * x = {Function.Print(c * primalSolution)}";
         }
-        private static int FindExitIndex(Vector Y_B, int[] B)
+        public string CalculatePrimalConstraints(Vector? primalSolution)
+        {
+            if (primalSolution is null || primalSolution.Size == 0)
+            {
+                return "";
+            }
+            return $"A * x = {GetA() * primalSolution}";
+        }
+        private static int FindExitIndex(Vector Y_B, int[] B, out Fraction NegElement)
         {
             int vecIndex = Y_B.NegativeIndexes.First();
+            NegElement = Y_B[vecIndex];
             return B[vecIndex];
         }
         private static int FindEnteringIndex(
@@ -282,6 +291,7 @@ namespace OperationalResearch.Models
                     Writer: Writer, 
                     maxIterations: 100);
                 await Writer.WriteLineAsync(CalculatePrimal(x));
+                await Writer.WriteLineAsync(CalculatePrimalConstraints(x));
             } catch (Exception ex)
             {
                 await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");

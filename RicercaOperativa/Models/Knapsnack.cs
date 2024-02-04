@@ -82,10 +82,7 @@ namespace OperationalResearch.Models
                     $"Dimension of the weights vector must be equal to the one of the volumes vector ({weights.Size} != {volumes.Size})");
             }
 
-            if (labels is null)
-            {
-                labels = weights.Indices.Select(i => (i + 1).ToString()).ToArray();
-            }
+            labels ??= weights.Indices.Select(i => (i + 1).ToString()).ToArray();
             if (weights.Size != labels.Length)
             {
                 throw new ArgumentException(
@@ -310,7 +307,7 @@ namespace OperationalResearch.Models
             if (Boolean)
             {
                 await Writer.WriteLineAsync("Solving with branch and bound from left to right:");
-                var boolSol = await BooleanBranchAndBound(Array.Empty<bool>(), Writer);
+                var boolSol = await BooleanBranchAndBound([], Writer);
                 if (boolSol is null)
                 {
                     await Writer.WriteLineAsync("Branch and bound could not solve the problem");
@@ -420,8 +417,8 @@ namespace OperationalResearch.Models
                     return null;
                 }
 
-                var Next0Res = await BooleanBranchAndBound(ChosenX.Append(false).ToArray(), Writer);
-                var Next1Res = await BooleanBranchAndBound(ChosenX.Append(true).ToArray(), Writer);
+                var Next0Res = await BooleanBranchAndBound([.. ChosenX, false], Writer);
+                var Next1Res = await BooleanBranchAndBound([.. ChosenX, true], Writer);
 
                 if (Next0Res is null)
                 {

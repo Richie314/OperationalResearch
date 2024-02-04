@@ -202,9 +202,9 @@ namespace OperationalResearch.Models
             }
 
             int maxLength = 0;
-            string[,] RenderedMatrix = m.Convert(x =>
+            string[,] RenderedMatrix = m.Apply(x =>
             {
-                string s = x.ToString();
+                string s = Function.Print(x);
                 maxLength = int.Max(maxLength, s.Length);
                 return s;
             });

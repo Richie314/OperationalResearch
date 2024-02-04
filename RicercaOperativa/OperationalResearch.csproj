@@ -26,6 +26,7 @@
     <PackageReference Include="AutomaticGraphLayout.WpfGraphControl" Version="1.1.12" />
     <PackageReference Include="Fractions" Version="7.3.0" />
     <PackageReference Include="Fractions.Json" Version="7.3.0" />
+    <PackageReference Include="Google.OrTools" Version="9.8.3296" />
     <PackageReference Include="IronPython" Version="3.4.1" />
     <PackageReference Include="IronPython.StdLib" Version="3.4.1" />
   </ItemGroup>

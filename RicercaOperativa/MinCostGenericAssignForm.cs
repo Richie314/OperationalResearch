@@ -171,7 +171,7 @@ namespace OperationalResearch
                     return null;
                 }
             }
-            return currRow.ToArray();
+            return [.. currRow];
         }
         private async void button_Click(object sender, EventArgs e)
         {

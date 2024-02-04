@@ -53,7 +53,7 @@
             matrix.AllowUserToDeleteRows = false;
             matrix.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             matrix.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            matrix.Location = new Point(25, 123);
+            matrix.Location = new Point(25, 132);
             matrix.Margin = new Padding(0);
             matrix.Name = "matrix";
             matrix.RowHeadersWidth = 50;
@@ -117,12 +117,12 @@
             functionGrid.AllowUserToResizeRows = false;
             functionGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             functionGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            functionGrid.Location = new Point(25, 80);
+            functionGrid.Location = new Point(25, 71);
             functionGrid.Margin = new Padding(0);
             functionGrid.Name = "functionGrid";
             functionGrid.RowHeadersWidth = 50;
             functionGrid.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
-            functionGrid.Size = new Size(900, 40);
+            functionGrid.Size = new Size(900, 52);
             functionGrid.TabIndex = 9;
             // 
             // label3
@@ -170,7 +170,7 @@
             xNonNegativeCheckbox.AutoSize = true;
             xNonNegativeCheckbox.Checked = true;
             xNonNegativeCheckbox.CheckState = CheckState.Checked;
-            xNonNegativeCheckbox.Location = new Point(294, 53);
+            xNonNegativeCheckbox.Location = new Point(657, 21);
             xNonNegativeCheckbox.Name = "xNonNegativeCheckbox";
             xNonNegativeCheckbox.Size = new Size(216, 19);
             xNonNegativeCheckbox.TabIndex = 14;

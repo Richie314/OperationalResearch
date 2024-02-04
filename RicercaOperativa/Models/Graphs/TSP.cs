@@ -14,7 +14,7 @@ namespace OperationalResearch.Models.Graphs
         {
             c = BuildMatrix(makeSymmetric);
         }
-        private Matrix c;
+        private readonly Matrix c;
         public async Task<bool> HamiltonCycleFlow(StreamWriter? Writer = null)
         {
             Writer ??= StreamWriter.Null;
@@ -92,7 +92,7 @@ namespace OperationalResearch.Models.Graphs
             int startingArcIndex = 0;
             while (true)
             {
-                if (startingArcIndex == ArcsByCost.Count())
+                if (startingArcIndex == ArcsByCost.Count)
                 {
                     await Writer.WriteLineAsync($"No cycle could be found!");
                     return null;
@@ -100,7 +100,7 @@ namespace OperationalResearch.Models.Graphs
                 Edge currArc = ArcsByCost.ElementAt(startingArcIndex);
                 await Writer.WriteLineAsync($"Finding cycle starting by arc {currArc}");
 
-                List<int> nodes = new List<int>() { currArc.From };
+                List<int> nodes = [currArc.From];
                 int nextNode = currArc.To;
                 while (!nodes.Contains(nextNode))
                 {
@@ -136,7 +136,7 @@ namespace OperationalResearch.Models.Graphs
             foreach (int start in NodesToStart)
             {
                 await Writer.WriteLineAsync($"Starting from node {start + 1}:");
-                List<int> nodes = new List<int>() { start };
+                List<int> nodes = [start];
                 int currNode = start;
                 while (nodes.Count < N)
                 {
