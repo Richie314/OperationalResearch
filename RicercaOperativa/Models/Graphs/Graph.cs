@@ -203,7 +203,7 @@ namespace OperationalResearch.Models
         /// </summary>
         /// <returns>The best cycle or null if no cycle can be found</returns>
         /// <exception cref="DataMisalignedException">If permutation of the nodes creates problems</exception>
-        public IEnumerable<int>? BruteForceHamiltonCycle()
+        public IEnumerable<int>? BruteForceHamiltonCycle(bool bidirectional = false)
         {
             IEnumerable<int> BestPerm = [];
             Fraction BestPermCost = Fraction.Zero;
@@ -216,13 +216,11 @@ namespace OperationalResearch.Models
                     throw new DataMisalignedException(
                         $"Permutation has number of element different from the number of nodes ({perm.Count()} != {N})");
                 }
-                var cyclePerm = perm.Append(perm.First()); 
-                // transforms (A-B-C) in (A-B-C-A)
                 try
                 {
-                    Fraction cost = Cost(cyclePerm);
+                    Fraction cost = Cost(perm, bidirectional);
                     int currentRequiredEdges = 
-                        (GetEdges(cyclePerm) ?? Enumerable.Empty<Edge>())
+                        (GetEdges(perm) ?? Enumerable.Empty<Edge>())
                         .Count(edge => edge.Type == Edge.EdgeType.Required);
 
                     if (requiredCount != 0 && currentRequiredEdges < requiredCount)
@@ -233,7 +231,8 @@ namespace OperationalResearch.Models
                     if (cost < BestPermCost || !BestPerm.Any())
                     {
                         BestPermCost = cost;
-                        BestPerm = cyclePerm;
+                        // transforms (A-B-C) in (A-B-C-A)
+                        BestPerm = perm.Append(perm.First());
                     }
                 } catch
                 {

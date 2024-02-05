@@ -17,7 +17,7 @@ namespace OperationalResearch.Models.Problems
         }
         public override async Task<bool> SolveMinAsync(IEnumerable<StreamWriter?> loggers)
         {
-            return await GetGraph.HamiltonCycleFlow(loggers.FirstOrDefault());
+            return await GetGraph.HamiltonCycleFlow(loggers.FirstOrDefault(), Symmetric);
         }
         public TSP GetGraph { get => new(g: Graph.FromMatrix(new Matrix(c), false), makeSymmetric: Symmetric); }
     }

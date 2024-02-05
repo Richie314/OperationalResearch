@@ -19,7 +19,7 @@ namespace OperationalResearch.Models.Graphs
             c = BuildMatrix(makeSymmetric);
         }
         private readonly Matrix c;
-        public async Task<bool> HamiltonCycleFlow(StreamWriter? Writer = null)
+        public async Task<bool> HamiltonCycleFlow(StreamWriter? Writer = null, bool bidirectional = false)
         {
             Writer ??= StreamWriter.Null;
             await Writer.WriteLineAsync("Finding best hamiltonian cycle");
@@ -49,7 +49,7 @@ namespace OperationalResearch.Models.Graphs
             try
             {
                 await Writer.WriteLineAsync("Brute forcing cycle...");
-                var result = BruteForceHamiltonCycle();
+                var result = BruteForceHamiltonCycle(bidirectional);
                 if (result is null)
                 {
                     await Writer.WriteLineAsync("Problem was not solved by brute force");
@@ -57,7 +57,7 @@ namespace OperationalResearch.Models.Graphs
                 else
                 {
                     await Writer.WriteLineAsync($"Brute forced cycle: {Function.Print(result)}");
-                    await Writer.WriteLineAsync($"Cost: {Function.Print(Cost(result))}");
+                    await Writer.WriteLineAsync($"Cost: {Function.Print(Cost(result, bidirectional))}");
                     FoundCycle = true;
                 }
             }
@@ -75,7 +75,7 @@ namespace OperationalResearch.Models.Graphs
         }
         public Task<IEnumerable<Edge>?> BestHamiltonCycle()
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("Functionality not yet implemented");
         }
         private IEnumerable<Edge> AllEdges()
         {
