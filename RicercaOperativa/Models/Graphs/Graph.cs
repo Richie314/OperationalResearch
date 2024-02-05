@@ -21,13 +21,19 @@ namespace OperationalResearch.Models
         public Graph(int n, IEnumerable<Edge>? edges)
         {
             N = n;
-            Edges = edges is null ? new List<Edge>() : edges.Order();
+            Edges = edges is null ? [] : edges.Order().ToList();
         }
-        public Graph(IEnumerable<Edge>? edges) : 
-            this(
-                (edges != null && edges.Any()) ? edges.Select(edge => Math.Max(edge.From, edge.To)).Max() : 0, 
-                edges)
+        public Graph(IEnumerable<Edge>? edges)
         {
+            if (edges is null)
+            {
+                Edges = [];
+                N = 0;
+            } else
+            {
+                Edges = edges.Order().ToList();
+                N = Edges.Select(edge => Math.Max(edge.From, edge.To)).Max() + 1;
+            }
         }
         public Matrix BuildMatrix(bool Symmetric = false)
         {
@@ -44,14 +50,30 @@ namespace OperationalResearch.Models
                     m[edge.To, edge.From] = edge.Cost;
                 }
             }
-            foreach (Edge edge in Edges)
+            return new Matrix(m);
+        }
+        public Dictionary<int, HashSet<int>> GetConnectionDictionary(bool symmetric)
+        {
+            Dictionary<int, HashSet<int>> dict = new();
+            foreach (var Edge in Edges)
             {
-                if (m[edge.To, edge.From].IsZero && Symmetric)
+                if (Edge.Type == Edge.EdgeType.Disabled) continue;
+                if (!dict.ContainsKey(Edge.From))
                 {
-                    m[edge.To, edge.From] = edge.Cost;
+                    dict[Edge.From] = new();
+                }
+                dict[Edge.From].Add(Edge.To);
+
+                if (symmetric)
+                {
+                    if (!dict.ContainsKey(Edge.To))
+                    {
+                        dict[Edge.To] = new();
+                    }
+                    dict[Edge.To].Add(Edge.From);
                 }
             }
-            return new Matrix(m);
+            return dict;
         }
         public static Graph FromMatrix(Matrix m, bool makeSymmetric = false)
         {
@@ -60,7 +82,7 @@ namespace OperationalResearch.Models
             {
                 throw new ArgumentException($"Invalid ({m.Rows}x{m.Cols}) matrix of edges!");
             }
-            List<Edge> edges = new List<Edge>();
+            List<Edge> edges = [];
             for (int i = 0; i < m.Rows; i++)
             {
                 for (int j = 0; j < m.Cols; j++)
@@ -77,12 +99,12 @@ namespace OperationalResearch.Models
             }
             return new Graph(m.Rows, edges);
         }
-        private Edge? FindEdge(int from , int to)
+        protected Edge? FindEdge(int from , int to)
         {
             int? matchIndex = Edges.ToArray().FirstOrNull(edge => edge.From == from && edge.To == to);
             return matchIndex.HasValue ? Edges.ElementAt(matchIndex.Value) : null;
         }
-        public Fraction Cost(IEnumerable<int> nodes, bool missingEdgesValid = false)
+        public Fraction Cost(IEnumerable<int> nodes, bool bidirectional = false)
         {
             ArgumentNullException.ThrowIfNull(nodes, nameof(nodes));
             if (nodes.Count() <= 1)
@@ -90,20 +112,15 @@ namespace OperationalResearch.Models
                 return Fraction.Zero;
             }
             var edge = FindEdge(from: nodes.First(), to: nodes.ElementAt(1));
+            edge ??= bidirectional ? FindEdge(to: nodes.First(), from: nodes.ElementAt(1)) : edge;
             if (edge is null)
             {
-                if (missingEdgesValid)
-                {
-                    edge = new Edge(Fraction.Zero, from: nodes.First(), to: nodes.ElementAt(1));
-                } else
-                {
-                    throw new Exception(
-                        $"Path invalid, impossible to go from {nodes.First()} to {nodes.ElementAt(1)}!");
-                }
+                throw new Exception(
+                    $"Path invalid, impossible to go from {nodes.First() + 1} to {nodes.ElementAt(1) + 1}!");
             }
-            return edge.Cost + Cost(nodes.Skip(1), missingEdgesValid);
+            return edge.Cost + Cost(nodes.Skip(1), bidirectional);
         }
-        public Fraction Cost(IEnumerable<Edge>? edges)
+        public static Fraction Cost(IEnumerable<Edge>? edges)
         {
             if (edges is null || !edges.Any())
             {
@@ -112,7 +129,7 @@ namespace OperationalResearch.Models
 
             return edges.First().Cost + Cost(edges.Skip(1));
         }
-        public IEnumerable<Edge>? GetEdges(IEnumerable<int> nodes)
+        public IEnumerable<Edge>? GetEdges(IEnumerable<int> nodes, bool bidirectional = false)
         {
             ArgumentNullException.ThrowIfNull(nodes, nameof(nodes));
             if (nodes.Count() <= 1)
@@ -120,11 +137,12 @@ namespace OperationalResearch.Models
                 return Enumerable.Empty<Edge>();
             }
             var edge = FindEdge(from: nodes.First(), to: nodes.ElementAt(1));
+            edge ??= bidirectional ? FindEdge(to: nodes.First(), from: nodes.ElementAt(1)) : edge;
             if (edge is null)
             {
                 return null;
             }
-            var rest = GetEdges(nodes.Skip(1));
+            var rest = GetEdges(nodes.Skip(1), bidirectional);
             if (rest is null)
             {
                 return null;
@@ -212,7 +230,7 @@ namespace OperationalResearch.Models
                         continue;
                     }
 
-                    if (cost < BestPermCost || BestPerm.Count() == 0)
+                    if (cost < BestPermCost || !BestPerm.Any())
                     {
                         BestPermCost = cost;
                         BestPerm = cyclePerm;
@@ -227,7 +245,67 @@ namespace OperationalResearch.Models
             return BestPerm.Any() ? BestPerm : null;
         }
         
-        
+        public bool HasCycle(bool symmetric = false)
+        {
+            if (!Edges.Any())
+            {
+                return false;
+            }
+            if (Edges.Count() == 1)
+            {
+                return Edges.First().From == Edges.First().To;
+            }
+            return FindAllCycles(symmetric).Any();
+        }
+
+        private List<List<int>> FindAllCycles(bool symmetric)
+        {
+            List<List<int>> cycles = new List<List<int>>();
+            var dict = GetConnectionDictionary(symmetric);
+
+            foreach (int node in dict.Keys)
+            {
+                List<int> visited = [node];
+
+                FindCyclesDFS(node, node, visited, cycles, dict);
+            }
+
+            return cycles;
+        }
+
+        // <summary>
+        // Depth-first search (DFS) algorithm to find cycles in the graph.
+        // </summary>
+        // <param name="startNode">The starting node of the current DFS traversal.</param>
+        // <param name="currentNode">The current node being visited.</param>
+        // <param name="visited">A list of visited nodes in the current DFS traversal.</param>
+        // <param name="cycles">A list to store the found cycles.</param>
+        private void FindCyclesDFS(
+            int startNode, int currentNode, 
+            List<int> visited, List<List<int>> cycles,
+            Dictionary<int, HashSet<int>> dict)
+        {
+            if (!dict.ContainsKey(currentNode))
+            {
+                return;
+            }
+            foreach (int neighbor in dict[currentNode])
+            {
+                if (visited.Contains(neighbor))
+                {
+                    if (visited.Count >= 3 && neighbor == startNode)
+                    {
+                        cycles.Add(new List<int>(visited));
+                    }
+                }
+                else
+                {
+                    visited.Add(neighbor);
+                    FindCyclesDFS(startNode, neighbor, visited, cycles, dict);
+                    visited.Remove(neighbor);
+                }
+            }
+        }
 
     }
 

@@ -5,19 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using Accord.Math;
 using OperationalResearch.Models;
-using static IronPython.Modules._ast;
 
 namespace OperationalResearch.Extensions
 {
     public static class EnumerablesExtensions
     {
-        public static bool HasCycle(this IEnumerable<Graph.Edge> edges)
-        {
-            ArgumentNullException.ThrowIfNull(edges);
-            var visitedNodes = edges.VisitedNodes();
-            return visitedNodes.Any() && visitedNodes.Count() > visitedNodes.Distinct().Count();
-        }
-
         public static IEnumerable<int> VisitedNodes(this IEnumerable<Graph.Edge> edges)
         {
             ArgumentNullException.ThrowIfNull(edges);
@@ -69,6 +61,25 @@ namespace OperationalResearch.Extensions
             // nextNode will be the first element of the sub problem
             return new int[] { currNode }.Concat(nextArr.VisitedNodes());
         }
+        public static Dictionary<int, int> MentionedNodes(this IEnumerable<Graph.Edge> edges)
+        {
+            Dictionary<int, int> seen = new();
+            foreach (var edge in edges)
+            {
+                if (!seen.ContainsKey(edge.From))
+                {
+                    seen.Add(edge.From, 0);
+                }
+                if (!seen.ContainsKey(edge.To))
+                {
+                    seen.Add(edge.To, 0);
+                }
+                seen[edge.From]++;
+                seen[edge.To]++;
+            }
+            return seen;
+        }
+        
         public static IEnumerable<Graph.Edge> OrderByCost(this IEnumerable<Graph.Edge> edges)
         {
             return edges.OrderBy(e => e.Cost);

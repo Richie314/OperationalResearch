@@ -14,6 +14,10 @@ namespace OperationalResearch.Models.Graphs
         {
             c = BuildMatrix(makeSymmetric);
         }
+        public TSP(Graph g, bool makeSymmetric) : base(g.N, g.Edges)
+        {
+            c = BuildMatrix(makeSymmetric);
+        }
         private readonly Matrix c;
         public async Task<bool> HamiltonCycleFlow(StreamWriter? Writer = null)
         {
@@ -69,7 +73,7 @@ namespace OperationalResearch.Models.Graphs
             }
             return FoundCycle;
         }
-        public async Task<IEnumerable<Edge>?> BestHamiltonCycle()
+        public Task<IEnumerable<Edge>?> BestHamiltonCycle()
         {
             throw new NotImplementedException();
         }
@@ -125,7 +129,7 @@ namespace OperationalResearch.Models.Graphs
             }
         }
 
-        public async Task<IEnumerable<Edge>?> NearestNodeUpperEstimate(
+        public async Task<IEnumerable<int>?> NearestNodeUpperEstimate(
             StreamWriter Writer, int? startingNode)
         {
             var NodesToStart = startingNode.HasValue ?
@@ -166,7 +170,7 @@ namespace OperationalResearch.Models.Graphs
                 await Writer.WriteLineAsync(
                         $"Cycle: {string.Join('-', nodes.Select(node => (node + 1).ToString()))}");
 
-                Fraction currCost = Cost(nodes);
+                Fraction currCost = Cost(nodes, bidirectional: true);
                 await Writer.WriteLineAsync($"has cost {Function.Print(currCost)}");
                 if (bestCycle is null)
                 {
@@ -180,7 +184,7 @@ namespace OperationalResearch.Models.Graphs
                 }
             }
 
-            if (bestCycle is null)
+            if (bestCycle is null || !bestCycle.Any())
             {
                 await Writer.WriteLineAsync($"No cycle found!");
                 return null;
@@ -190,9 +194,7 @@ namespace OperationalResearch.Models.Graphs
                 $"Best cycle is: {string.Join('-', bestCycle.Select(node => (node + 1).ToString()))}");
             await Writer.WriteLineAsync($"Best cost is: {Function.Print(bestCost)}");
 
-            return Enumerable.Range(0, bestCycle.Count)
-                .Select(i => new Edge(Fraction.One,
-                    bestCycle[i], bestCycle[(i + 1) % bestCycle.Count]));
+            return bestCycle;
         }
 
 

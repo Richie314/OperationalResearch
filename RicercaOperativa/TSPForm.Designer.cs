@@ -35,6 +35,8 @@
             setNumBtn = new Button();
             findHamiltonCycleBtn = new Button();
             considerSymmetric = new CheckBox();
+            showKTreeBtn = new Button();
+            nearestNodeBtn = new Button();
             ((System.ComponentModel.ISupportInitialize)matrix).BeginInit();
             ((System.ComponentModel.ISupportInitialize)n).BeginInit();
             SuspendLayout();
@@ -44,9 +46,9 @@
             label1.AutoSize = true;
             label1.Location = new Point(24, 22);
             label1.Name = "label1";
-            label1.Size = new Size(99, 15);
+            label1.Size = new Size(100, 15);
             label1.TabIndex = 0;
-            label1.Text = "Number of edges";
+            label1.Text = "Number of nodes";
             // 
             // matrix
             // 
@@ -90,7 +92,7 @@
             findHamiltonCycleBtn.Location = new Point(10, 300);
             findHamiltonCycleBtn.Margin = new Padding(3, 2, 3, 2);
             findHamiltonCycleBtn.Name = "findHamiltonCycleBtn";
-            findHamiltonCycleBtn.Size = new Size(329, 38);
+            findHamiltonCycleBtn.Size = new Size(157, 38);
             findHamiltonCycleBtn.TabIndex = 4;
             findHamiltonCycleBtn.Text = "Find Hamiltonian Cycle";
             findHamiltonCycleBtn.UseVisualStyleBackColor = true;
@@ -100,6 +102,8 @@
             // 
             considerSymmetric.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             considerSymmetric.AutoSize = true;
+            considerSymmetric.Checked = true;
+            considerSymmetric.CheckState = CheckState.Checked;
             considerSymmetric.Location = new Point(462, 312);
             considerSymmetric.Name = "considerSymmetric";
             considerSymmetric.Size = new Size(194, 19);
@@ -107,11 +111,35 @@
             considerSymmetric.Text = "Consider Problem as symmetric";
             considerSymmetric.UseVisualStyleBackColor = true;
             // 
+            // showKTreeBtn
+            // 
+            showKTreeBtn.Cursor = Cursors.Hand;
+            showKTreeBtn.Location = new Point(175, 300);
+            showKTreeBtn.Name = "showKTreeBtn";
+            showKTreeBtn.Size = new Size(115, 38);
+            showKTreeBtn.TabIndex = 7;
+            showKTreeBtn.Text = "Show K-Tree";
+            showKTreeBtn.UseVisualStyleBackColor = true;
+            showKTreeBtn.Click += showKTreeBtn_Click;
+            // 
+            // nearestNodeBtn
+            // 
+            nearestNodeBtn.Cursor = Cursors.Hand;
+            nearestNodeBtn.Location = new Point(299, 301);
+            nearestNodeBtn.Name = "nearestNodeBtn";
+            nearestNodeBtn.Size = new Size(115, 37);
+            nearestNodeBtn.TabIndex = 8;
+            nearestNodeBtn.Text = "Nearest Node";
+            nearestNodeBtn.UseVisualStyleBackColor = true;
+            nearestNodeBtn.Click += nearestNodeBtn_Click;
+            // 
             // TSPForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(700, 346);
+            Controls.Add(nearestNodeBtn);
+            Controls.Add(showKTreeBtn);
             Controls.Add(considerSymmetric);
             Controls.Add(findHamiltonCycleBtn);
             Controls.Add(setNumBtn);
@@ -137,5 +165,7 @@
         private Button setNumBtn;
         private Button findHamiltonCycleBtn;
         private CheckBox considerSymmetric;
+        private Button showKTreeBtn;
+        private Button nearestNodeBtn;
     }
 }

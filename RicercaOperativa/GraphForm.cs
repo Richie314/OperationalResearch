@@ -9,26 +9,57 @@ using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using OperationalResearch.Models;
 
 namespace RicercaOperativa
 {
     public partial class GraphForm : Form
     {
-        public GraphForm()
+        private readonly Graph GraphToShow;
+        public GraphForm(Graph graphToDisplay)
         {
             InitializeComponent();
+            GraphToShow = graphToDisplay;
+
             graphViewer = new Microsoft.Msagl.GraphViewerGdi.GViewer();
             //create a graph object 
             Microsoft.Msagl.Drawing.Graph graph = new("graph");
             //create the graph content 
-            graph.AddEdge("A", "B");
-            graph.AddEdge("B", "C");
-            graph.AddEdge("A", "C").Attr.Color = Microsoft.Msagl.Drawing.Color.Green;
-            graph.FindNode("A").Attr.FillColor = Microsoft.Msagl.Drawing.Color.Magenta;
-            graph.FindNode("B").Attr.FillColor = Microsoft.Msagl.Drawing.Color.MistyRose;
-            Microsoft.Msagl.Drawing.Node c = graph.FindNode("C");
-            c.Attr.FillColor = Microsoft.Msagl.Drawing.Color.PaleGreen;
-            c.Attr.Shape = Microsoft.Msagl.Drawing.Shape.Diamond;
+            foreach (var Edge in graphToDisplay.Edges)
+            {
+                var e = graph.AddEdge(
+                    (Edge.From + 1).ToString(), Function.Print(Edge.Cost), (Edge.To + 1).ToString());
+                switch (Edge.Type)
+                {
+                    case Graph.Edge.EdgeType.Standard:
+                        e.Attr.LineWidth = 1;
+                        e.Attr.Weight = 1;
+                        e.Attr.Color = Microsoft.Msagl.Drawing.Color.Blue;
+                        break;
+                    case Graph.Edge.EdgeType.Required:
+                        e.Attr.LineWidth = 2;
+                        e.Attr.Weight = 2;
+                        e.Attr.Color = Microsoft.Msagl.Drawing.Color.Green;
+                        break;
+                    case Graph.Edge.EdgeType.Disabled:
+                        e.Attr.LineWidth = 1;
+                        e.Attr.Weight = 2;
+                        e.Attr.Color = Microsoft.Msagl.Drawing.Color.Red;
+                        break;
+                }
+            }
+            foreach (var Node in graph.Nodes)
+            {
+                if (Node.Id == "0")
+                {
+                    Node.Attr.FillColor = Microsoft.Msagl.Drawing.Color.PaleGreen;
+                    Node.Attr.Shape = Microsoft.Msagl.Drawing.Shape.Diamond;
+                } else
+                {
+                    Node.Attr.FillColor = Microsoft.Msagl.Drawing.Color.AntiqueWhite;
+                }
+            }
+            
             //bind the graph to the viewer 
             graphViewer.Graph = graph;
         }

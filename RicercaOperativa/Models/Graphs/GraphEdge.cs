@@ -10,7 +10,7 @@ namespace OperationalResearch.Models
 {
     partial class Graph
     {
-        public class Edge
+        public class Edge : IComparable<Edge>
         {
             [Range(0, int.MaxValue)]
             public int From, To;
@@ -61,7 +61,38 @@ namespace OperationalResearch.Models
             {
                 return a.From != b.From || a.To != b.To;
             }
+            public int CompareTo(Edge? other)
+            {
+                if (other is null)
+                {
+                    if (this is null)
+                    {
+                        return 0;
+                    }
+                    return -1;
+                }
+                return this < other ? (-1) : (this == other ? 0 : 1);
+            }
 
+            public override bool Equals(object? obj)
+            {
+                if (ReferenceEquals(this, obj))
+                {
+                    return true;
+                }
+
+                if (obj is null)
+                {
+                    return false;
+                }
+
+                throw new NotImplementedException();
+            }
+
+            public override int GetHashCode()
+            {
+                return base.GetHashCode();
+            }
         }
     }
 }

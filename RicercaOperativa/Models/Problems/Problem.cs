@@ -59,5 +59,17 @@ namespace OperationalResearch.Models
             Solver.SetSecondVector(vecC);
             return await Task.Run(() => Solver.SolveMaxAsync(loggers));
         }
+        public Fraction[,] getMainMatrix()
+        {
+            return matrix;
+        }
+        public Vector getMainVetcor()
+        {
+            return vecB;
+        }
+        public Vector getSecondVetcor()
+        {
+            return vecC;
+        }
     }
 }

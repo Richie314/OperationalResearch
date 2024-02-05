@@ -10,15 +10,15 @@ namespace OperationalResearch.Models.Problems
 {
     internal class TravellingSalesmanProblemSolver(bool symmetric = false) : IntegerLinearProgramming
     {
-        private bool Symmetric = symmetric;
+        private readonly bool Symmetric = symmetric;
         public override Task<bool> SolveMaxAsync(IEnumerable<StreamWriter?> loggers)
         {
             throw new NotImplementedException("Only lowest cost cycle can be found!");
         }
         public override async Task<bool> SolveMinAsync(IEnumerable<StreamWriter?> loggers)
         {
-            TSP tsp = (TSP)Graph.FromMatrix(new Matrix(c), makeSymmetric: Symmetric);
-            return await tsp.HamiltonCycleFlow(loggers.FirstOrDefault());
+            return await GetGraph.HamiltonCycleFlow(loggers.FirstOrDefault());
         }
+        public TSP GetGraph { get => new(g: Graph.FromMatrix(new Matrix(c), false), makeSymmetric: Symmetric); }
     }
 }

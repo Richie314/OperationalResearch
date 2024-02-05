@@ -32,7 +32,7 @@ namespace OperationalResearch
                 if (i == 0)
                 {
                     matrix.Columns[i].Name = "From\\To";
-                    matrix.Columns[i].Width = 200;
+                    matrix.Columns[i].Width = 180;
                     continue;
                 }
                 matrix.Columns[i].Name = i.ToString();
@@ -83,10 +83,10 @@ namespace OperationalResearch
             Form.Show();
 
             Problem p = new(
-                solver: new TravellingSalesmanProblemSolver(),
+                solver: new TravellingSalesmanProblemSolver(considerSymmetric.Checked),
                 sMatrix: mainGridStr,
-                sVecB: new string[0],
-                sVecC: new string[0]);
+                sVecB: [],
+                sVecC: []);
             if (await p.SolveMin(loggers: new StreamWriter?[] { Form.Writer }))
             {
                 MessageBox.Show(
@@ -127,7 +127,7 @@ namespace OperationalResearch
                 List<string> currRow = [];
                 for (int col = 1; col < matrix.ColumnCount; col++)
                 {
-                    containsBlank = containsBlank || string.IsNullOrWhiteSpace((string)matrix[col, row].Value);
+                    containsBlank |= string.IsNullOrWhiteSpace((string)matrix[col, row].Value);
                     currRow.Add((string)matrix[col, row].Value);
                 }
                 list.Add([.. currRow]);
@@ -150,6 +150,96 @@ namespace OperationalResearch
             return [.. list];
         }
 
+        private async void showKTreeBtn_Click(object sender, EventArgs e)
+        {
+            string input = Microsoft.VisualBasic.Interaction.InputBox(
+                "K = ", "Chose the node to exclude", string.Empty, 0, 0);
+            if (string.IsNullOrWhiteSpace(input) || !int.TryParse(input, out int value))
+            {
+                return;
+            }
+            value -= 1;
+            if (value < 0 || value >= N)
+            {
+                return;
+            }
+            findHamiltonCycleBtn.Enabled = false;
+            string[][]? mainGridStr = MainGridStr();
+            if (mainGridStr is null || mainGridStr.Length == 0)
+            {
+                findHamiltonCycleBtn.Enabled = true;
+                return;
+            }
+            var solver = new TravellingSalesmanProblemSolver(considerSymmetric.Checked);
+            var problem = new Problem(mainGridStr, [], [], solver);
+            solver.SetMainMatrix(problem.getMainMatrix());
+
+            var Form = new ProblemForm();
+            void closeFormCallback(object? sender, FormClosedEventArgs e)
+            {
+                findHamiltonCycleBtn.Enabled = true;
+            };
+            Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
+            Form.Show();
+
+            var g = await solver.GetGraph.FindKTree(value, considerSymmetric.Checked, Form.Writer);
+            if (g is null)
+            {
+                findHamiltonCycleBtn.Enabled = true;
+                return;
+            }
+
+            new GraphForm(new Graph(g)).Show(Form);
+        }
+
+        private async void nearestNodeBtn_Click(object sender, EventArgs e)
+        {
+            string input = Microsoft.VisualBasic.Interaction.InputBox(
+                "Starting node = ", "Chose the node to start from", string.Empty, 0, 0);
+            if (string.IsNullOrWhiteSpace(input) || !int.TryParse(input, out int value))
+            {
+                return;
+            }
+            value -= 1;
+            if (value < 0 || value >= N)
+            {
+                return;
+            }
+            findHamiltonCycleBtn.Enabled = false;
+            string[][]? mainGridStr = MainGridStr();
+            if (mainGridStr is null || mainGridStr.Length == 0)
+            {
+                findHamiltonCycleBtn.Enabled = true;
+                return;
+            }
+            var solver = new TravellingSalesmanProblemSolver(considerSymmetric.Checked);
+            var problem = new Problem(mainGridStr, [], [], solver);
+            solver.SetMainMatrix(problem.getMainMatrix());
+
+            var Form = new ProblemForm();
+            void closeFormCallback(object? sender, FormClosedEventArgs e)
+            {
+                findHamiltonCycleBtn.Enabled = true;
+            };
+            Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
+            Form.Show();
+
+            var G = solver.GetGraph;
+            var g = await G.NearestNodeUpperEstimate(Form.Writer, value);
+            if (g is null)
+            {
+                findHamiltonCycleBtn.Enabled = true;
+                return;
+            }
+            var edges = G.GetEdges(g, considerSymmetric.Checked);
+            if (edges is null)
+            {
+                findHamiltonCycleBtn.Enabled = true;
+                return;
+            }
+
+            new GraphForm(new Graph(N, edges)).Show(Form);
+        }
     }
 
 }
