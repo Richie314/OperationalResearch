@@ -65,6 +65,12 @@ namespace OperationalResearch.Models
         {
             get => v;
         }
+        public Vector Concat(Vector? x2)
+        {
+            if (x2 is null || x2.Size == 0)
+                return this;
+            return Get.Concat(x2.Get).ToArray();
+        }
         public static Vector operator + (Vector a, Vector b)
         {
             ArgumentNullException.ThrowIfNull(a);
@@ -334,6 +340,33 @@ namespace OperationalResearch.Models
         public override string ToString()
         {
             return "( " + string.Join(", ", v.Select( x => Function.Print(x))) + " )";
+        }
+
+        public static Vector Sum(IEnumerable<Vector> vectors)
+        {
+            ArgumentNullException.ThrowIfNull(vectors);
+            if (!vectors.Any())
+            {
+                throw new ArgumentException("Requested sum of empty collection");
+            }
+            if (vectors.Count() == 1)
+            {
+                return vectors.First();
+            }
+            return vectors.First() + Sum(vectors.Skip(1));
+        }
+        public Fraction SumOfComponents()
+        {
+            if (Size == 0)
+            {
+                return Fraction.Zero;
+            }
+            Fraction fraction = Fraction.Zero;
+            for (int i = 0; i < Size; i++)
+            {
+                fraction += this[i];
+            }
+            return fraction;
         }
     }
 }

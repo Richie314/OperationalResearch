@@ -124,14 +124,15 @@ namespace OperationalResearch.Models
         {
             ArgumentNullException.ThrowIfNull(Writer);
             var a = GetA();
+            var VectorB = GetB();
 
-            int[] B = startBase ?? FindStartBase(a, GetB(), c, true); B.Sort();
+            int[] B = startBase ?? FindStartBase(a, VectorB, c, true); B.Sort();
             int[] N = a.RowsIndeces.Where(i => !B.Contains(i)).ToArray();
 
             await Writer.WriteLineAsync("Start:");
             await Writer.WriteLineAsync($"c = {c}");
             await Writer.WriteLineAsync($"A = {a}");
-            await Writer.WriteLineAsync($"b = {GetB()}");
+            await Writer.WriteLineAsync($"b = {VectorB}");
             await Writer.WriteLineAsync();
 
             await Writer.WriteLineAsync($"B = {Function.Print(B)}");
@@ -154,23 +155,25 @@ namespace OperationalResearch.Models
                 await Writer.WriteLineAsync($"A_N = {A_N}");
                 if (A_B.Det.IsZero)
                 {
-                    throw new ArgumentException($"Base {Function.Print(B)} is invalid: Det(A_B) = 0");
+                    throw new ArgumentException($"Basis {Function.Print(B)} is invalid: Det(A_B) = 0");
                 }
                 Matrix A_B_inv = A_B.Inv;
                 await Writer.WriteLineAsync($"A_B^-1 = {A_B_inv}");
                 await Writer.WriteLineAsync();
 
-                Vector b_B = GetB()[B];
-                Vector b_N = GetB()[N];
+                Vector b_B = VectorB[B];
+                Vector b_N = VectorB[N];
                 await Writer.WriteLineAsync($"b_B = {b_B}");
                 await Writer.WriteLineAsync($"b_N = {b_N}");
                 await Writer.WriteLineAsync();
 
                 Vector x = A_B_inv * b_B;
                 await Writer.WriteLineAsync($"x = {x}");
-                if (A_N * x <= b_N)
+                var A_N_X = A_N * x;
+                if (A_N_X <= b_N)
                 {
                     await Writer.WriteLineAsync($"x is acceptable");
+
                 } else
                 {
                     // Non acceptable solution
@@ -178,6 +181,21 @@ namespace OperationalResearch.Models
                         $"Solution x = {x}  of base B = {Function.Print(B)} is not acceptable");
                 }
                 await Writer.WriteLineAsync();
+
+                var zeroIndeces = A_N_X.ZeroIndexes;
+                if (zeroIndeces.Length != 0)
+                {
+                    await Writer.WriteLineAsync($"x is degenearate: solution also of other basis");
+                    foreach (var i in zeroIndeces)
+                    {
+                        if (!N.Contains(i))
+                        {
+                            await Writer.WriteLineAsync($"\tThe {i}-th element of N also verifies the current vertex. It was impossible, however, to find that element in N");
+                            continue;
+                        }
+                        await Writer.WriteLineAsync($"\tIndex {N[i]} in N is also verified");
+                    }
+                }
 
 
                 Vector Y_B = (c.Row * A_B_inv)[0]; // Get first row of one row matrix
@@ -190,11 +208,11 @@ namespace OperationalResearch.Models
 
                     try
                     {
-                        await Gomory(Writer, a, x, B);
+                        await Gomory(Writer, a, VectorB, x, B, addPositive);
                     } catch (Exception ex)
                     {
                         await Writer.WriteLineAsync(
-                            "Error in calculating Gpmory: " + ex.Message);
+                            "Error in calculating Gomory plane: " + ex.Message);
                     }
 
                     return x;
@@ -217,7 +235,7 @@ namespace OperationalResearch.Models
                 }
 
 
-                int k = FindEnteringIndex(a, Wh, GetB(), x, N, out Fraction Theta);
+                int k = FindEnteringIndex(a, Wh, VectorB, x, N, out Fraction Theta);
                 await Writer.WriteLineAsync($"Theta = {Theta}");
                 await Writer.WriteLineAsync($"k = {k + 1}");
                 await Writer.WriteLineAsync();
@@ -230,7 +248,8 @@ namespace OperationalResearch.Models
 
                 if (maxIterations.HasValue && step > maxIterations.Value)
                 {
-                    throw new ApplicationException("Could not complete the calculation: max iteration limit exceeded");
+                    throw new ApplicationException(
+                        $"Could not complete the calculation: max iteration limit ({maxIterations.Value}) exceeded");
                 }
             }
 
@@ -461,21 +480,75 @@ namespace OperationalResearch.Models
         }
         private static async Task Gomory(
             StreamWriter Writer,
-            Matrix a, Vector Xrc, int[] BestBase)
+            Matrix a, Vector b, 
+            Vector Xrc, int[] BestBase,
+            bool addedPositivesRestriction)
         {
             IEnumerable<int> N = a.RowsIndeces.Where(i => !BestBase.Contains(i));
             await Writer.WriteLineAsync($"Calculating Gomory plane with B = {Function.Print(BestBase)}, N = {Function.Print(N)}");
 
-            Matrix aB_Inv = a[BestBase].Inv, a_N = a[N];
+            await Writer.WriteLineAsync($"Adding {a.Rows} variables");
+
+            var xRemain = Xrc.Concat(b - (a * Xrc)); // Added x_N+1, x_N+2, ...
+            await Writer.WriteLineAsync($"x of dual problem: {xRemain}");
+
+            int[] DualBase = xRemain.ZeroIndexes;
+            if (addedPositivesRestriction)
+            {
+                await Writer.WriteLineAsync($"You may ignore the last {a.Cols} element of the expanded solution");
+            }
+
+            Matrix aB_Inv = a[BestBase].Inv;
             await Writer.WriteLineAsync($"A^~ = {aB_Inv}");
 
             Matrix aB_Inv_Frac = new(aB_Inv.M.Apply(a => a.FractionPart()));
             await Writer.WriteLineAsync($"{{ A~ }} = {aB_Inv_Frac}");
 
             Vector XrcFrac = Xrc.Get.Select(x => x.FractionPart()).ToArray();
-            await Writer.WriteLineAsync($"{{ A~ }} * x_N >= {{ X_rc }} = {XrcFrac}");
+            await Writer.WriteLineAsync($"{{ X_rc }} = {XrcFrac}");
 
             await Writer.WriteLineAsync();
+            
+            for (int r = 0; r < XrcFrac.Size; r++)
+            {
+                await Writer.WriteAsync($"\tPlane from row {r + 1} of {{ A~ }}:");
+                var arr = aB_Inv_Frac[r].Get.Apply((arj, j) =>
+                {
+                    if (arj.IsZero)
+                    {
+                        return string.Empty;
+                    }
+                    return $"{Function.Print(arj)} * x{DualBase[j] + 1}";
+                }).Where(s => !string.IsNullOrEmpty(s));
+
+                if (!arr.Any())
+                {
+                    await Writer.WriteLineAsync($"0 >= {Function.Print(XrcFrac[r])}");
+                    continue;
+                }
+                await Writer.WriteLineAsync(
+                    string.Join(" + ", arr) + $" >= {Function.Print(XrcFrac[r])}");
+
+                Fraction bToSum = (
+                    (Vector)aB_Inv_Frac[r].Get.Apply((arj, j) => b[DualBase[j] - a.Cols] * arj)).SumOfComponents() - 
+                    XrcFrac[r];
+                Vector aToSum = Vector.Sum(
+                    aB_Inv_Frac[r].Get.Apply((arj, j) => arj * a[DualBase[j] - a.Cols]));
+                await Writer.WriteLineAsync(
+                    $"\tEquation to add: " +
+                        string.Join(" ", aToSum.Indices.Select(j =>
+                        {
+                            if (aToSum[j].IsZero)
+                            {
+                                return string.Empty;
+                            }
+                            return 
+                                (aToSum[j].IsPositive ? "+" : "")  + 
+                                $"{Function.Print(aToSum[j])} * x{j + 1}";
+                        }).Where(s => !string.IsNullOrEmpty(s))) + $" <= {Function.Print(bToSum)}"
+                    );
+            }
+            
         }
     }
 }

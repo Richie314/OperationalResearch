@@ -281,7 +281,22 @@ namespace OperationalResearch.Models
             }
             return new(a.m.InsertColumn(b.Get));
         }
-        
+        public static Matrix operator |(Matrix a, Matrix b)
+        {
+            ArgumentNullException.ThrowIfNull(a);
+            ArgumentNullException.ThrowIfNull(b);
+            if (a.Rows != b.Rows)
+            {
+                throw new ArgumentException($"Matrixes have incompatible sizes ({a.Rows} != {b.Rows})");
+            }
+            var m = a.m.Copy();
+            for (int i = 0; i < b.Cols; i++)
+            {
+                m = m.InsertColumn(b.Col(i));
+            }
+            return new(m);
+        }
+
         public Fraction[,] M { get => m; } 
     }
 }
