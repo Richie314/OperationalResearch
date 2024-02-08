@@ -281,7 +281,7 @@ namespace OperationalResearch.Models
             }
             return new(a.m.InsertColumn(b.Get));
         }
-        public static Matrix operator |(Matrix a, Matrix b)
+        public static Matrix operator | (Matrix a, Matrix b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);

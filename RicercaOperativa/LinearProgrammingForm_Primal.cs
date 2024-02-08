@@ -58,6 +58,55 @@ namespace RicercaOperativa
             functionGrid.Rows.Add(new string[VariablesCount]);
             startBaseInput.Clear();
         }
+        private void EditGrid()
+        {
+            while (matrix.Columns.Count > VariablesCount + 1)
+            {
+                matrix.Columns.RemoveAt(matrix.Columns.Count - 1);
+            }
+            while (matrix.Columns.Count < VariablesCount + 1)
+            {
+                matrix.Columns.Add(new DataGridViewColumn(matrix.Columns[0].CellTemplate));
+                matrix.Columns[matrix.Columns.Count - 1].Width = 50;
+                matrix.Columns[matrix.Columns.Count - 1].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            }
+
+            while (functionGrid.Columns.Count > VariablesCount)
+            {
+                functionGrid.Columns.RemoveAt(functionGrid.Columns.Count - 1);
+            }
+            while (functionGrid.Columns.Count < VariablesCount)
+            {
+                functionGrid.Columns.Add(new DataGridViewColumn(functionGrid.Columns[0].CellTemplate));
+                functionGrid.Columns[functionGrid.Columns.Count - 1].Width = 50;
+                functionGrid.Columns[functionGrid.Columns.Count - 1].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            }
+
+            for (int i = 0; i < matrix.ColumnCount; i++)
+            {
+                if (i < VariablesCount)
+                {
+                    matrix.Columns[i].Name = "x" + (i + 1).ToString();
+                    functionGrid.Columns[i].Name = "c" + (i + 1).ToString();
+                }
+                else
+                {
+                    matrix.Columns[i].Name = "b";
+                }
+            }
+
+            while (matrix.Rows.Count > EquationsCount)
+            {
+                matrix.Rows.RemoveAt(matrix.Rows.Count - 1);
+            }
+            while (matrix.Rows.Count < EquationsCount)
+            {
+                string[] row = new string[VariablesCount + 1];
+                matrix.Rows.Add(row);
+                matrix.Rows[matrix.Rows.Count - 1].Height = 20;
+            }
+
+        }
 
         private void LinearProgrammingForm_Load(object sender, EventArgs e)
         {
@@ -85,11 +134,11 @@ namespace RicercaOperativa
             {
                 EquationsCount = (int)equationsCountInput.Value;
                 VariablesCount = (int)variablesCountInput.Value;
-                GenerateGrid();
+                EditGrid();
             }
             catch (Exception err)
             {
-                MessageBox.Show(err.Message);
+                MessageBox.Show(this, err.Message, "An error happened", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
         }
 

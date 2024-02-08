@@ -63,6 +63,7 @@
             // 
             // label1
             // 
+            label1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label1.AutoSize = true;
             label1.Location = new Point(59, 19);
             label1.Name = "label1";
@@ -72,7 +73,7 @@
             // 
             // label2
             // 
-            label2.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            label2.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label2.AutoSize = true;
             label2.Location = new Point(291, 19);
             label2.Name = "label2";
@@ -82,6 +83,7 @@
             // 
             // variablesCountInput
             // 
+            variablesCountInput.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             variablesCountInput.Location = new Point(154, 17);
             variablesCountInput.Name = "variablesCountInput";
             variablesCountInput.Size = new Size(120, 23);
@@ -90,7 +92,7 @@
             // 
             // equationsCountInput
             // 
-            equationsCountInput.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            equationsCountInput.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             equationsCountInput.Location = new Point(392, 17);
             equationsCountInput.Name = "equationsCountInput";
             equationsCountInput.Size = new Size(120, 23);
@@ -99,7 +101,7 @@
             // 
             // resetTableBtn
             // 
-            resetTableBtn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            resetTableBtn.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             resetTableBtn.Cursor = Cursors.Hand;
             resetTableBtn.Location = new Point(543, 12);
             resetTableBtn.Name = "resetTableBtn";
@@ -122,7 +124,7 @@
             functionGrid.Name = "functionGrid";
             functionGrid.RowHeadersWidth = 50;
             functionGrid.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
-            functionGrid.Size = new Size(900, 52);
+            functionGrid.Size = new Size(900, 49);
             functionGrid.TabIndex = 9;
             // 
             // label3
@@ -136,7 +138,7 @@
             // 
             // startSimplexBtn
             // 
-            startSimplexBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            startSimplexBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             startSimplexBtn.Cursor = Cursors.Hand;
             startSimplexBtn.Location = new Point(25, 487);
             startSimplexBtn.Name = "startSimplexBtn";
@@ -148,7 +150,7 @@
             // 
             // startBaseInput
             // 
-            startBaseInput.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            startBaseInput.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             startBaseInput.Location = new Point(412, 503);
             startBaseInput.Name = "startBaseInput";
             startBaseInput.Size = new Size(503, 23);
@@ -156,7 +158,7 @@
             // 
             // label4
             // 
-            label4.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            label4.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label4.AutoSize = true;
             label4.Location = new Point(260, 508);
             label4.Name = "label4";
@@ -166,7 +168,7 @@
             // 
             // xNonNegativeCheckbox
             // 
-            xNonNegativeCheckbox.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            xNonNegativeCheckbox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             xNonNegativeCheckbox.AutoSize = true;
             xNonNegativeCheckbox.Checked = true;
             xNonNegativeCheckbox.CheckState = CheckState.Checked;
