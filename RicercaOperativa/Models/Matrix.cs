@@ -292,11 +292,14 @@ namespace OperationalResearch.Models
             var m = a.m.Copy();
             for (int i = 0; i < b.Cols; i++)
             {
-                m = m.InsertColumn(b.Col(i));
+                m = m.InsertColumn(b.Col(i).Get);
             }
             return new(m);
         }
-
+        public Matrix GetCols(IEnumerable<int> cols)
+        {
+            return T[cols].T;
+        }
         public Fraction[,] M { get => m; } 
     }
 }

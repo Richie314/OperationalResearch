@@ -71,7 +71,7 @@ namespace OperationalResearch.Models
                 return this;
             return Get.Concat(x2.Get).ToArray();
         }
-        public static Vector operator + (Vector a, Vector b)
+        public static Vector operator +(Vector a, Vector b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);
@@ -81,7 +81,7 @@ namespace OperationalResearch.Models
             }
             return a.Indices.Select(i => a[i] + b[i]).ToArray();
         }
-        public static Vector operator - (Vector a, Vector b)
+        public static Vector operator -(Vector a, Vector b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);
@@ -98,7 +98,7 @@ namespace OperationalResearch.Models
         /// <param name="b"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
-        public static Fraction operator * (Vector a, Vector b)
+        public static Fraction operator *(Vector a, Vector b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);
@@ -154,12 +154,12 @@ namespace OperationalResearch.Models
         /// <param name="b"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
-        public static Vector operator * (Fraction a, Vector b)
+        public static Vector operator *(Fraction a, Vector b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);
             Vector c = b.Get.Copy(); // Not copying the array causes the original to be overwritten
-            for (int i = 0; i <  c.Size; i++)
+            for (int i = 0; i < c.Size; i++)
             {
                 c[i] *= a;
             }
@@ -172,7 +172,7 @@ namespace OperationalResearch.Models
         /// <param name="b"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
-        public static Vector operator * (Vector a, Fraction b)
+        public static Vector operator *(Vector a, Fraction b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);
@@ -183,8 +183,8 @@ namespace OperationalResearch.Models
             }
             return c;
         }
-        
-        public static bool operator < (Vector a, Vector b)
+
+        public static bool operator <(Vector a, Vector b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);
@@ -194,7 +194,7 @@ namespace OperationalResearch.Models
             }
             return a.Indices.All(i => a[i] < b[i]);
         }
-        public static bool operator <= (Vector a, Vector b)
+        public static bool operator <=(Vector a, Vector b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);
@@ -205,7 +205,7 @@ namespace OperationalResearch.Models
             return a.Indices.All(i => a[i] <= b[i]);
         }
 
-        public static bool operator > (Vector a, Vector b)
+        public static bool operator >(Vector a, Vector b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);
@@ -215,7 +215,7 @@ namespace OperationalResearch.Models
             }
             return a.Indices.All(i => a[i] > b[i]);
         }
-        public static bool operator >= (Vector a, Vector b)
+        public static bool operator >=(Vector a, Vector b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);
@@ -225,8 +225,8 @@ namespace OperationalResearch.Models
             }
             return a.Indices.All(i => a[i] >= b[i]);
         }
-        
-        public static bool operator == (Vector a, Vector b)
+
+        public static bool operator ==(Vector a, Vector b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);
@@ -236,7 +236,7 @@ namespace OperationalResearch.Models
             }
             return a.Indices.All(i => a[i] == b[i]);
         }
-        public static bool operator != (Vector a, Vector b)
+        public static bool operator !=(Vector a, Vector b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);
@@ -339,7 +339,7 @@ namespace OperationalResearch.Models
         }
         public override string ToString()
         {
-            return "( " + string.Join(", ", v.Select( x => Function.Print(x))) + " )";
+            return "( " + string.Join(", ", v.Select(x => Function.Print(x))) + " )";
         }
 
         public static Vector Sum(IEnumerable<Vector> vectors)

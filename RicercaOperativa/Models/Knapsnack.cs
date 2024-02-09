@@ -16,7 +16,7 @@ namespace OperationalResearch.Models
             public Fraction Value { get; set; }
             public Fraction Weight { get; set; }
             public Fraction Volume { get; set; }
-            public Item(Fraction value,  Fraction weight, Fraction volume, string label)
+            public Item(Fraction value, Fraction weight, Fraction volume, string label)
             {
                 ArgumentNullException.ThrowIfNull(value, nameof(value));
                 ArgumentNullException.ThrowIfNull(weight, nameof(weight));
@@ -45,12 +45,12 @@ namespace OperationalResearch.Models
         private readonly Fraction TotalVolume, TotalWeight;
         private readonly Item[] Items;
         public int N { get => Items.Length; }
-        public Vector Values {  get => Items.Select(x => x.Value).ToArray(); }
-        public Vector Weights { get => Items.Select(x =>x.Weight).ToArray(); }
+        public Vector Values { get => Items.Select(x => x.Value).ToArray(); }
+        public Vector Weights { get => Items.Select(x => x.Weight).ToArray(); }
         public Vector Volumes { get => Items.Select(x => x.Volume).ToArray(); }
         public IEnumerable<string> Labels { get => Items.Select(x => x.Label); }
         public Knapsnack(
-            Fraction volume, Fraction weight, 
+            Fraction volume, Fraction weight,
             Vector weights, Vector values, Vector volumes, string[]? labels = null)
         {
             ArgumentNullException.ThrowIfNull(volume, nameof(volume));
@@ -71,7 +71,7 @@ namespace OperationalResearch.Models
                 throw new ArgumentException("Max weight can't be negative");
             }
 
-            if (weights.Size !=  values.Size)
+            if (weights.Size != values.Size)
             {
                 throw new ArgumentException(
                     $"Dimension of the weights vector must be equal to the one of the values vector ({weights.Size} != {values.Size})");
@@ -194,7 +194,7 @@ namespace OperationalResearch.Models
 
                 case OrderCriteria.ByValueWeightRatio:
                     await Writer.WriteLineAsync("Ordering products in descending order by value / weight ratio");
-                    return Enumerable.Range(0, N).OrderBy(i => { 
+                    return Enumerable.Range(0, N).OrderBy(i => {
                         if (Items[i].Weight.IsZero)
                         {
                             return new Fraction(int.MaxValue);
@@ -320,7 +320,7 @@ namespace OperationalResearch.Models
             Fraction bestVal = Fraction.Zero;
             await Writer.WriteLineAsync("Recursive solver starting now...");
             int calls = RecursiveSolver(
-                ref count, ref best, ref bestVal, 
+                ref count, ref best, ref bestVal,
                 0, Fraction.Zero, TotalWeight, TotalVolume);
             await Writer.WriteLineAsync($"{calls} recursions done.");
             await Writer.WriteLineAsync($"Best solution = {Function.Print(best, false)}");
@@ -328,13 +328,13 @@ namespace OperationalResearch.Models
             return best;
         }
         private int RecursiveSolver(
-            ref int[] count, 
-            ref int[] best, 
-            ref Fraction best_val, 
-            int i, 
+            ref int[] count,
+            ref int[] best,
+            ref Fraction best_val,
+            int i,
             Fraction Value, Fraction Weight, Fraction Volume)
         {
-            
+
             if (i == N)
             {
                 if (Value > best_val)
@@ -344,9 +344,9 @@ namespace OperationalResearch.Models
                 }
                 return 1;
             }
-            int countW = Items[i].Weight.IsZero ? 
+            int countW = Items[i].Weight.IsZero ?
                 int.MaxValue : (int)(Weight / Items[i].Weight).Floor();
-            int countV = Items[i].Volume.IsZero ? 
+            int countV = Items[i].Volume.IsZero ?
                 int.MaxValue : (int)(Volume / Items[i].Volume).Floor();
             int callsDone = 0;
             for (count[i] = Math.Min(countW, countV); count[i] >= 0; count[i]--)
@@ -391,7 +391,7 @@ namespace OperationalResearch.Models
                 return null;
             }
             var X = "[ " + string.Join(", ", ChosenX.Select(x => x ? "1" : "0").Concat(Enumerable.Repeat("?", N - ChosenX.Length))) + " ]";
-            
+
             try
             {
                 var SubProblem = GetSubProblem(ChosenX.Select(x => x ? 1 : 0).ToArray());
@@ -442,7 +442,8 @@ namespace OperationalResearch.Models
                 }
                 await Writer.WriteLineAsync($"{pad}Branch {X} -> {Function.Print(Gain(Next1Res))}");
                 return Next1Res;
-            } catch (ArgumentException)
+            }
+            catch (ArgumentException)
             {
                 return null;
             }
@@ -459,7 +460,8 @@ namespace OperationalResearch.Models
                 {
                     exitValue = false;
                     await Writer.WriteLineAsync("Could not find solution to the problem");
-                } else
+                }
+                else
                 {
                     await Writer.WriteLineAsync($"Solution X = {Function.Print(x, false)}");
                     await Writer.WriteLineAsync($"Gain = {Function.Print(Gain(x))}");

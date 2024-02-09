@@ -66,7 +66,8 @@ namespace OperationalResearch.Models
             if (max)
             {
                 objective.SetMaximization();
-            } else
+            }
+            else
             {
                 objective.SetMinimization();
             }
@@ -111,7 +112,8 @@ namespace OperationalResearch.Models
                 await Writer.WriteLineAsync($"Solution X = {Function.Print(sol, false)}");
                 await Writer.WriteLineAsync($"c * X = {Function.Print(c * sol.Select(x => new Fraction(x)).ToArray())}");
                 return true;
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
 #if DEBUG

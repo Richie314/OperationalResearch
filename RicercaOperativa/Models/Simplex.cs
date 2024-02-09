@@ -484,41 +484,66 @@ namespace OperationalResearch.Models
             Vector Xrc, int[] BestBase,
             bool addedPositivesRestriction)
         {
-            IEnumerable<int> N = a.RowsIndeces.Where(i => !BestBase.Contains(i));
-            await Writer.WriteLineAsync($"Calculating Gomory plane with B = {Function.Print(BestBase)}, N = {Function.Print(N)}");
+            await Writer.WriteLineAsync(
+                $"Calculating Gomory plane with primary B = {Function.Print(BestBase)}");
 
+            if (!addedPositivesRestriction)
+            {
+                throw new NotImplementedException();
+            }
+
+            a = a[Enumerable.Range(0, a.Rows - a.Cols)];
+            b = b[Enumerable.Range(0, a.Rows)];
             await Writer.WriteLineAsync($"Adding {a.Rows} variables");
+
+            Matrix dualM = a | Matrix.Identity(a.Rows);
+            await Writer.WriteLineAsync($"Matrix A of dual problem: {dualM}");
+            await Writer.WriteLineAsync($"Vector b = A * x: {b}");
+
 
             var xRemain = Xrc.Concat(b - (a * Xrc)); // Added x_N+1, x_N+2, ...
             await Writer.WriteLineAsync($"x of dual problem: {xRemain}");
+            var dualBase = xRemain.NonZeroIndeces;
+            var dualN = dualM.ColsIndeces.Where(i => !dualBase.Contains(i));
+            await Writer.WriteLineAsync($"Base of dual problem's solution: {Function.Print(dualBase)}");
 
-            int[] DualBase = xRemain.ZeroIndexes;
-            if (addedPositivesRestriction)
-            {
-                await Writer.WriteLineAsync($"You may ignore the last {a.Cols} element of the expanded solution");
-            }
-
-            Matrix aB_Inv = a[BestBase].Inv;
+            Matrix aB_Inv = 
+                dualM.GetCols(dualBase).Inv * 
+                dualM.GetCols(dualN);//*a[N] but a[N] is the identity matrix we added before!
             await Writer.WriteLineAsync($"A^~ = {aB_Inv}");
 
             Matrix aB_Inv_Frac = new(aB_Inv.M.Apply(a => a.FractionPart()));
-            await Writer.WriteLineAsync($"{{ A~ }} = {aB_Inv_Frac}");
+            await Writer.WriteLineAsync($"{{ A^~ }} = {aB_Inv_Frac}");
 
-            Vector XrcFrac = Xrc.Get.Select(x => x.FractionPart()).ToArray();
+            Vector XrcFrac = Xrc[
+                aB_Inv_Frac.RowsIndeces.Where(i => i < Xrc.Size)
+                ].Get.Select(x => x.FractionPart()).ToArray();
             await Writer.WriteLineAsync($"{{ X_rc }} = {XrcFrac}");
 
             await Writer.WriteLineAsync();
-            
+
             for (int r = 0; r < XrcFrac.Size; r++)
             {
-                await Writer.WriteAsync($"\tPlane from row {r + 1} of {{ A~ }}:");
+                await Writer.WriteAsync($"Plane from row {r + 1} of {{ A~ }}:");
                 var arr = aB_Inv_Frac[r].Get.Apply((arj, j) =>
                 {
                     if (arj.IsZero)
                     {
                         return string.Empty;
                     }
-                    return $"{Function.Print(arj)} * x{DualBase[j] + 1}";
+                    if (arj == Fraction.One)
+                    {
+                        return $"+ x{dualN.ElementAt(j) + 1}";
+                    }
+                    if (arj == Fraction.MinusOne)
+                    {
+                        return $"- x{dualN.ElementAt(j) + 1}";
+                    }
+                    if (arj.IsPositive)
+                    {
+                        return $"+{Function.Print(arj)} * x{dualN.ElementAt(j) + 1}";
+                    }
+                    return $"{Function.Print(arj)} * x{dualN.ElementAt(j) + 1}";
                 }).Where(s => !string.IsNullOrEmpty(s));
 
                 if (!arr.Any())
@@ -527,26 +552,41 @@ namespace OperationalResearch.Models
                     continue;
                 }
                 await Writer.WriteLineAsync(
-                    string.Join(" + ", arr) + $" >= {Function.Print(XrcFrac[r])}");
+                    string.Join(" ", arr) + $" >= {Function.Print(XrcFrac[r])}");
 
-                Fraction bToSum = (
-                    (Vector)aB_Inv_Frac[r].Get.Apply((arj, j) => b[DualBase[j] - a.Cols] * arj)).SumOfComponents() - 
-                    XrcFrac[r];
-                Vector aToSum = Vector.Sum(
-                    aB_Inv_Frac[r].Get.Apply((arj, j) => arj * a[DualBase[j] - a.Cols]));
+                Vector components = Enumerable.Repeat(Fraction.Zero, a.Cols).ToArray();
+                Fraction bComp = XrcFrac[r];
+                for (int j = 0; j < aB_Inv_Frac.Cols; j++)
+                {
+                    int k = dualN.ElementAt(j);
+                    if (k < a.Cols)
+                    {
+                        components[k] += aB_Inv_Frac[r, j];
+                        continue;
+                    }
+                    int OriginalEquation = k - a.Cols;
+                    bComp -= b[OriginalEquation] * aB_Inv_Frac[r, j];
+                    components -= a[OriginalEquation] * aB_Inv_Frac[r, j];
+                }
+                components *= Fraction.MinusOne; bComp *= Fraction.MinusOne;
                 await Writer.WriteLineAsync(
                     $"\tEquation to add: " +
-                        string.Join(" ", aToSum.Indices.Select(j =>
-                        {
-                            if (aToSum[j].IsZero)
-                            {
-                                return string.Empty;
-                            }
-                            return 
-                                (aToSum[j].IsPositive ? "+" : "")  + 
-                                $"{Function.Print(aToSum[j])} * x{j + 1}";
-                        }).Where(s => !string.IsNullOrEmpty(s))) + $" <= {Function.Print(bToSum)}"
-                    );
+                        string.Join("  ",
+                            components.NonZeroIndeces.Select(
+                                j => { 
+                                    if (components[j] == Fraction.One)
+                                    {
+                                        return $"+ x{j + 1}";
+                                    }
+                                    if (components[j] == Fraction.MinusOne)
+                                    {
+                                        return $"- x{j + 1}";
+                                    }
+                                    return (components[j].IsPositive ? "+" : "") + $"{Function.Print(components[j])}*x{j + 1}";
+                                }
+                        )
+                    ) + $" <= {Function.Print(bComp)}");
+                
             }
             
         }
