@@ -76,5 +76,11 @@ namespace RicercaOperativa
             var NewForm = new QuadraticProgrammingForm();
             NewForm.Show();
         }
+
+        private void flowOfMinCostToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var NewForm = new MinCostFlowForm();
+            NewForm.Show();
+        }
     }
 }

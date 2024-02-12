@@ -33,6 +33,20 @@ namespace OperationalResearch.Models
                 To = to;
                 Type = EdgeType.Standard;
             }
+            public Edge(string s)
+            {
+                if (string.IsNullOrWhiteSpace(s))
+                    throw new ArgumentNullException("s");
+                Type = EdgeType.Standard;
+                string[] pair = s.Split('-', StringSplitOptions.TrimEntries);
+                if (pair.Length < 2)
+                {
+                    throw new ArgumentException("Invalid syntax for edge. Use From-To");
+                }
+                From = int.Parse(pair[0]) - 1;
+                To = int.Parse(pair[1]) - 1;
+                Cost = Fraction.One;
+            }
             public override string ToString()
             {
                 return $"({From + 1}, {To + 1})";

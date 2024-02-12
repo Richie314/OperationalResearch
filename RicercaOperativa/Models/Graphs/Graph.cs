@@ -256,7 +256,10 @@ namespace OperationalResearch.Models
             }
             return FindAllCycles(symmetric).Any();
         }
-
+        public List<int[]> AllBidirectionalCicles()
+        {
+            return FindAllCycles(true).Select(c => c.ToArray()).ToList();
+        }
         private List<List<int>> FindAllCycles(bool symmetric)
         {
             List<List<int>> cycles = new List<List<int>>();

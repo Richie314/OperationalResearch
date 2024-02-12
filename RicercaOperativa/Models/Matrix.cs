@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Accord.Math;
 using System.Drawing.Drawing2D;
 using System.Windows.Input.Manipulations;
+using Microsoft.Scripting.Utils;
 
 namespace OperationalResearch.Models
 {
@@ -49,6 +50,10 @@ namespace OperationalResearch.Models
                     m[i, j] = matrix[i][j];
                 }
             }
+        }
+        public Matrix (int rows, int cols) : this(
+            Enumerable.Repeat(Enumerable.Repeat(Fraction.Zero, cols).ToArray(), rows).ToArray())
+        {
         }
         public int Rows { get => m.Rows(); }
         public int Cols { get => m.Columns(); }
@@ -300,6 +305,14 @@ namespace OperationalResearch.Models
         {
             return T[cols].T;
         }
-        public Fraction[,] M { get => m; } 
+        public Fraction[,] M { get => m; }
+        public int[][] AllIndices
+        {
+            get => RowsIndeces.Select(r => this[r].Indices.ToArray()).ToArray();
+        }
+        public int[][] NonZeroIndices
+        {
+            get => RowsIndeces.Select(r => this[r].NonZeroIndeces).ToArray();
+        }
     }
 }
