@@ -39,6 +39,9 @@
             button2 = new Button();
             label3 = new Label();
             startBase = new TextBox();
+            startU = new TextBox();
+            label4 = new Label();
+            button3 = new Button();
             ((System.ComponentModel.ISupportInitialize)matrix).BeginInit();
             ((System.ComponentModel.ISupportInitialize)n).BeginInit();
             ((System.ComponentModel.ISupportInitialize)boundsGrid).BeginInit();
@@ -62,7 +65,7 @@
             matrix.Location = new Point(11, 69);
             matrix.Name = "matrix";
             matrix.RowHeadersWidth = 51;
-            matrix.Size = new Size(489, 333);
+            matrix.Size = new Size(489, 347);
             matrix.TabIndex = 1;
             // 
             // n
@@ -94,26 +97,26 @@
             boundsGrid.Location = new Point(517, 69);
             boundsGrid.Name = "boundsGrid";
             boundsGrid.RowHeadersWidth = 51;
-            boundsGrid.Size = new Size(486, 333);
+            boundsGrid.Size = new Size(486, 347);
             boundsGrid.TabIndex = 4;
             // 
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(532, 43);
+            label2.Location = new Point(517, 44);
             label2.Name = "label2";
-            label2.Size = new Size(196, 20);
+            label2.Size = new Size(103, 20);
             label2.TabIndex = 5;
-            label2.Text = "Lower bounds|Upperbounds";
+            label2.Text = "Upper bounds";
             // 
             // button1
             // 
             button1.Cursor = Cursors.Hand;
-            button1.Location = new Point(734, 34);
+            button1.Location = new Point(459, 4);
             button1.Name = "button1";
             button1.Size = new Size(269, 29);
             button1.TabIndex = 6;
-            button1.Text = "Solve Unbounded";
+            button1.Text = "Solve as unbounded";
             button1.UseVisualStyleBackColor = true;
             button1.Click += button1_Click;
             // 
@@ -126,28 +129,58 @@
             button2.TabIndex = 7;
             button2.Text = "Solve Bounded";
             button2.UseVisualStyleBackColor = true;
+            button2.Click += button2_Click;
             // 
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(34, 425);
+            label3.Location = new Point(15, 426);
             label3.Name = "label3";
-            label3.Size = new Size(96, 20);
+            label3.Size = new Size(98, 20);
             label3.TabIndex = 8;
-            label3.Text = "Starting Base";
+            label3.Text = "Starting Basis";
             // 
             // startBase
             // 
-            startBase.Location = new Point(168, 421);
+            startBase.Location = new Point(188, 421);
             startBase.Name = "startBase";
-            startBase.Size = new Size(761, 27);
+            startBase.Size = new Size(814, 27);
             startBase.TabIndex = 9;
+            // 
+            // startU
+            // 
+            startU.Location = new Point(187, 454);
+            startU.Name = "startU";
+            startU.Size = new Size(816, 27);
+            startU.TabIndex = 10;
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Location = new Point(14, 458);
+            label4.Name = "label4";
+            label4.Size = new Size(157, 20);
+            label4.TabIndex = 11;
+            label4.Text = "Starting satureted arcs";
+            // 
+            // button3
+            // 
+            button3.Location = new Point(734, 39);
+            button3.Name = "button3";
+            button3.Size = new Size(268, 29);
+            button3.TabIndex = 12;
+            button3.Text = "Dijkstra";
+            button3.UseVisualStyleBackColor = true;
+            button3.Click += button3_Click;
             // 
             // MinCostFlowForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1015, 458);
+            ClientSize = new Size(1015, 488);
+            Controls.Add(button3);
+            Controls.Add(label4);
+            Controls.Add(startU);
             Controls.Add(startBase);
             Controls.Add(label3);
             Controls.Add(button2);
@@ -160,7 +193,7 @@
             Controls.Add(label1);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "MinCostFlowForm";
-            Text = "Travelling Salesman's Problem";
+            Text = "Flow of min cost";
             Load += TravellingSalesmanProblemForm_Load;
             ((System.ComponentModel.ISupportInitialize)matrix).EndInit();
             ((System.ComponentModel.ISupportInitialize)n).EndInit();
@@ -181,5 +214,8 @@
         private Button button2;
         private Label label3;
         private TextBox startBase;
+        private TextBox startU;
+        private Label label4;
+        private Button button3;
     }
 }

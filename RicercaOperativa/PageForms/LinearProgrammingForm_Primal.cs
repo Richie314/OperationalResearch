@@ -7,8 +7,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Accord.Math;
 using OperationalResearch.Models;
 using OperationalResearch.Models.Problems;
+using OperationalResearch.ViewForms;
+using Matrix = OperationalResearch.Models.Matrix;
 
 namespace RicercaOperativa
 {
@@ -164,7 +167,12 @@ namespace RicercaOperativa
                 solver: new LinearProgrammingPrimal(startBase, xNonNegativeCheckbox.Checked),
                 sMatrixAndB: mainGridStr,
                 sVecC: MainVectorStr());
-
+            if (p.getMainMatrix().Columns() == 2)
+            {
+                var graphForm = new CartesianForm(
+                    new Matrix(p.getMainMatrix()) | p.getMainVetcor());
+                graphForm.Show();
+            }
             if (await p.SolveMax(loggers: new StreamWriter?[] { primalForm.Writer, null }))
             {
                 MessageBox.Show(
@@ -202,7 +210,12 @@ namespace RicercaOperativa
                 solver: new IntegerLinearProgrammingPrimal(xNonNegativeCheckbox.Checked),
                 sMatrixAndB: mainGridStr,
                 sVecC: MainVectorStr());
-
+            if (p.getMainMatrix().Columns() == 2)
+            {
+                var graphForm = new CartesianForm(
+                    new Matrix(p.getMainMatrix()) | p.getMainVetcor());
+                graphForm.Show();
+            }
             if (await p.SolveMax(loggers: new StreamWriter?[] { primalForm.Writer }))
             {
                 MessageBox.Show(

@@ -34,9 +34,11 @@ namespace OperationalResearch.Models.Python
                 await Writer.WriteLineAsync($"Solving for max value...");
             }
             await Writer.WriteLineAsync();
+            await Writer.WriteLineAsync($"A = {a}");
+            await Writer.WriteLineAsync($"b = {b}");
             //step1:
 
-            Vector xk = startX ?? GetRandomStartPoint(A, B);
+            Vector xk = startX ?? GetRandomStartPoint(a, b);
         step2:
             await Writer.WriteLineAsync($"Iteration {k}:");
             if (maxK.HasValue && maxK.Value < k)
@@ -45,11 +47,9 @@ namespace OperationalResearch.Models.Python
                 await Writer.WriteLineAsync($"Exiting with failure.");
                 return null;
             }
-            await Writer.WriteLineAsync($"A = {a}");
-            await Writer.WriteLineAsync($"b = {b}");
             await Writer.WriteLineAsync($"x{k} = {xk}");
 
-            if (a * xk > b) // Check if A * xk > b. In that case stop (an error has appened)
+            if (a * xk > b) // Check if A * xk <= b. In that case stop (an error has appened)
             {
                 await Writer.WriteLineAsync();
                 await Writer.WriteLineAsync($"Vector x{k} is out of bound!");
@@ -70,7 +70,7 @@ namespace OperationalResearch.Models.Python
             Vector gradXk = Grad(xk);
             await Writer.WriteLineAsync($"gradF(x{k}) = {gradXk}");
 
-            Vector dk = H * gradXk * (IsMin ? -1 : Fraction.One);
+            Vector dk = H * gradXk * (IsMin ? Fraction.MinusOne : Fraction.One);
             await Writer.WriteLineAsync($"d{k} = {dk}");
             if (dk.IsZero) // dk == 0
             {
@@ -78,7 +78,7 @@ namespace OperationalResearch.Models.Python
                 goto step5;
             }
 
-            Fraction tMax = FindTMaxMin(a, xk, dk, b, true);
+            Fraction tMax = FindTMaxMin(a, xk, dk, b, IsMin);
             await Writer.WriteLineAsync($"t{k}^ = {Models.Function.Print(tMax)}");
             if (tMax.IsNegative)
             {
@@ -120,7 +120,7 @@ namespace OperationalResearch.Models.Python
                 await Writer.WriteLineAsync($"Exit with unknown (unexpected) result.");
                 return xk;
             }
-            Vector lambda = (IsMin ? -1 : Fraction.One) * ((M * M.T).Inv * M * gradXk);
+            Vector lambda = (IsMin ? Fraction.MinusOne : Fraction.One) * ((M * M.T).Inv * M * gradXk);
             await Writer.WriteLineAsync($"lambda = {lambda}");
             if (lambda.IsPositiveOrZero) // lambda >= 0
             {
@@ -214,7 +214,7 @@ namespace OperationalResearch.Models.Python
                 Vector b_ax_over_ad = Vector.Div(
                     b_ax[NegativeIndexes],
                     ad[NegativeIndexes]);
-                // Return the max{t} : t > (b - ax) / ad => return max { (b - ax) / ad } ad < 0
+                // Return the min{t} : t > (b - ax) / ad => return max { (b - ax) / ad } ad < 0
                 tLeft = b_ax_over_ad.Max;
             }
 

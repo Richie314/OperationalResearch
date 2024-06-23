@@ -2,6 +2,7 @@ using OperationalResearch.Models;
 using System.Windows.Controls;
 using OperationalResearch;
 using OperationalResearch.Models.Problems;
+using OperationalResearch.ViewForms;
 
 namespace RicercaOperativa
 {
@@ -80,6 +81,12 @@ namespace RicercaOperativa
         private void flowOfMinCostToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var NewForm = new MinCostFlowForm();
+            NewForm.Show();
+        }
+
+        private void webviewToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var NewForm = new CartesianForm();
             NewForm.Show();
         }
     }

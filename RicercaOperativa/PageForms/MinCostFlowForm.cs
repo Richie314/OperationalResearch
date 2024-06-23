@@ -58,7 +58,7 @@ namespace OperationalResearch
             }
             matrix.Columns[N + 1].Name = "b";
             matrix.Columns[N + 1].Width = 70;
-            matrix.Columns[N + 1].DefaultCellStyle.Alignment = 
+            matrix.Columns[N + 1].DefaultCellStyle.Alignment =
                 DataGridViewContentAlignment.MiddleRight;
 
             for (int i = 0; i < N; i++)
@@ -149,13 +149,35 @@ namespace OperationalResearch
         }
         private Matrix? UpperBound()
         {
-            return null;
+            var list = new List<string[]>();
+            for (int row = 0; row < boundsGrid.RowCount; row++)
+            {
+                List<string> currRow = [];
+                for (int col = 1; col < boundsGrid.ColumnCount; col++)
+                {
+                    currRow.Add((string)boundsGrid[col, row].Value);
+                }
+                list.Add([.. currRow]);
+            }
+            list = list.Select(
+                row => row.Select(x => string.IsNullOrWhiteSpace(x) ? "0" : x).ToArray()).ToList();
+            string[][] m = list.ToArray();
+            return new Matrix(m.Apply(row => row.Apply(Fraction.FromString)));
         }
         private BoundedGraphEdge[]? getStartBase()
         {
-            if (string.IsNullOrWhiteSpace(startBase.Text)) 
+            if (string.IsNullOrWhiteSpace(startBase.Text))
                 return null;
             return startBase.Text
+                .Split(',', StringSplitOptions.TrimEntries)
+                .Select(pair => new BoundedGraphEdge(new Graph.Edge(pair)))
+                .ToArray();
+        }
+        private BoundedGraphEdge[]? getStartU()
+        {
+            if (string.IsNullOrWhiteSpace(startU.Text))
+                return null;
+            return startU.Text
                 .Split(',', StringSplitOptions.TrimEntries)
                 .Select(pair => new BoundedGraphEdge(new Graph.Edge(pair)))
                 .ToArray();
@@ -178,7 +200,7 @@ namespace OperationalResearch
                 return;
             Vector b = getB();
             MinCostFlow m = new MinCostFlow(
-                c, b, LowerBound(), UpperBound());
+                c, b, LowerBound(), null);
 
             var Form = new ProblemForm();
             Form.Show();
@@ -197,6 +219,57 @@ namespace OperationalResearch
                     MessageBoxIcon.Error);
             }
 
+        }
+
+        private async void button2_Click(object sender, EventArgs e)
+        {
+            var c = StrToFraction(MainGridStr());
+            if (c is null)
+                return;
+            Vector b = getB();
+            var u = UpperBound();
+            MinCostFlow m = new MinCostFlow(
+                c, b, LowerBound(), u);
+
+            var Form = new ProblemForm();
+            Form.Show();
+            if (await m.FlowBounded(getStartBase(), getStartU(), Form.Writer))
+            {
+                MessageBox.Show(
+                    "Network Programming problem solved",
+                    "Problem solved", MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show(
+                    "Network Programming problem could not be solved",
+                    "Error", MessageBoxButtons.OKCancel,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private async void button3_Click(object sender, EventArgs e)
+        {
+            string input = Microsoft.VisualBasic.Interaction.InputBox(
+                "K = ", "Node to start from", string.Empty, 0, 0);
+            if (string.IsNullOrWhiteSpace(input) || !int.TryParse(input, out int value))
+            {
+                return;
+            }
+            value -= 1;
+            if (value < 0 || value >= N)
+            {
+                return;
+            }
+            var m = StrToFraction(MainGridStr());
+            if (m is null)
+                return;
+            Graph g = Graph.FromMatrix(m);
+
+            var Form = new ProblemForm();
+            Form.Show();
+            await g.Dijkstra(Form.Writer, startNode: value);
         }
     }
 

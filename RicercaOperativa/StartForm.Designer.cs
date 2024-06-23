@@ -41,12 +41,14 @@
             knapsnacToolStripMenuItem = new ToolStripMenuItem();
             travellingSalesmansProblemToolStripMenuItem = new ToolStripMenuItem();
             NetworksProgrammingMenuItem = new ToolStripMenuItem();
+            flowOfMinCostToolStripMenuItem = new ToolStripMenuItem();
             NonlinearProgrammingMenuItem = new ToolStripMenuItem();
             genericProblemToolStripMenuItem = new ToolStripMenuItem();
             quadraticProgrammingToolStripMenuItem = new ToolStripMenuItem();
             ToolStripMenuItem = new ToolStripMenuItem();
             CreditsToolStripMenuItem = new ToolStripMenuItem();
-            flowOfMinCostToolStripMenuItem = new ToolStripMenuItem();
+            testToolStripMenuItem = new ToolStripMenuItem();
+            webviewToolStripMenuItem = new ToolStripMenuItem();
             menuStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -138,6 +140,13 @@
             NetworksProgrammingMenuItem.Size = new Size(278, 26);
             NetworksProgrammingMenuItem.Text = "Network Programming";
             // 
+            // flowOfMinCostToolStripMenuItem
+            // 
+            flowOfMinCostToolStripMenuItem.Name = "flowOfMinCostToolStripMenuItem";
+            flowOfMinCostToolStripMenuItem.Size = new Size(201, 26);
+            flowOfMinCostToolStripMenuItem.Text = "Flow of min cost";
+            flowOfMinCostToolStripMenuItem.Click += flowOfMinCostToolStripMenuItem_Click;
+            // 
             // NonlinearProgrammingMenuItem
             // 
             NonlinearProgrammingMenuItem.DropDownItems.AddRange(new ToolStripItem[] { genericProblemToolStripMenuItem, quadraticProgrammingToolStripMenuItem });
@@ -161,7 +170,7 @@
             // 
             // ToolStripMenuItem
             // 
-            ToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { CreditsToolStripMenuItem });
+            ToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { CreditsToolStripMenuItem, testToolStripMenuItem });
             ToolStripMenuItem.Name = "ToolStripMenuItem";
             ToolStripMenuItem.Size = new Size(30, 24);
             ToolStripMenuItem.Text = "&?";
@@ -169,16 +178,23 @@
             // CreditsToolStripMenuItem
             // 
             CreditsToolStripMenuItem.Name = "CreditsToolStripMenuItem";
-            CreditsToolStripMenuItem.Size = new Size(138, 26);
+            CreditsToolStripMenuItem.Size = new Size(224, 26);
             CreditsToolStripMenuItem.Text = "&Credits";
             CreditsToolStripMenuItem.Click += CreditsToolStripMenuItem_Click;
             // 
-            // flowOfMinCostToolStripMenuItem
+            // testToolStripMenuItem
             // 
-            flowOfMinCostToolStripMenuItem.Name = "flowOfMinCostToolStripMenuItem";
-            flowOfMinCostToolStripMenuItem.Size = new Size(224, 26);
-            flowOfMinCostToolStripMenuItem.Text = "Flow of min cost";
-            flowOfMinCostToolStripMenuItem.Click += flowOfMinCostToolStripMenuItem_Click;
+            testToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { webviewToolStripMenuItem });
+            testToolStripMenuItem.Name = "testToolStripMenuItem";
+            testToolStripMenuItem.Size = new Size(224, 26);
+            testToolStripMenuItem.Text = "Test";
+            // 
+            // webviewToolStripMenuItem
+            // 
+            webviewToolStripMenuItem.Name = "webviewToolStripMenuItem";
+            webviewToolStripMenuItem.Size = new Size(224, 26);
+            webviewToolStripMenuItem.Text = "Webview";
+            webviewToolStripMenuItem.Click += webviewToolStripMenuItem_Click;
             // 
             // StartForm
             // 
@@ -217,5 +233,7 @@
         private ToolStripMenuItem genericProblemToolStripMenuItem;
         private ToolStripMenuItem quadraticProgrammingToolStripMenuItem;
         private ToolStripMenuItem flowOfMinCostToolStripMenuItem;
+        private ToolStripMenuItem testToolStripMenuItem;
+        private ToolStripMenuItem webviewToolStripMenuItem;
     }
 }

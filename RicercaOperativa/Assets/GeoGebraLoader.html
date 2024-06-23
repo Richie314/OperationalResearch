@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <title>
+        Geogebra view
+    </title>
+    <meta charset="UTF-8">
+    <meta name="description" content="Geo gebra view">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #applet_container {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <script type="text/javascript" 
+            src="https://cdn.geogebra.org/apps/deployggb.js"></script>
+    <script type="text/javascript">
+        var parameters = {
+            "prerelease": false,
+            "width": window.innerWidth,
+            "height": window.innerHeight,
+            "showToolBar": false,
+            "borderColor": null,
+            "showMenuBar": false,
+            "showAlgebraInput": false,
+            "showResetIcon": false,
+            "enableLabelDrags": false,
+            "enableShiftDragZoom": true,
+            "enableRightClick": false,
+            "capturingThreshold": null,
+            "showToolBarHelp": false,
+            "errorDialogsActive": true,
+            "useBrowserForJS": false,
+            appletOnLoad(api) {
+                window.api = api;
+                window.sched.forEach(s => api.evalCommand(s));
+            }
+        };
+
+        window.sched = [];
+        var applet = new GGBApplet('5.0', parameters);
+
+        //when used with Math Apps Bundle, uncomment this:
+        //applet.setHTML5Codebase('GeoGebra/HTML5/5.0/webSimple/');
+
+        window.onload = () => applet.inject('applet_container');
+        window.addEventListener('resize', () => ggbApplet.setSize(window.innerWidth, window.innerHeight))
+        
+        function GeoGebraEval(str) {
+            if (!str) return;
+            if (!('api' in window)) {
+                window.sched.push(str);
+                return;
+            }
+            ggbApplet.evalCommand(str);
+        }
+    </script>
+
+    <div id="applet_container"></div>
+</body>
+</html>

@@ -48,7 +48,7 @@ namespace OperationalResearch.Models.Python
                 await Writer.WriteLineAsync($"b = {b}");
                 await Writer.WriteLineAsync($"x{k} = {xk}");
 
-                if (a * xk > b) // Check if A * xk > b. In that case stop (an error has appened)
+                if (a * xk > b) // Check if A * xk <= b. In that case stop (an error has appened)
                 {
                     await Writer.WriteLineAsync();
                     await Writer.WriteLineAsync($"Vector x{k} is out of bound!");
@@ -61,7 +61,7 @@ namespace OperationalResearch.Models.Python
 
                 Simplex s = new(
                     a.M, b,
-                    gradF * (IsMin ? -1 : Fraction.One), // If we want a max of the simplex we have to multiply its c coefficients by -1 
+                    gradF * (IsMin ? Fraction.MinusOne : Fraction.One), // If we want a max of the simplex we have to multiply its c coefficients by -1 
                     false);
                 Vector? yk = await s.SolvePrimalMax(StreamWriter.Null, null, null);
                 if (yk is null)
@@ -85,6 +85,11 @@ namespace OperationalResearch.Models.Python
                 Fraction tk = FindArgOfFunction(IsMin,
                     Fraction.Zero, Fraction.One, 5000, xk, dk);
                 await Writer.WriteLineAsync($"t{k} = {Models.Function.Print(tk)}");
+                if (tk.IsZero)
+                {
+                    await Writer.WriteLineAsync($"Internal error.");
+                    break;
+                }
 
                 xk += tk * dk;
                 k++;
