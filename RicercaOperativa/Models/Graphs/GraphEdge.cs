@@ -53,19 +53,19 @@ namespace OperationalResearch.Models
             }
             public static bool operator <(Edge a, Edge b)
             {
-                return a.From < b.From || a.To < b.To;
+                return a.From < b.From || (a.To < b.To && a.From == b.From);
             }
             public static bool operator >(Edge a, Edge b)
             {
-                return a.From > b.From || a.To > b.To;
+                return a.From > b.From || (a.To > b.To && a.From == b.From);
             }
             public static bool operator <=(Edge a, Edge b)
             {
-                return a.From <= b.From || a.To <= b.To;
+                return a < b || a == b;
             }
             public static bool operator >=(Edge a, Edge b)
             {
-                return a.From >= b.From || a.To >= b.To;
+                return a > b || a == b;
             }
             public static bool operator ==(Edge a, Edge b)
             {

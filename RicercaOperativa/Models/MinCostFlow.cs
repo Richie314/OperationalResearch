@@ -4,6 +4,7 @@ using OperationalResearch.Models.Graphs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -562,6 +563,169 @@ namespace OperationalResearch.Models
                 await Writer.WriteLineAsync($"Exception happened '{ex.Message}'");
                 return false;
             }
+        }
+
+        public async Task<bool> MinFlowMaxCut(int s, int t, StreamWriter? Writer = null)
+        {
+            Writer ??= StreamWriter.Null;
+
+            // Set xij = 0
+            Vector x = Vector.Zero(Edges.Length);
+
+            int it = 1;
+            bool qEmpty = false;
+            // E-K algorithm
+            while (it < 10)
+            {
+                await Writer.WriteLineAsync($"Iteration #{it} of E-K starts now...");
+                it++;
+
+                // Build G(x)
+                List<BoundedGraphEdge> r = [];
+                for (int i = 0; i < Edges.Length; i++)
+                {
+                    var edge = Edges[i];
+                    if (edge.ub is not null && x[i] < edge.ub)
+                    {
+                        Fraction u = (Fraction)edge.ub;
+                        r.Add(new BoundedGraphEdge(edge.Cost, edge.From, edge.To, ub: u - x[i], lb: 0));
+                    }
+                    if (x[i].IsPositive)
+                    {
+                        r.Add(new BoundedGraphEdge(edge.Cost, edge.To, edge.From, ub: x[i], lb: 0));
+                    }
+                }
+                r = r.ToArray().Order().ToList();
+                foreach (var rij in r)
+                {
+                    await Writer.WriteLineAsync($"\t{rij} with capacity = {rij.ub}");
+                }
+
+                // Predecessors
+                var p = Enumerable.Repeat(-2, b.Size + 1).ToArray();
+                if (t >= p.Length || s >= p.Length || s < 0 || t < 0)
+                {
+                    throw new ArgumentException("Destination or starting node not found!");
+                }
+                p[s] = -1;
+
+                IEnumerable<int> Q = [s];
+
+                while (Q.Any())
+                {
+                    await Writer.WriteLineAsync($"Q = {Function.Print(Q)}");
+                    await Writer.WriteLineAsync($"X = {x}");
+                    await Writer.WriteLineAsync($"p = {Function.Print(p)}");
+
+                    // extract first element
+                    int i = Q.First();
+                    Q = Q.Skip(1);
+
+                    await Writer.WriteLineAsync($"Extracting {i + 1} from Q");
+
+                    if (r.Any(rij => rij.From == i && rij.To == t))
+                    {
+                        p[t] = i;
+                        await Writer.WriteLineAsync($"{new Graph.Edge(0, i, t)} found inside A(x)");
+                        await Writer.WriteLineAsync($"p_t = p_{t + 1} = {i + 1}");
+                        await Writer.WriteLineAsync($"Exiting loop");
+                        break;
+                    }
+
+                    foreach (var edge in r.Where(e => 
+                        e.From == i && 
+                        p[e.To] < 0/* &&
+                        e.Cost < e.ub*/)) // Not filled edges
+                    {
+                        if (p[edge.To] == -1) continue;
+                        await Writer.WriteLineAsync($"Analizing edge {edge}");
+
+                        p[edge.To] = i;
+                        await Writer.WriteLineAsync($"\tp_{edge.To + 1} = {i + 1}");
+
+                        Q = Q.Append(edge.To);
+                        await Writer.WriteLineAsync($"\tAdding {edge.To + 1} to Q");
+                    }
+                }
+
+                await Writer.WriteLineAsync();
+                await Writer.WriteLineAsync("EK-iteration ended");
+                await Writer.WriteLineAsync();
+
+
+                await Writer.WriteLineAsync($"\tp = {Function.Print(p)}");
+                await Writer.WriteLineAsync();
+
+
+                // Find min
+                int curr = t; // start from end
+                Fraction min = int.MaxValue;
+                IEnumerable<int> Path = [t];
+                while (p[curr] >= 0)
+                {
+                    var rij = r.First(rij => rij.From == p[curr] && rij.To == curr);
+                    if (rij is null)
+                    {
+                        throw new Exception("This should not happen :/");
+                    }
+                    if (rij.ub < min)
+                    {
+                        min = (Fraction)rij.ub;
+                    }
+                    curr = p[curr]; // Get predecessor
+                    Path = Path.Prepend(curr);
+                }
+
+                await Writer.WriteLineAsync($"\tPath: {string.Join('-', Path.Select(i => i + 1))}");
+                await Writer.WriteLineAsync($"\tMax flow that can be sent: {Function.Print(min)}");
+
+                // Update X
+                for (int i = Path.Count() - 1; i > 0; i--)
+                {
+                    // current edge
+                    curr = Path.ElementAt(i);
+                    int prev = Path.ElementAt(i - 1);
+
+                    // find edge index to find which x modify
+                    int edgeIndex = Edges.Find(e => e.From == prev && e.To == curr).First();
+
+                    x[edgeIndex] = min;
+                }
+                await Writer.WriteLineAsync($"\tX = {x}");
+
+                if (Q.Any())
+                {
+                    // We were "interruped"
+                    await Writer.WriteLineAsync($"\tQ = {Function.Print(Q)}");
+                }
+
+                // End of E-K algorithm
+
+                if (!Q.Any())
+                {
+                    if (qEmpty)
+                    {
+                        await Writer.WriteLineAsync("Could not find a new flow, so the previous is optimal");
+
+
+                        await Writer.WriteLineAsync("Cut:");
+                        var Ns = Enumerable.Range(0, p.Length).Where(i => p[i] != -2);
+                        await Writer.WriteLineAsync($"N_s = N_{s + 1} = {Function.Print(Ns)}");
+
+                        var Nt = Enumerable.Range(0, p.Length).Where(i => p[i] == -2);
+                        await Writer.WriteLineAsync($"N_t = N_{t + 1} = {Function.Print(Nt)}");
+
+                        break;
+                    }
+                    qEmpty = true;
+
+
+                }
+
+                await Writer.WriteLineAsync();
+                await Writer.WriteLineAsync();
+            }
+            return true;
         }
     }
 }

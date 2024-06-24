@@ -42,6 +42,7 @@
             startU = new TextBox();
             label4 = new Label();
             button3 = new Button();
+            button4 = new Button();
             ((System.ComponentModel.ISupportInitialize)matrix).BeginInit();
             ((System.ComponentModel.ISupportInitialize)n).BeginInit();
             ((System.ComponentModel.ISupportInitialize)boundsGrid).BeginInit();
@@ -134,7 +135,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(15, 426);
+            label3.Location = new Point(15, 427);
             label3.Name = "label3";
             label3.Size = new Size(98, 20);
             label3.TabIndex = 8;
@@ -142,22 +143,22 @@
             // 
             // startBase
             // 
-            startBase.Location = new Point(188, 421);
+            startBase.Location = new Point(187, 421);
             startBase.Name = "startBase";
             startBase.Size = new Size(814, 27);
             startBase.TabIndex = 9;
             // 
             // startU
             // 
-            startU.Location = new Point(187, 454);
+            startU.Location = new Point(187, 453);
             startU.Name = "startU";
-            startU.Size = new Size(816, 27);
+            startU.Size = new Size(815, 27);
             startU.TabIndex = 10;
             // 
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(14, 458);
+            label4.Location = new Point(14, 459);
             label4.Name = "label4";
             label4.Size = new Size(157, 20);
             label4.TabIndex = 11;
@@ -167,17 +168,30 @@
             // 
             button3.Location = new Point(734, 39);
             button3.Name = "button3";
-            button3.Size = new Size(268, 29);
+            button3.Size = new Size(125, 29);
             button3.TabIndex = 12;
             button3.Text = "Dijkstra";
             button3.UseVisualStyleBackColor = true;
             button3.Click += button3_Click;
+            // 
+            // button4
+            // 
+            button4.Cursor = Cursors.Hand;
+            button4.Location = new Point(865, 39);
+            button4.Margin = new Padding(3, 4, 3, 4);
+            button4.Name = "button4";
+            button4.Size = new Size(136, 31);
+            button4.TabIndex = 13;
+            button4.Text = "FFEK";
+            button4.UseVisualStyleBackColor = true;
+            button4.Click += button4_Click;
             // 
             // MinCostFlowForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1015, 488);
+            Controls.Add(button4);
             Controls.Add(button3);
             Controls.Add(label4);
             Controls.Add(startU);
@@ -191,6 +205,7 @@
             Controls.Add(n);
             Controls.Add(matrix);
             Controls.Add(label1);
+            Cursor = Cursors.Hand;
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "MinCostFlowForm";
             Text = "Flow of min cost";
@@ -217,5 +232,6 @@
         private TextBox startU;
         private Label label4;
         private Button button3;
+        private Button button4;
     }
 }

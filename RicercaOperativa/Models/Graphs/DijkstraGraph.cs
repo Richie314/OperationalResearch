@@ -40,19 +40,19 @@ namespace OperationalResearch.Models
             }
             Writer ??= StreamWriter.Null;
 
-            int[] prev = Enumerable.Repeat(-1, N).ToArray();
-            Vector pi = Enumerable.Repeat(Fraction.FromDouble(Double.PositiveInfinity), N).ToArray();
+            int[] p = Enumerable.Repeat(-2, N).ToArray();
+            Vector π = Enumerable.Repeat(Fraction.FromDouble(int.MaxValue), N).ToArray();
             int[] Q = [startNode];
 
-            prev[startNode] = startNode;
-            pi[startNode] = 0;
+            p[startNode] = startNode;
+            π[startNode] = -1;
 
             await Writer.WriteLineAsync("Dijkstra starting...");
             await Writer.WriteLineAsync("Initial condition:");
             await Writer.WriteLineAsync($"starting node = {startNode + 1}");
 
-            await Writer.WriteLineAsync($"prev = {Function.Print(prev)}");
-            await Writer.WriteLineAsync($"pi = {pi}");
+            await Writer.WriteLineAsync($"p = {Function.Print(p)}");
+            await Writer.WriteLineAsync($"π = {π}");
             await Writer.WriteLineAsync($"Q = {Function.Print(Q)}");
             await Writer.WriteLineAsync();
 
@@ -61,11 +61,11 @@ namespace OperationalResearch.Models
             {
                 await Writer.WriteLineAsync($"Iteration {k}:");
 
-                int u = Q[Q.Select(i => pi[i]).ToArray().ArgMin()];//ArgMin == 0 -> min is with first element of Q
+                int u = Q[Q.Select(i => π[i]).ToArray().ArgMin()];//ArgMin == 0 -> min is with first element of Q
                 await Writer.WriteLineAsync($"u = {u + 1}, removed from Q");
 
-                await Writer.WriteLineAsync($"prev[{u + 1}] = {prev[u] + 1}");
-                await Writer.WriteLineAsync($"pi[{u + 1}] = {Function.Print(pi[u])}");
+                await Writer.WriteLineAsync($"prev[{u + 1}] = {p[u] + 1}");
+                await Writer.WriteLineAsync($"pi[{u + 1}] = {Function.Print(π[u])}");
 
                 // Remove u from Q
                 Q = Q.Where(i => i != u).ToArray();
@@ -77,15 +77,15 @@ namespace OperationalResearch.Models
                     if (edge.From == u)
                     {
                         int v = edge.To;
-                        if (pi[v] > pi[u] + edge.Cost)
+                        if (π[v] > π[u] + edge.Cost)
                         {
                             // Violates Bellman's condition
                             await Writer.WriteLineAsync($"Edge {edge} violates Bellman's condition:");
                             await Writer.WriteLineAsync(
-                                $"{Function.Print(pi[v])} > {Function.Print(pi[u])} + {Function.Print(edge.Cost)} = {Function.Print(pi[u] + edge.Cost)}");
+                                $"{Function.Print(π[v])} > {Function.Print(π[u])} + {Function.Print(edge.Cost)} = {Function.Print(π[u] + edge.Cost)}");
 
-                            pi[v] = pi[u] + edge.Cost;
-                            pi[v] = u;
+                            π[v] = π[u] + edge.Cost;
+                            p[v] = u;
                             updated[v] = true;
                             Q = Q.Concatenate(v); Q.Sort();
                             await Writer.WriteLineAsync($"Q = Q U {{ {v + 1} }} = {Function.Print(Q)}");
@@ -96,7 +96,7 @@ namespace OperationalResearch.Models
                 await Writer.WriteLineAsync("Distances: [updated]");
                 for (int i = 0; i < N; i++)
                 {
-                    await Writer.WriteAsync(updated[i] ? $"[{Function.Print(pi[i])}]" : $"{Function.Print(pi[i])}");
+                    await Writer.WriteAsync((updated[i] ? $"[{Function.Print(π[i])}]" : $"{Function.Print(π[i])}") + "  ");
                 }
                 await Writer.WriteLineAsync();
                 await Writer.WriteLineAsync();
@@ -112,7 +112,7 @@ namespace OperationalResearch.Models
                 }
             }
 
-            return new DijkstraResult(prev, pi);
+            return new DijkstraResult(p, π);
         }
 
     }

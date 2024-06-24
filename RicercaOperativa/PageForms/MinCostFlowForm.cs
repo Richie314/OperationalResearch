@@ -269,7 +269,65 @@ namespace OperationalResearch
 
             var Form = new ProblemForm();
             Form.Show();
-            await g.Dijkstra(Form.Writer, startNode: value);
+            try
+            {
+                var res = await g.Dijkstra(Form.Writer, startNode: value);
+                if (res is null)
+                {
+                    await Form.Writer.WriteLineAsync("Probem not solved");
+                } else
+                {
+                    await Form.Writer.WriteLineAsync($"Solution:");
+                    await Form.Writer.WriteLineAsync($"p = {Function.Print(res.P)}");
+                    await Form.Writer.WriteLineAsync($"π = {res.PI}");
+                }
+            }
+            catch (Exception ex)
+            {
+                await Form.Writer.WriteLineAsync(ex.ToString());
+            }
+        }
+
+        private async void button4_Click(object sender, EventArgs e)
+        {
+            string input = Microsoft.VisualBasic.Interaction.InputBox(
+                "s-t", "Node to start from and arrive to", "1-" + N, 0, 0);
+            if (string.IsNullOrWhiteSpace(input) || !input.Contains('-'))
+            {
+                return;
+            }
+            string[] parts = input.Split('-');
+            if (parts.Length != 2)
+            {
+                return;
+            }
+            if (!int.TryParse(parts[0], out int s) || !int.TryParse(parts[1], out int t))
+            {
+                return;
+            }
+            s--; t--;
+            if (s < 0 || s >= N || t < 0 || t >= N)
+            {
+                return;
+            }
+
+            var c = StrToFraction(MainGridStr());
+            if (c is null)
+                return;
+            Vector b = getB();
+            var u = UpperBound();
+            MinCostFlow m = new MinCostFlow(
+                c, b, LowerBound(), u);
+
+            var Form = new ProblemForm();
+            Form.Show();
+            try
+            {
+                await m.MinFlowMaxCut(s, t, Form.Writer);
+            }
+            catch (Exception ex) { 
+                await Form.Writer.WriteLineAsync(ex.ToString());
+            }
         }
     }
 
