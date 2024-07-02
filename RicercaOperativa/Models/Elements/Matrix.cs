@@ -9,19 +9,20 @@ using Accord.Math;
 using System.Drawing.Drawing2D;
 using System.Windows.Input.Manipulations;
 using Microsoft.Scripting.Utils;
+using static IronPython.SQLite.PythonSQLite;
 
-namespace OperationalResearch.Models
+namespace OperationalResearch.Models.Elements
 {
     public sealed class Matrix
     {
         private readonly Fraction[,] m;
         public Matrix()
         {
-            m = new Fraction[0,0];
+            m = new Fraction[0, 0];
         }
         public Matrix(Fraction[,] matrix)
         {
-            m = matrix;            
+            m = matrix;
         }
         public Matrix(Fraction[][] matrix)
         {
@@ -33,7 +34,7 @@ namespace OperationalResearch.Models
             int rows = matrix.Length;
             if (rows == 0)
             {
-                m = new Fraction[0,0];
+                m = new Fraction[0, 0];
                 return;
             }
             int cols = matrix[0].Length;
@@ -51,7 +52,7 @@ namespace OperationalResearch.Models
                 }
             }
         }
-        public Matrix (int rows, int cols) : this(
+        public Matrix(int rows, int cols) : this(
             Enumerable.Repeat(Enumerable.Repeat(Fraction.Zero, cols).ToArray(), rows).ToArray())
         {
         }
@@ -59,10 +60,8 @@ namespace OperationalResearch.Models
         public int Cols { get => m.Columns(); }
         public Matrix T { get => new(m.Transpose()); }
         public bool IsSquare { get => Rows > 0 && m.IsSquare(); }
-        private Matrix GetSub(int excludeRow, int excludeCol)
-        {
-            return new Matrix(m.RemoveRow(excludeRow).RemoveColumn(excludeCol));
-        }
+        private Matrix GetSub(int excludeRow, int excludeCol) =>
+            new Matrix(m.RemoveRow(excludeRow).RemoveColumn(excludeCol));
         private Fraction Determinant()
         {
             if (Rows == 0 || Cols == 0)
@@ -93,7 +92,7 @@ namespace OperationalResearch.Models
             }
             return det;
         }
-        public Fraction Det {  get => Determinant(); }
+        public Fraction Det { get => Determinant(); }
         private Matrix Invert()
         {
             if (!m.IsSquare())
@@ -103,7 +102,7 @@ namespace OperationalResearch.Models
             if (Rows == 1)
             {
                 return new Matrix(
-                    new Fraction[1, 1] { { Fraction.One / m[0, 0] } } );
+                    new Fraction[1, 1] { { Fraction.One / m[0, 0] } });
             }
             Fraction det = Det;
             if (det.IsZero)
@@ -118,8 +117,10 @@ namespace OperationalResearch.Models
                     if ((i + j) % 2 == 0)
                     {
                         m2[i, j] = GetSub(i, j).Det;
-                    } else {
-                        m2[i, j] = GetSub(i, j).Det.Invert();
+                    }
+                    else
+                    {
+                        m2[i, j] = -GetSub(i, j).Det;
                     }
                     m2[i, j] /= det;
                 }
@@ -127,10 +128,8 @@ namespace OperationalResearch.Models
             return new Matrix(m2).T;
         }
         public Matrix Inv { get => Invert(); }
-        private Matrix ToBaseIndexes(int[] indexes)
-        {
-            return new Matrix(T.m.GetColumns(indexes)).T;
-        }
+        private Matrix ToBaseIndexes(int[] indexes) =>
+            new Matrix(T.m.GetColumns(indexes)).T;
         public Vector this[int rowIndex]
         {
             get => m.GetRow(rowIndex);
@@ -149,7 +148,7 @@ namespace OperationalResearch.Models
         {
             get => ToBaseIndexes(baseIndexes.ToArray());
         }
-        public static Matrix operator * (Matrix a, Matrix b)
+        public static Matrix operator *(Matrix a, Matrix b)
         {
             if (a.Cols != b.Rows)
             {
@@ -157,7 +156,7 @@ namespace OperationalResearch.Models
             }
 
             Fraction[,] m2 = new Fraction[a.Rows, b.Cols];
-            for (int i = 0;  i < a.Rows; i++)
+            for (int i = 0; i < a.Rows; i++)
             {
                 for (int j = 0; j < b.Cols; j++)
                 {
@@ -166,14 +165,11 @@ namespace OperationalResearch.Models
             }
             return new Matrix(m2);
         }
-        public static Matrix operator * (Fraction a, Matrix b)
-        {
-            return new Matrix(b.m.Convert(x => a * x));
-        }
-        public static Matrix operator * (Matrix a, Fraction b)
-        {
-            return new Matrix(a.m.Convert(x => b * x));
-        }
+        public static Matrix operator *(Fraction a, Matrix b) =>
+            new Matrix(b.m.Convert(x => a * x));
+        public static Matrix operator *(Matrix a, Fraction b) =>
+            new Matrix(a.m.Convert(x => b * x));
+
         /// <summary>
         /// 
         /// </summary>
@@ -194,7 +190,7 @@ namespace OperationalResearch.Models
             }
             return c;
         }
-        
+
         public override string ToString()
         {
             if (m.GetNumberOfElements() == 0)
@@ -216,7 +212,7 @@ namespace OperationalResearch.Models
             List<string> lines = [];
             for (int i = 0; i < Rows; i++)
             {
-                string line = string.Join(' ', 
+                string line = string.Join(' ',
                     RenderedMatrix
                     .GetRow(i)
                     .Select(s => s.PadLeft(maxLength))
@@ -224,32 +220,31 @@ namespace OperationalResearch.Models
                 if (i == 0)
                 {
                     lines.Add($"\t/ {line} \\");
-                } else if (i == Rows - 1)
+                }
+                else if (i == Rows - 1)
                 {
                     lines.Add($"\t\\ {line} /");
-                } else
+                }
+                else
                 {
                     lines.Add($"\t| {line} |");
                 }
             }
             return Environment.NewLine + string.Join(Environment.NewLine, [.. lines]);
         }
-        
+
         public IEnumerable<int> RowsIndeces { get => Enumerable.Range(0, Rows); }
         public IEnumerable<int> ColsIndeces { get => Enumerable.Range(0, Cols); }
-        public static Matrix Identity(int rows)
+        public static Matrix Identity(int n)
         {
-            Fraction[,] m2 = new Fraction[rows, rows];
-            for (int i = 0; i < rows; i++)
+            Matrix I = new(n, n);
+            for (int i = 0; i < n; i++)
             {
-                for (int j = 0; j < rows; j++)
-                {
-                    m2[i, j] = (i == j) ? Fraction.One : Fraction.Zero;
-                }
+                I[i, i] = Fraction.One;
             }
-            return new Matrix(m2);
+            return I;
         }
-        public static Matrix operator + (Matrix a, Matrix b)
+        public static Matrix operator +(Matrix a, Matrix b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);
@@ -272,11 +267,8 @@ namespace OperationalResearch.Models
             }
             return new Matrix(c);
         }
-        public static Matrix operator - (Matrix a, Matrix b)
-        {
-            return a + ((-1) * b);
-        }
-        public static Matrix operator | (Matrix a, Vector b)
+        public static Matrix operator -(Matrix a, Matrix b) => a + (-1 * b);
+        public static Matrix operator |(Matrix a, Vector b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);
@@ -286,7 +278,7 @@ namespace OperationalResearch.Models
             }
             return new(a.m.InsertColumn(b.Get));
         }
-        public static Matrix operator | (Matrix a, Matrix b)
+        public static Matrix operator |(Matrix a, Matrix b)
         {
             ArgumentNullException.ThrowIfNull(a);
             ArgumentNullException.ThrowIfNull(b);
@@ -301,10 +293,7 @@ namespace OperationalResearch.Models
             }
             return new(m);
         }
-        public Matrix GetCols(IEnumerable<int> cols)
-        {
-            return T[cols].T;
-        }
+        public Matrix GetCols(IEnumerable<int> cols) => T[cols].T;
         public Fraction[,] M { get => m; }
         public int[][] AllIndices
         {
@@ -314,5 +303,24 @@ namespace OperationalResearch.Models
         {
             get => RowsIndeces.Select(r => this[r].NonZeroIndeces).ToArray();
         }
+        public Matrix AddRow(Vector x)
+        {
+            if (x.Size != Cols)
+            {
+                throw new ArgumentException(
+                    $"row to add must have col number equal to the cols of the matrix ({x.Size} != {Cols})");
+            }
+            return new Matrix(M.InsertRow(x.Get));
+        }
+        public Matrix AddRows(IEnumerable<Vector> arr)
+        {
+            if (!arr.Any())
+            {
+                return this;
+            }
+            return AddRow(arr.First()).AddRows(arr.Skip(1));
+        }
+        public Matrix AddRows(Matrix m) => AddRows(m[m.RowsIndeces]);
+        public Matrix Copy() => new Matrix(M.Copy());
     }
 }

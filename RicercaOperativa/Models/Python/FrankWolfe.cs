@@ -1,39 +1,41 @@
-﻿using Accord.Math;
-using Fractions;
-using System.Diagnostics;
-using System.Reflection.Metadata.Ecma335;
+﻿using Fractions;
+using OperationalResearch.Extensions;
+using OperationalResearch.Models.Elements;
 
 namespace OperationalResearch.Models.Python
 {
     internal sealed class FrankWolfe : PythonFunctionAnalyzer
     {
-        public FrankWolfe(Fraction[,] A, Vector b, string python) : base(A, b, python) { }
+        public FrankWolfe(Polyhedron P, string python) : base(P, python) { }
         public override async Task<Vector?> SolveMin(
             Vector? startX = null,
-            StreamWriter? Writer = null,
-            int? maxK = null)
-        {
-            return await Solve(true, startX, Writer, maxK);
-        }
+            IndentWriter? Writer = null,
+            int? maxK = null) => await Solve(true, startX, Writer, maxK);
+
         public override async Task<Vector?> SolveMax(
             Vector? startX = null,
-            StreamWriter? Writer = null,
-            int? maxK = null)
-        {
-            return await Solve(false, startX, Writer, maxK);
-        }
+            IndentWriter? Writer = null,
+            int? maxK = null) => await Solve(false, startX, Writer, maxK);
+
         private async Task<Vector?> Solve(
             bool IsMin,
             Vector? startX = null,
-            StreamWriter? Writer = null,
+            IndentWriter? Writer = null,
             int? maxK = null)
         {
-            Writer ??= StreamWriter.Null;
-            Matrix a = A;
-            Vector b = B;
+            Writer ??= IndentWriter.Null;
             int k = 0;
+            await Writer.WriteLineAsync($"A = {P.A}");
+            await Writer.WriteLineAsync($"b = {P.b}");
 
-            Vector xk = startX ?? GetRandomStartPoint(A, B);
+            if (startX is not null && !P.IsInside(startX))
+            {
+                await Writer.WriteLineAsync($"Starting x = {startX} is not in the polyhedron!.");
+                await Writer.WriteLineAsync($"A new starting point will be generated randomly");
+                startX = null;
+            }
+
+            Vector xk = startX ?? P.RandomInternalPoint() ?? throw new Exception("Could not find a random starting point!");
             while (true)
             {
                 if (maxK.HasValue && k >= maxK.Value)
@@ -42,38 +44,36 @@ namespace OperationalResearch.Models.Python
                     await Writer.WriteLineAsync($"Exiting with failure.");
                     break;
                 }
-                await Writer.WriteLineAsync($"Iteration {k}:");
+                await Writer.WriteLineAsync($"Iteration #{k}:");
 
-                await Writer.WriteLineAsync($"A = {a}");
-                await Writer.WriteLineAsync($"b = {b}");
-                await Writer.WriteLineAsync($"x{k} = {xk}");
+                await Writer.WriteLineAsync($"x_{k} = {xk}");
 
-                if (a * xk > b) // Check if A * xk <= b. In that case stop (an error has appened)
+                if (!P.IsInside(xk)) // Check if A * xk <= b. In that case stop (an error has appened)
                 {
                     await Writer.WriteLineAsync();
-                    await Writer.WriteLineAsync($"Vector x{k} is out of bound!");
+                    await Writer.WriteLineAsync($"Vector x_{k} is out of bound!");
                     await Writer.WriteLineAsync();
                     break;
                 }
 
                 Vector gradF = Grad(xk);
-                await Writer.WriteLineAsync($"gradF(x{k}) = {gradF}");
+                await Writer.WriteLineAsync($"∇f(x_{k}) = {gradF}");
 
                 Simplex s = new(
-                    a.M, b,
-                    gradF * (IsMin ? Fraction.MinusOne : Fraction.One), // If we want a max of the simplex we have to multiply its c coefficients by -1 
-                    false);
-                Vector? yk = await s.SolvePrimalMax(StreamWriter.Null, null, null);
+                    P,
+                    gradF * (IsMin ? Fraction.MinusOne : Fraction.One)); // If we want a max of the simplex we have to multiply its c coefficients by -1 
+
+                Vector? yk = await s.SolvePrimalMax(IndentWriter.Null, null, null);
                 if (yk is null)
                 {
-                    await Writer.WriteLineAsync($"It was impossible for the simplex to find y{k}.");
+                    await Writer.WriteLineAsync($"It was impossible for the simplex to find y_{k}.");
                     await Writer.WriteLineAsync($"Exiting with failure.");
                     break;
                 }
-                await Writer.WriteLineAsync($"y{k} = {yk}");
+                await Writer.WriteLineAsync($"y_{k} = {yk}");
 
                 Vector dk = yk - xk;
-                await Writer.WriteLineAsync($"d{k} = y{k} - x{k} = {dk}");
+                await Writer.WriteLineAsync($"d_{k} = y_{k} - x_{k} = {dk}");
 
                 if (dk.IsZero)
                 {
@@ -84,7 +84,7 @@ namespace OperationalResearch.Models.Python
 
                 Fraction tk = FindArgOfFunction(IsMin,
                     Fraction.Zero, Fraction.One, 5000, xk, dk);
-                await Writer.WriteLineAsync($"t{k} = {Models.Function.Print(tk)}");
+                await Writer.WriteLineAsync($"t_{k} = {Models.Function.Print(tk)}");
                 if (tk.IsZero)
                 {
                     await Writer.WriteLineAsync($"Internal error.");

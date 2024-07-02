@@ -11,7 +11,7 @@ using Accord.Math;
 using OperationalResearch.Models;
 using OperationalResearch.Models.Problems;
 using OperationalResearch.ViewForms;
-using Matrix = OperationalResearch.Models.Matrix;
+using Matrix = OperationalResearch.Models.Elements.Matrix;
 
 namespace RicercaOperativa
 {

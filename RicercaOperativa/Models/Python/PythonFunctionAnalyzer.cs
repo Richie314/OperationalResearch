@@ -1,14 +1,12 @@
-﻿using Accord.Math;
-using Fractions;
-using System.Diagnostics;
-using System.Reflection.Metadata.Ecma335;
+﻿using Fractions;
+using OperationalResearch.Extensions;
+using OperationalResearch.Models.Elements;
 
 namespace OperationalResearch.Models.Python
 {
     public abstract class PythonFunctionAnalyzer
     {
-        protected readonly Matrix A;
-        protected readonly Vector B;
+        protected readonly Polyhedron P;
         private readonly dynamic function;
         private readonly dynamic gradFunction;
         protected Vector Grad(Vector x)
@@ -34,6 +32,7 @@ namespace OperationalResearch.Models.Python
             var outPut = (double)function(x.ToDouble().ToList());
             return Fraction.FromDouble(outPut);
         }
+
         /// <summary>
         /// Finds the t between t_start and t_end that has the min value of
         /// f(x + dt)
@@ -46,20 +45,16 @@ namespace OperationalResearch.Models.Python
         /// <returns>The first t that takes the function to its min value</returns>
         protected Fraction FindArgMinOfFunction(
             Fraction t_start, Fraction t_end, int steps,
-            Vector x, Vector d)
-        {
-            return Models.Function.FindArgMin(
+            Vector x, Vector d) => Models.Function.FindArgMin(
                 t => Function(x + d * t), // Phi(t)
                 t_start, t_end, steps);
-        }
+
         protected Fraction FindArgMaxOfFunction(
             Fraction t_start, Fraction t_end, int steps,
-            Vector x, Vector d)
-        {
-            return Models.Function.FindArgMax(
+            Vector x, Vector d) => Models.Function.FindArgMax(
                 t => Function(x + d * t), // Phi(t)
                 t_start, t_end, steps);
-        }
+
         /// <summary>
         /// Finds min or max of phi(t) = f(x + t * d)
         /// </summary>
@@ -81,17 +76,11 @@ namespace OperationalResearch.Models.Python
             }
             return FindArgMaxOfFunction(t_start, t_end, steps, x, d);
         }
-        public PythonFunctionAnalyzer(Fraction[,] A, Vector b, string python)
+        public PythonFunctionAnalyzer(Polyhedron P, string python)
         {
-            ArgumentNullException.ThrowIfNull(A);
-            ArgumentNullException.ThrowIfNull(b);
+            ArgumentNullException.ThrowIfNull(P);
             ArgumentException.ThrowIfNullOrWhiteSpace(python);
-            if (A.Rows() != b.Size)
-            {
-                throw new ArgumentException("A must have row number equal to the length of b");
-            }
-            this.A = new Matrix(A);
-            B = b;
+            this.P = P;
             var list = GetFunctions(python);
             function = list[0];
             gradFunction = list[1];
@@ -140,14 +129,14 @@ namespace OperationalResearch.Models.Python
 
         public abstract Task<Vector?> SolveMin(
             Vector? startX = null,
-            StreamWriter? Writer = null,
+            IndentWriter? Writer = null,
             int? maxK = null);
         public abstract Task<Vector?> SolveMax(
             Vector? startX = null,
-            StreamWriter? Writer = null,
+            IndentWriter? Writer = null,
             int? maxK = null);
 
-        public async Task<bool> SolveMinFlow(StreamWriter? Writer = null, Vector? startingPoint = null)
+        public async Task<bool> SolveMinFlow(IndentWriter? Writer = null, Vector? startingPoint = null)
         {
             try
             {
@@ -178,7 +167,7 @@ namespace OperationalResearch.Models.Python
                 return false;
             }
         }
-        public async Task<bool> SolveMaxFlow(StreamWriter? Writer = null, Vector? startingPoint = null)
+        public async Task<bool> SolveMaxFlow(IndentWriter? Writer = null, Vector? startingPoint = null)
         {
             try
             {
@@ -208,37 +197,6 @@ namespace OperationalResearch.Models.Python
                 }
                 return false;
             }
-        }
-
-        public static Vector GetRandomStartPoint(Matrix A, Vector b)
-        {
-            if (A.Rows != b.Size)
-            {
-                throw new ArgumentException($"Columns of a must be equal to size of b ({A.Rows} != {b.Size})");
-            }
-
-            // if point 0 is acceptable we return it
-            if (b.IsPositiveOrZero) // b >= 0
-            {
-                return Enumerable.Repeat(Fraction.Zero, A.Cols).ToArray();
-            }
-
-            Random rnd = new();
-            int guesses = 0;
-            while (guesses < 3000)
-            {
-                guesses++;
-                Fraction[] x = new Fraction[A.Cols];
-                for (int i = 0; i < x.Length; i++)
-                {
-                    x[i] = new Fraction(rnd.Next(), rnd.Next() + 1);
-                }
-                if (A * x <= b)
-                {
-                    return x;
-                }
-            }
-            throw new Exception($"It was impossible to find a starting x, {guesses} possible vectors considered");
         }
     }
 }

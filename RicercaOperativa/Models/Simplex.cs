@@ -1,145 +1,65 @@
-﻿using Accord.Math;
-using Fractions;
+﻿using Fractions;
 using Microsoft.Scripting.Utils;
-using OperationalResearch.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.DirectoryServices.ActiveDirectory;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading.Tasks;
+using Accord.Math;
+using OperationalResearch.Extensions;
+using OperationalResearch.Models.Elements;
+using Vector = OperationalResearch.Models.Elements.Vector;
+using Matrix = OperationalResearch.Models.Elements.Matrix;
 
 namespace OperationalResearch.Models
 {
     internal class Simplex
     {
-        private readonly Matrix A;
-        private readonly Vector b;
+        private readonly Polyhedron P;
         private readonly Vector c;
-        private readonly bool addPositive;
 
-        public Simplex(Fraction[,] A, Vector b, Vector c, bool AddXPositiveOrZeroCostraint = true)
+        public Simplex NegateTarget
         {
-            ArgumentNullException.ThrowIfNull(A);
-            ArgumentNullException.ThrowIfNull(b);
+            get => new Simplex(P, Fraction.MinusOne * c);
+        }
+        public Simplex NegateKnownVector
+        {
+            get => new Simplex(P.NegateKnownVector, c);
+        }
+
+        public Simplex(Polyhedron p, Vector c)
+        {
+            ArgumentNullException.ThrowIfNull(p);
             ArgumentNullException.ThrowIfNull(c);
 
-            this.A = new Matrix(A);
-            this.b = b;
+            P = p;
             this.c = c;
-            if (this.A.Rows != b.Size)
+            if (P.Cols != c.Size)
             {
                 throw new ArgumentException(
-                    $"A must have row number equal to the size of b ({this.A.Rows} != {b.Size}");
+                    $"A must have col number equal to the size of c ({P.Cols} != {c.Size})");
             }
-            if (this.A.Cols != c.Size)
-            {
-                throw new ArgumentException(
-                    $"A must have col number equal to the size of c ({this.A.Cols} != {c.Size})");
-            }
-            this.addPositive = AddXPositiveOrZeroCostraint;
         }
-        private Matrix GetA()
-        {
-            if (!addPositive)
-            {
-                return A;
-            }
-            var copy = A.M.Copy();
-            for (int i = 0; i < copy.Columns(); i++)
-            {
-                Fraction[] rowToAdd =
-                    Enumerable.Repeat(Fraction.Zero, i)
-                    .Concat(new Fraction[1] { new(-1) })
-                    .Concat(Enumerable.Repeat(Fraction.Zero, copy.Columns() - i - 1))
-                    .ToArray();
-                copy = copy.InsertRow(rowToAdd);
-            }
-            return new Matrix(copy);
-        }
-        private Vector GetB()
-        {
-            if (!addPositive)
-            {
-                return b;
-            }
-            return b.Get.Concat(Enumerable.Repeat(Fraction.Zero, A.Cols)).ToArray();
-        }
-        private Vector GetC()
-        {
-            if (!addPositive)
-            {
-                return c;
-            }
-            return c.Get.Concat(Enumerable.Repeat(Fraction.Zero, A.Cols)).ToArray();
-        }
-        private static int[] FindStartBase(Matrix A, Vector b, Vector c, bool forX = true)
-        {
-            int guesses = 0;
-            do
-            {
-                if (guesses > 1000)
-                {
-                    throw new InvalidNumberException("Could not guess a valid base in 1000 guesses!");
-                }
+        
 
-                int[] B = [.. new Random().GetItems(  A.RowsIndeces.ToArray(),  A.Cols)];
-                int[] N = A.RowsIndeces.Where(i => !B.Contains(i)).ToArray();
-
-                Matrix A_B = A[B];
-                if (A_B.Det.IsZero)
-                {
-                    continue;
-                }
-                Matrix A_B_inv = A_B.Inv;
-
-                Vector b_B = b[B];
-                Vector b_N = b[N];
-
-                if (forX)
-                {
-                    Vector x = A_B_inv * b_B;
-                    if ((A[N] * x) <= b_N)
-                    {
-                        // Solution is acceptable => Base is acceptable
-                        return B;
-                    }
-                } else
-                {
-                    Vector Y_B = (c.Row * A_B_inv)[0];
-                    if (Y_B.IsPositiveOrZero)
-                    {
-                        return B;
-                    }
-                }
-                guesses++;
-            } while (true);
-        }
         public async Task<Vector?> SolvePrimalMax(
-            StreamWriter Writer, 
-            int[]? startBase = null,
+            IndentWriter Writer, 
+            int[]? startBasis = null,
             int? maxIterations = null)
         {
             ArgumentNullException.ThrowIfNull(Writer);
-            var a = GetA();
-            var VectorB = GetB();
+            var A = P.GetMatrix();
+            var b = P.GetVector();
 
-            int[] B = startBase ?? FindStartBase(a, VectorB, c, true); B.Sort();
-            int[] N = a.RowsIndeces.Where(i => !B.Contains(i)).ToArray();
+            int[] B = startBasis ?? P.RandomBasis() ?? throw new Exception("Could not find a random basis");
+            int[] N = A.RowsIndeces.Where(i => !B.Contains(i)).ToArray();
 
             await Writer.WriteLineAsync("Start:");
             await Writer.WriteLineAsync($"c = {c}");
-            await Writer.WriteLineAsync($"A = {a}");
-            await Writer.WriteLineAsync($"b = {VectorB}");
+            await Writer.WriteLineAsync($"A = {A}");
+            await Writer.WriteLineAsync($"b = {b}");
             await Writer.WriteLineAsync();
 
             await Writer.WriteLineAsync($"B = {Function.Print(B)}");
             await Writer.WriteLineAsync($"N = {Function.Print(N)}");
-            Debug.Assert(B.Length + N.Length == a.Rows);
-            Trace.Assert(B.Length + N.Length == a.Rows);
-
 
             int step = 1;
 
@@ -149,21 +69,25 @@ namespace OperationalResearch.Models
                 await Writer.WriteLineAsync();
                 Writer.WriteLine($"Step #{step}:");
 
-                Matrix A_B = a[B];
+                Matrix A_B = A[B];
                 await Writer.WriteLineAsync($"A_B = {A_B}");
-                Matrix A_N = a[N];
+
+                Matrix A_N = A[N];
                 await Writer.WriteLineAsync($"A_N = {A_N}");
+
                 if (A_B.Det.IsZero)
                 {
                     throw new ArgumentException($"Basis {Function.Print(B)} is invalid: Det(A_B) = 0");
                 }
+
                 Matrix A_B_inv = A_B.Inv;
                 await Writer.WriteLineAsync($"A_B^-1 = {A_B_inv}");
                 await Writer.WriteLineAsync();
 
-                Vector b_B = VectorB[B];
-                Vector b_N = VectorB[N];
+                Vector b_B = b[B];
                 await Writer.WriteLineAsync($"b_B = {b_B}");
+
+                Vector b_N = b[N];
                 await Writer.WriteLineAsync($"b_N = {b_N}");
                 await Writer.WriteLineAsync();
 
@@ -172,13 +96,13 @@ namespace OperationalResearch.Models
                 var A_N_X = A_N * x;
                 if (A_N_X <= b_N)
                 {
-                    await Writer.WriteLineAsync($"x is acceptable");
+                    await Writer.WriteLineAsync($"x is acceptable (A_N * x <= b_N)");
 
                 } else
                 {
                     // Non acceptable solution
                     throw new DataMisalignedException(
-                        $"Solution x = {x}  of base B = {Function.Print(B)} is not acceptable");
+                        $"Solution x = {x}  of basis B = {Function.Print(B)} is not acceptable");
                 }
                 await Writer.WriteLineAsync();
 
@@ -190,10 +114,10 @@ namespace OperationalResearch.Models
                     {
                         if (!N.Contains(i))
                         {
-                            await Writer.WriteLineAsync($"\tThe {i}-th element of N also verifies the current vertex. It was impossible, however, to find that element in N");
+                            await Writer.WriteLineAsync($"\tThe {i + 1}-th element of N also verifies the current vertex. It was impossible, however, to find that element in N");
                             continue;
                         }
-                        await Writer.WriteLineAsync($"\tIndex {N[i]} in N is also verified");
+                        await Writer.WriteLineAsync($"\tIndex {N[i] + 1} in N is also verified");
                     }
                 }
 
@@ -208,7 +132,7 @@ namespace OperationalResearch.Models
 
                     try
                     {
-                        await Gomory(Writer, a, VectorB, x, B, addPositive);
+                        await Gomory(Writer.Indent(), P, x, B);
                     } catch (Exception ex)
                     {
                         await Writer.WriteLineAsync(
@@ -224,24 +148,24 @@ namespace OperationalResearch.Models
                 await Writer.WriteLineAsync($"h = {h + 1} of element {Function.Print(ExitingElement)}");
 
                 Vector Wh = A_B_inv.Col( B.Find(i => i == h).First() ) * (-1); // Wh is the h-th column of -A_b_inv
-                await Writer.WriteLineAsync($"Wh = {Wh}");
+                await Writer.WriteLineAsync($"W_{h + 1} = {Wh}");
                 await Writer.WriteLineAsync();
 
-                if (N.All(i => !(a[i] * Wh).IsPositive))
+                if (N.All(i => !(A[i] * Wh).IsPositive))
                 {
                     // optimal value is +inf
-                    await Writer.WriteLineAsync($"A[i] * Wh <= 0 for each i inside N");
+                    await Writer.WriteLineAsync($"A[i] * W_{h + 1} <= 0 for each i inside N");
                     return null;
                 }
 
 
-                int k = FindEnteringIndex(a, Wh, VectorB, x, N, out Fraction Theta);
+                int k = FindEnteringIndex(A, Wh, b, x, N, out Fraction Theta);
                 await Writer.WriteLineAsync($"Theta = {Theta}");
                 await Writer.WriteLineAsync($"k = {k + 1}");
                 await Writer.WriteLineAsync();
 
-                B = B.Where(i => i != h).Append(k).ToArray(); B.Sort();
-                N = N.Where(i => i != k).Append(h).ToArray(); N.Sort();
+                B = B.Where(i => i != h).Append(k).ToArray().Sorted();
+                N = N.Where(i => i != k).Append(h).ToArray().Sorted();
                 await Writer.WriteLineAsync($"B = B - {{ {h + 1} }} U {{ {k + 1} }} = {Function.Print(B)}");
                 await Writer.WriteLineAsync();
                 step++;
@@ -269,7 +193,7 @@ namespace OperationalResearch.Models
             {
                 return "";
             }
-            return $"A * x = {GetA() * primalSolution}";
+            return $"A * x = {P.GetMatrix() * primalSolution}";
         }
         private static int FindExitIndex(Vector Y_B, int[] B, out Fraction NegElement)
         {
@@ -277,6 +201,7 @@ namespace OperationalResearch.Models
             NegElement = Y_B[vecIndex];
             return B[vecIndex];
         }
+
         private static int FindEnteringIndex(
             Matrix A, 
             Vector Wh, 
@@ -299,18 +224,18 @@ namespace OperationalResearch.Models
             return k;
         }
 
-        public async Task<bool> SolvePrimalMaxFlow(int[]? startBase = null, StreamWriter? Writer = null)
+        public async Task<bool> SolvePrimalMaxFlow(int[]? startBasis = null, IndentWriter? Writer = null)
         {
-            Writer ??= StreamWriter.Null;
-            bool exitValue = true;
+            Writer ??= IndentWriter.Null;
             try
             {
                 Vector? x = await SolvePrimalMax(
-                    startBase: startBase, 
+                    startBasis: startBasis, 
                     Writer: Writer, 
                     maxIterations: 100);
                 await Writer.WriteLineAsync(CalculatePrimal(x));
                 await Writer.WriteLineAsync(CalculatePrimalConstraints(x));
+                return true;
             } catch (Exception ex)
             {
                 await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
@@ -320,20 +245,25 @@ namespace OperationalResearch.Models
                     await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
                 }
 #endif
-                exitValue = false;
+                return false;
             }
-            return exitValue;
         }
         
+
+
+
         public async Task<Vector?> SolveDualMin(
-            int[]? startBase = null, 
-            StreamWriter? Writer = null,
+            int[]? startBasis = null, 
+            IndentWriter? Writer = null,
             int? maxIterations = null)
         {
             ArgumentNullException.ThrowIfNull(Writer);
+            Matrix A = P.GetMatrix();
+            Vector b = P.GetVector();
 
-            int[] B = startBase ?? FindStartBase(A, b, c, false); B.Sort();
+            int[] B = startBasis ?? P.RandomDualBasis(c) ?? throw new Exception("It was impossible to find a basis");
             int[] N = A.RowsIndeces.Where(i => !B.Contains(i)).ToArray();
+            
             await Writer.WriteLineAsync("Start:");
             await Writer.WriteLineAsync($"b = {b}");
             await Writer.WriteLineAsync($"A = {A}");
@@ -342,8 +272,6 @@ namespace OperationalResearch.Models
 
             await Writer.WriteLineAsync($"B = {Function.Print(B)}");
             await Writer.WriteLineAsync($"N = {Function.Print(N)}");
-            Debug.Assert(B.Length + N.Length == A.Rows);
-            Trace.Assert(B.Length + N.Length == A.Rows);
 
 
             int step = 1;
@@ -356,37 +284,36 @@ namespace OperationalResearch.Models
 
                 Matrix A_B = A[B];
                 await Writer.WriteLineAsync($"A_B = {A_B}");
-                Matrix A_N = A[N];
-                await Writer.WriteLineAsync($"A_N = {A_N}");
+
                 if (A_B.Det.IsZero)
                 {
                     throw new ArgumentException($"Base {Function.Print(B)} is invalid: Det(A_B) = 0");
                 }
+
+                Matrix A_N = A[N];
+                await Writer.WriteLineAsync($"A_N = {A_N}");
+
                 Matrix A_B_inv = A_B.Inv;
                 await Writer.WriteLineAsync($"A_B^-1 = {A_B_inv}");
                 await Writer.WriteLineAsync();
 
                 Vector b_B = b[B];
-                Vector b_N = b[N];
                 await Writer.WriteLineAsync($"b_B = {b_B}");
+
+                Vector b_N = b[N];
                 await Writer.WriteLineAsync($"b_N = {b_N}");
                 await Writer.WriteLineAsync();
 
                 Vector Y_B = (c.Row * A_B_inv)[0]; // Get first row of one row matrix
                 await Writer.WriteLineAsync($"Y_B = {Y_B}");
                 await Writer.WriteLineAsync();
-                Vector Y = Enumerable.Range(0, A.Rows).Select(
-                    i =>
-                    {
-                        if (B.Contains(i))
-                        {
-                            return Y_B[B.IndexOf(i)];
-                        }
-                        return Fraction.Zero;
-                    }).ToArray();
+
+                Vector Y = A.RowsIndeces.Select(
+                    i => B.Contains(i) ? Y_B[B.IndexOf(i)] : Fraction.Zero).ToArray();
+
                 await Writer.WriteLineAsync($"Y = {Y}");
 
-                if (addPositive)
+                if (P.ForcePositive)
                 {
                     if (!Y.IsPositiveOrZero)
                     {
@@ -407,22 +334,23 @@ namespace OperationalResearch.Models
                 if (b_N >= A_N * x)
                 {
                     // Optimal value
-                    await Writer.WriteLineAsync($"Y is optimal.");
+                    await Writer.WriteLineAsync($"b_N >= A_N x => Y is optimal.");
                     await Writer.WriteLineAsync();
 
                     return Y;
                 }
+
                 // Find enetring index
                 int k = N.Where(i => b[i] < A[i] * x).Min();
                 await Writer.WriteLineAsync($"k = {k + 1}");
 
                 Matrix W = (-1) * A_B_inv;
                 Vector AkW = (A[k].Row * W)[0];
-                await Writer.WriteLineAsync($"AkW = {AkW}");
+                await Writer.WriteLineAsync($"A_{k + 1 } * W = {AkW}");
                 if (AkW.IsPositiveOrZero)
                 {
                     // optimal value is -inf
-                    await Writer.WriteLineAsync($"AkW >= 0");
+                    await Writer.WriteLineAsync($"A_{k + 1} * W >= 0");
                     await Writer.WriteLineAsync($"Problem cannot be solved");
                     return null;
                 }
@@ -433,8 +361,8 @@ namespace OperationalResearch.Models
                 int h = AkW.NegativeIndexes.Select(i => B[i]).Where(i => Y[i] / AkW[B.IndexOf(i)] * (-1) == Theta).Min();
                 await Writer.WriteLineAsync($"h = {h + 1}");
 
-                B = B.Where(i => i != h).Append(k).ToArray(); B.Sort();
-                N = N.Where(i => i != k).Append(h).ToArray(); N.Sort();
+                B = B.Where(i => i != h).Append(k).ToArray().Sorted();
+                N = N.Where(i => i != k).Append(h).ToArray().Sorted();
                 await Writer.WriteLineAsync($"B = B - {{ {h + 1} }} U {{ {k + 1} }} = {Function.Print(B)}");
                 await Writer.WriteLineAsync();
                 step++;
@@ -445,17 +373,17 @@ namespace OperationalResearch.Models
                 }
             }
         }
-        public async Task<bool> SolveDualMinFlow(int[]? startBase = null, StreamWriter? Writer = null)
+        public async Task<bool> SolveDualMinFlow(int[]? startBasis = null, IndentWriter? Writer = null)
         {
-            Writer ??= StreamWriter.Null;
-            bool exitValue = true;
+            Writer ??= IndentWriter.Null;
             try
             {
                 Vector? y = await SolveDualMin(
-                    startBase: startBase,
+                    startBasis: startBasis,
                     Writer: Writer,
                     maxIterations: 100);
                 await Writer.WriteLineAsync(CalculateDual(y));
+                return true;
             }
             catch (Exception ex)
             {
@@ -466,34 +394,37 @@ namespace OperationalResearch.Models
                     await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
                 }
 #endif
-                exitValue = false;
+                return false;
             }
-            return exitValue;
         }
+
         public string CalculateDual(Vector? dualSolution)
         {
             if (dualSolution is null || dualSolution.Size == 0)
             {
                 return "Infinity: problem unbounded";
             }
-            return $"y^T * b = {Function.Print(dualSolution * b)}";
+            return $"y^T * b = {Function.Print(dualSolution * P.GetVector())}";
         }
+
+
         private static async Task Gomory(
-            StreamWriter Writer,
-            Matrix a, Vector b, 
-            Vector Xrc, int[] BestBase,
-            bool addedPositivesRestriction)
+            IndentWriter Writer,
+            Polyhedron P,
+            Vector Xrc, int[] BestBase)
         {
             await Writer.WriteLineAsync(
-                $"Calculating Gomory plane with primary B = {Function.Print(BestBase)}");
+                $"Calculating Gomory plane with primary basis B = {Function.Print(BestBase)}");
 
-            if (!addedPositivesRestriction)
+            if (!P.ForcePositive)
             {
-                throw new NotImplementedException();
+                throw new NotImplementedException("Functionality not yet implemented");
             }
 
-            a = a[Enumerable.Range(0, a.Rows - a.Cols)];
-            b = b[Enumerable.Range(0, a.Rows)];
+
+
+            var a = P.GetMatrix()[Enumerable.Range(0, P.Rows - P.Cols)];
+            var b = P.GetVector()[Enumerable.Range(0, a.Rows)];
             await Writer.WriteLineAsync($"Adding {a.Rows} variables");
 
             Matrix dualM = a | Matrix.Identity(a.Rows);
@@ -505,11 +436,11 @@ namespace OperationalResearch.Models
             await Writer.WriteLineAsync($"x of dual problem: {xRemain}");
             var dualBase = xRemain.NonZeroIndeces;
             var dualN = dualM.ColsIndeces.Where(i => !dualBase.Contains(i));
-            await Writer.WriteLineAsync($"Base of dual problem's solution: {Function.Print(dualBase)}");
+            await Writer.WriteLineAsync($"Basis of dual problem's solution: {Function.Print(dualBase)}");
 
             Matrix aB_Inv = 
                 dualM.GetCols(dualBase).Inv * 
-                dualM.GetCols(dualN);//*a[N] but a[N] is the identity matrix we added before!
+                dualM.GetCols(dualN); //*a[N] but a[N] is the identity matrix we added before!
             await Writer.WriteLineAsync($"A^~ = {aB_Inv}");
 
             Matrix aB_Inv_Frac = new(aB_Inv.M.Apply(a => a.FractionPart()));

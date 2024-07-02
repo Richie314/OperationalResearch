@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Accord.Math;
 using Fractions;
 
-namespace OperationalResearch.Models
+namespace OperationalResearch.Models.Elements
 {
     /// <summary>
     /// Column vector
@@ -22,29 +22,21 @@ namespace OperationalResearch.Models
             ArgumentNullException.ThrowIfNull(v);
             this.v = v;
         }
-        public static implicit operator Vector(Fraction[] v)
-        {
-            return new Vector(v);
-        }
-        public static implicit operator Vector(List<Fraction> v)
-        {
-            return new Vector(v);
-        }
+        
+        public static implicit operator Vector(Fraction[] v) =>
+            new Vector(v);
+        public static implicit operator Vector(List<Fraction> v) => 
+            new Vector(v);
+
         public Vector(IEnumerable<Fraction> v)
         {
             ArgumentNullException.ThrowIfNull(v);
             this.v = v.ToArray();
         }
-        public IEnumerable<double> ToDouble()
-        {
-            return v.Select(v => v.ToDouble());
-        }
-        public IEnumerable<decimal> ToDecimal()
-        {
-            return v.Select(v => v.ToDecimal());
-        }
+        public IEnumerable<double> ToDouble() => v.Select(v => v.ToDouble());
+        public IEnumerable<decimal> ToDecimal() => v.Select(v => v.ToDecimal());
         public static Vector Empty = new();
-        public static Vector Zero(int length) => 
+        public static Vector Zero(int length) =>
             Enumerable.Repeat(Fraction.Zero, length).ToArray();
         public int Size { get { return v.Length; } }
         public bool IsEmpty { get => Size == 0; }
@@ -73,6 +65,9 @@ namespace OperationalResearch.Models
                 return this;
             return Get.Concat(x2.Get).ToArray();
         }
+        public Vector Concat(IEnumerable<Fraction>? x2) => 
+            x2 is null ? this : Concat((Vector)x2.ToArray());
+        public static Vector Zeros(int n) => new Vector(Enumerable.Repeat(Fraction.Zero, n));
         public static Vector operator +(Vector a, Vector b)
         {
             ArgumentNullException.ThrowIfNull(a);
@@ -93,6 +88,7 @@ namespace OperationalResearch.Models
             }
             return a.Indices.Select(i => a[i] - b[i]).ToArray();
         }
+
         /// <summary>
         /// Scalar product
         /// </summary>
@@ -115,6 +111,7 @@ namespace OperationalResearch.Models
             }
             return sum;
         }
+
         /// <summary>
         /// Multiplies component by component
         /// </summary>
@@ -132,6 +129,7 @@ namespace OperationalResearch.Models
             }
             return a.Indices.Select(i => a[i] * b[i]).ToArray();
         }
+
         /// <summary>
         /// Divides component by component
         /// </summary>
@@ -149,6 +147,7 @@ namespace OperationalResearch.Models
             }
             return a.Indices.Select(i => a[i] / b[i]).ToArray();
         }
+        
         /// <summary>
         /// Multply all acomponents by scalar
         /// </summary>
@@ -167,6 +166,7 @@ namespace OperationalResearch.Models
             }
             return c;
         }
+        
         /// <summary>
         /// Multply all acomponents by scalar
         /// </summary>
@@ -320,10 +320,7 @@ namespace OperationalResearch.Models
         {
             get => v.Find(x => x.IsNegative);
         }
-        public Vector RemoveAt(int jToRemove)
-        {
-            return v.RemoveAt(jToRemove);
-        }
+        public Vector RemoveAt(int jToRemove) => v.RemoveAt(jToRemove);
         /// <summary>
         /// Transforms the column vector to a matrix with one row
         /// </summary>
@@ -331,18 +328,11 @@ namespace OperationalResearch.Models
         {
             get => new([v]);
         }
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-        public override bool Equals(object? obj)
-        {
-            return base.Equals(obj);
-        }
-        public override string ToString()
-        {
-            return "( " + string.Join(", ", v.Select(x => Function.Print(x))) + " )";
-        }
+        public override int GetHashCode() => base.GetHashCode();
+        public override bool Equals(object? obj) => base.Equals(obj);
+        public override string ToString() => 
+            $"( {string.Join(", ", v.Select(x => Function.Print(x)))} )";
+
 
         public static Vector Sum(IEnumerable<Vector> vectors)
         {
@@ -370,5 +360,18 @@ namespace OperationalResearch.Models
             }
             return fraction;
         }
+        public static Vector Rand(int size)
+        {
+            var x = Zeros(size);
+            var rnd = Random.Shared;
+            for (int i = 0; i < size; i++)
+            {
+                x[i] = new Fraction(
+                    rnd.Next(int.MinValue, int.MaxValue), 
+                    rnd.Next(1, int.MaxValue));
+            }
+            return x;
+        }
+        public Vector Copy() => v.ToList();
     }
 }

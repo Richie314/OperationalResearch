@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using OperationalResearch.Models;
+using OperationalResearch.Models.Elements;
 
 namespace OperationalResearch.ViewForms
 {

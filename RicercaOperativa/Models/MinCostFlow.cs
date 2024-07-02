@@ -1,5 +1,6 @@
 ﻿using Accord.Math;
 using Fractions;
+using OperationalResearch.Models.Elements;
 using OperationalResearch.Models.Graphs;
 using System;
 using System.Collections.Generic;

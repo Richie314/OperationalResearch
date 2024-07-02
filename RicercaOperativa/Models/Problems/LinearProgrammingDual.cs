@@ -1,5 +1,6 @@
 ﻿using Fractions;
 using IronPython.Hosting;
+using OperationalResearch.Models.Elements;
 using System;
 using System.Collections.Generic;
 using System.Linq;

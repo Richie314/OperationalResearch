@@ -1,29 +1,25 @@
-﻿using Accord.Math;
-using Fractions;
-using System.Diagnostics;
-using System.Reflection.Metadata.Ecma335;
+﻿using Fractions;
+using OperationalResearch.Extensions;
+using OperationalResearch.Models.Elements;
 
 namespace OperationalResearch.Models.Python
 {
-    internal sealed class ProjectedGradient(Fraction[,] A, Vector b, string python) : PythonFunctionAnalyzer(A, b, python)
+    internal sealed class ProjectedGradient(Polyhedron P, string python) : PythonFunctionAnalyzer(P, python)
     {
         public override async Task<Vector?> SolveMin(
-            Vector? startX = null, StreamWriter? Writer = null, int? maxK = null)
-        {
-            return await Solve(true, startX, Writer, maxK);
-        }
+            Vector? startX = null, IndentWriter? Writer = null, int? maxK = null) =>
+            await Solve(true, startX, Writer, maxK);
         public override async Task<Vector?> SolveMax(
-            Vector? startX = null, StreamWriter? Writer = null, int? maxK = null)
-        {
-            return await Solve(false, startX, Writer, maxK);
-        }
+            Vector? startX = null, IndentWriter? Writer = null, int? maxK = null) =>
+            await Solve(false, startX, Writer, maxK);
+
         public async Task<Vector?> Solve(
             bool IsMin,
-            Vector? startX = null, StreamWriter? Writer = null, int? maxK = null)
+            Vector? startX = null, 
+            IndentWriter? Writer = null, 
+            int? maxK = null)
         {
-            Writer ??= StreamWriter.Null;
-            Matrix a = A;
-            Vector b = B;
+            Writer ??= IndentWriter.Null;
             int k = 0;
             if (IsMin)
             {
@@ -34,56 +30,67 @@ namespace OperationalResearch.Models.Python
                 await Writer.WriteLineAsync($"Solving for max value...");
             }
             await Writer.WriteLineAsync();
-            await Writer.WriteLineAsync($"A = {a}");
-            await Writer.WriteLineAsync($"b = {b}");
+
+            Polyhedron p = P.Copy();
+
+            await Writer.WriteLineAsync($"A = {p.A}");
+            await Writer.WriteLineAsync($"b = {p.b}");
             //step1:
 
-            Vector xk = startX ?? GetRandomStartPoint(a, b);
+            if (startX is not null && !p.IsInside(startX))
+            {
+                await Writer.WriteLineAsync($"Starting x = {startX} is not in the polyhedron!.");
+                await Writer.WriteLineAsync($"A new starting point will be generated randomly");
+                startX = null;
+            }
+
+            Vector xk = startX ?? p.RandomInternalPoint() ?? throw new Exception("Could not find a random starting point!");
+
         step2:
-            await Writer.WriteLineAsync($"Iteration {k}:");
+            await Writer.WriteLineAsync($"Iteration #{k}:");
             if (maxK.HasValue && maxK.Value < k)
             {
                 await Writer.WriteLineAsync($"Optimal value not reached in {k} iterations.");
                 await Writer.WriteLineAsync($"Exiting with failure.");
                 return null;
             }
-            await Writer.WriteLineAsync($"x{k} = {xk}");
+            await Writer.WriteLineAsync($"x_{k} = {xk}");
 
-            if (a * xk > b) // Check if A * xk <= b. In that case stop (an error has appened)
+            if (!p.IsInside(xk)) // Check if A * xk <= b. In that case stop (an error has appened)
             {
                 await Writer.WriteLineAsync();
-                await Writer.WriteLineAsync($"Vector x{k} is out of bound!");
+                await Writer.WriteLineAsync($"Vector x_{k} is out of bound!");
                 await Writer.WriteLineAsync();
                 return null;
             }
 
         step3:
-            IEnumerable<int> J = a.RowsIndeces.Where(i => a[i] * xk == b[i]);
+            IEnumerable<int> J = P.A.RowsIndeces.Where(i => p.A[i] * xk == p.b[i]);
             await Writer.WriteLineAsync($"J = {Models.Function.Print(J)}");
-            Matrix M = a[J];
+            Matrix M = p.A[J];
             await Writer.WriteLineAsync($"M = {M}");
 
             //step4:
-            Matrix H = await GetHMatrix(M, A.Cols, null);
+            Matrix H = await GetHMatrix(M, p.A.Cols, null);
             await Writer.WriteLineAsync($"H = {H}");
 
             Vector gradXk = Grad(xk);
-            await Writer.WriteLineAsync($"gradF(x{k}) = {gradXk}");
+            await Writer.WriteLineAsync($"∇f(x_{k}) = {gradXk}");
 
             Vector dk = H * gradXk * (IsMin ? Fraction.MinusOne : Fraction.One);
-            await Writer.WriteLineAsync($"d{k} = {dk}");
+            await Writer.WriteLineAsync($"d_{k} = {dk}");
             if (dk.IsZero) // dk == 0
             {
-                await Writer.WriteLineAsync($"d{k} is zero!");
+                await Writer.WriteLineAsync($"d_{k} is zero!");
                 goto step5;
             }
 
-            Fraction tMax = FindTMaxMin(a, xk, dk, b, IsMin);
-            await Writer.WriteLineAsync($"t{k}^ = {Models.Function.Print(tMax)}");
+            Fraction tMax = FindTMaxMin(p.A, xk, dk, p.b, IsMin);
+            await Writer.WriteLineAsync($"t_{k}^ = {Models.Function.Print(tMax)}");
             if (tMax.IsNegative)
             {
                 // We won't move
-                await Writer.WriteLineAsync($"t{k}^ is negative!");
+                await Writer.WriteLineAsync($"t_{k}^ is negative!");
                 await Writer.WriteLineAsync($"Unexpected value. Procedure may be compromised.");
                 await Writer.WriteLineAsync();
                 return null;
@@ -91,15 +98,15 @@ namespace OperationalResearch.Models.Python
 
             const int PointsToPlot = 5000;
             await Writer.WriteLineAsync(
-                $"Finding {(IsMin ? "min" : "max")} value of phi(t) = f(x{k} + t d{k}) " +
+                $"Finding {(IsMin ? "min" : "max")} value of phi(t) = f(x_{k} + t d_{k}) " +
                 $"inside [0, {Models.Function.Print(tMax)}]. {PointsToPlot} points considered");
 
             Fraction tk = FindArgOfFunction(IsMin, 0, tMax, PointsToPlot, xk, dk);
-            await Writer.WriteLineAsync($"t{k} = {Models.Function.Print(tk)}");
+            await Writer.WriteLineAsync($"t_{k} = {Models.Function.Print(tk)}");
             if (tk.IsZero)
             {
                 // We won't move
-                await Writer.WriteLineAsync($"t{k} is zero!");
+                await Writer.WriteLineAsync($"t_{k} is zero!");
                 await Writer.WriteLineAsync($"It is impossible to move forward.");
                 await Writer.WriteLineAsync();
                 return null;
@@ -120,44 +127,42 @@ namespace OperationalResearch.Models.Python
                 await Writer.WriteLineAsync($"Exit with unknown (unexpected) result.");
                 return xk;
             }
-            Vector lambda = (IsMin ? Fraction.MinusOne : Fraction.One) * ((M * M.T).Inv * M * gradXk);
-            await Writer.WriteLineAsync($"lambda = {lambda}");
-            if (lambda.IsPositiveOrZero) // lambda >= 0
+            Vector λ = (IsMin ? Fraction.MinusOne : Fraction.One) * ((M * M.T).Inv * M * gradXk);
+            await Writer.WriteLineAsync($"λ = {λ}");
+            if (λ.IsPositiveOrZero) // lambda >= 0
             {
-                await Writer.WriteLineAsync($"lambda >= 0.");
-                await Writer.WriteLineAsync($"Exit with success.");
+                await Writer.Indent().WriteLineAsync($"λ >= 0.");
+                await Writer.Indent().WriteLineAsync($"Exit with success.");
                 return xk;
             }
             else
             {
-                await Writer.WriteLineAsync($"lambda has at least one component below zero.");
+                await Writer.Indent().WriteLineAsync($"λ has at least one component below zero.");
             }
             // J has at least 1 element here
             // J == {} => dk == -gradF(xk)
-            // dk == 0 => gradF(xk) == 0 => lambda == 0 => lambda >= 0 => It has already exited
+            // dk == 0 => gradF(xk) == 0 => λ == 0 => λ >= 0 => It has already exited
 
             // argmin == 0 -> min is the first element of J
             // argmin == 1 -> min is the second element of J
             // and so on
-            int argmin = lambda.ArgMin;
-            await Writer.WriteLineAsync($"Argmin{{lambda}} = {argmin + 1}");
+            int argmin = λ.ArgMin;
+            await Writer.WriteLineAsync($"Argmin{{ λ }} = {argmin + 1}");
             int jToRemove = J.ElementAt(argmin);
             await Writer.WriteLineAsync($"Removing equation {jToRemove + 1} from A|b.");
-            // Remove row from a
-            a = a[a.RowsIndeces.Where(j => j != jToRemove)];
-            // Remove row from b
-            b = b.RemoveAt(jToRemove);
-            await Writer.WriteLineAsync($"(A|b)' = {a | b}");
+
+            p = p.RemoveEquation(jToRemove);
+            await Writer.WriteLineAsync($"new (A|b) = {p.A | p.b}");
             goto step3;
         }
 
-        private static async Task<Matrix> GetHMatrix(Matrix M, int xLength, StreamWriter? Writer = null)
+        private static async Task<Matrix> GetHMatrix(Matrix M, int xLength, IndentWriter? Writer = null)
         {
             if (M.Rows == 0)
             {
                 return Matrix.Identity(xLength);
             }
-            Writer ??= StreamWriter.Null;
+            Writer ??= IndentWriter.Null;
 
             // M * M.T
             var mmt = M * M.T;
@@ -183,6 +188,8 @@ namespace OperationalResearch.Models.Python
             }
             return Matrix.Identity(xLength) - mt_mmt_inv_m;
         }
+        
+        
         /// <summary>
         /// Finds max(t) where
         /// A (x + td) < b

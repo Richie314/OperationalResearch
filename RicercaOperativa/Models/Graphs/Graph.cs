@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using OperationalResearch.Extensions;
 using System.Xaml;
+using OperationalResearch.Models.Elements;
+using Matrix = OperationalResearch.Models.Elements.Matrix;
 
 namespace OperationalResearch.Models
 {
@@ -15,6 +17,7 @@ namespace OperationalResearch.Models
     {        
         [Range(1, int.MaxValue)]
         public int N;
+
         [MinLength(1)]
         public IEnumerable<Edge> Edges;
 

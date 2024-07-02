@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OperationalResearch.Models
+namespace OperationalResearch.Models.Elements
 {
     internal struct Point2
     {

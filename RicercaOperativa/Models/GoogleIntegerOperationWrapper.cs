@@ -6,37 +6,30 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Google.OrTools.LinearSolver;
+using OperationalResearch.Models.Elements;
+using Vector = OperationalResearch.Models.Elements.Vector;
+using OperationalResearch.Extensions;
 
 namespace OperationalResearch.Models
 {
-    internal class GoogleIntegerLinearProgramming
+    internal class GoogleIntegerOperationWrapper
     {
-        private readonly Matrix A;
-        private readonly Vector b;
+        private readonly Polyhedron P;
         private readonly Vector c;
         private const string SOLVER_ID = "SCIP";
-        bool xPos = true;
-        public GoogleIntegerLinearProgramming(
-            Fraction[,] A, Vector b, Vector c, bool AddXPositiveOrZeroCostraint = true)
+        public GoogleIntegerOperationWrapper(
+            Polyhedron p, Vector c)
         {
-            ArgumentNullException.ThrowIfNull(A);
-            ArgumentNullException.ThrowIfNull(b);
-            ArgumentNullException.ThrowIfNull(c);
+            ArgumentNullException.ThrowIfNull(p, nameof(p));
+            ArgumentNullException.ThrowIfNull(c, nameof(c));
 
-            if (A.Rows() != b.Size)
+            if (p.Cols != c.Size)
             {
                 throw new ArgumentException(
-                    $"A must have row number equal to the size of b ({A.Rows()} != {b.Size}");
+                    $"A must have col number equal to the size of c ({p.Cols} != {c.Size})");
             }
-            if (A.Columns() != c.Size)
-            {
-                throw new ArgumentException(
-                    $"A must have col number equal to the size of c ({A.Columns()} != {c.Size})");
-            }
-            xPos = AddXPositiveOrZeroCostraint;
 
-            this.A = new Matrix(A);
-            this.b = b;
+            P = p;
             this.c = c;
         }
         private int[]? Solve(bool max)
@@ -46,15 +39,15 @@ namespace OperationalResearch.Models
             {
                 return null;
             }
-            double lb = xPos ? 0.00 : double.NegativeInfinity;
+            double lb = P.ForcePositive ? 0.00 : double.NegativeInfinity;
             Variable[] x = c.Indices.Select(i =>
                 solver.MakeIntVar(lb, double.PositiveInfinity, $"x_{i + 1}")).ToArray();
-            for (int i = 0; i < A.Rows; ++i)
+            for (int i = 0; i < P.A.Rows; ++i)
             {
-                Constraint constraint = solver.MakeConstraint(lb, b[i].ToDouble(), $"A[{i + 1}] * x <= b_{i + 1}");
+                Constraint constraint = solver.MakeConstraint(lb, P.b[i].ToDouble(), $"A[{i + 1}] * x <= b_{i + 1}");
                 for (int j = 0; j < c.Size; ++j)
                 {
-                    constraint.SetCoefficient(x[j], A[i, j].ToDouble());
+                    constraint.SetCoefficient(x[j], P.A[i, j].ToDouble());
                 }
             }
 
@@ -81,23 +74,17 @@ namespace OperationalResearch.Models
 
             return x.Select(xi => (int)xi.SolutionValue()).ToArray();
         }
-        public int[]? FindMax()
+        public int[]? FindMax() => Solve(true);
+        public int[]? FindMin() => Solve(false);
+        public async Task<bool> SolveMaxFlow(IndentWriter? Writer = null)
         {
-            return Solve(true);
-        }
-        public int[]? FindMin()
-        {
-            return Solve(false);
-        }
-        public async Task<bool> SolveMaxFlow(StreamWriter? Writer = null)
-        {
-            Writer ??= StreamWriter.Null;
+            Writer ??= IndentWriter.Null;
             try
             {
-                await Writer.WriteLineAsync($"A|b = {A | b}");
-                if (xPos)
+                await Writer.WriteLineAsync($"A|b = {P.A | P.b}");
+                if (P.ForcePositive)
                 {
-                    await Writer.WriteLineAsync($"x >= 0 implicitly added.");
+                    await Writer.WriteLineAsync($"x >= 0 added at the end of A added.");
                 }
                 await Writer.WriteLineAsync($"Maximize c = {c}");
                 await Writer.WriteLineAsync();
@@ -117,23 +104,23 @@ namespace OperationalResearch.Models
             {
                 await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
 #if DEBUG
-                if (ex.StackTrace is not null)
+                if (!string.IsNullOrWhiteSpace(ex.StackTrace))
                 {
-                    await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
+                    await Writer.Indent().WriteLineAsync($"Stack Trace: {ex.StackTrace}");
                 }
 #endif
                 return false;
             }
         }
-        public async Task<bool> SolveMinFlow(StreamWriter? Writer = null)
+        public async Task<bool> SolveMinFlow(IndentWriter? Writer = null)
         {
-            Writer ??= StreamWriter.Null;
+            Writer ??= IndentWriter.Null;
             try
             {
-                await Writer.WriteLineAsync($"A|b = {A | b}");
-                if (xPos)
+                await Writer.WriteLineAsync($"A|b = {P.A | P.b}");
+                if (P.ForcePositive)
                 {
-                    await Writer.WriteLineAsync($"x >= 0 implicitly added.");
+                    await Writer.WriteLineAsync($"x >= 0 added at the end of A added.");
                 }
                 await Writer.WriteLineAsync($"Minimize c = {c}");
                 await Writer.WriteLineAsync();
@@ -153,9 +140,9 @@ namespace OperationalResearch.Models
             {
                 await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
 #if DEBUG
-                if (ex.StackTrace is not null)
+                if (!string.IsNullOrWhiteSpace(ex.StackTrace))
                 {
-                    await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
+                    await Writer.Indent().WriteLineAsync($"Stack Trace: {ex.StackTrace}");
                 }
 #endif
                 return false;

@@ -1,27 +1,27 @@
 ﻿using Accord.Math;
 using Accord.Math.Optimization;
 using Fractions;
-using Microsoft.Msagl.Core.ProjectionSolver;
+using OperationalResearch.Extensions;
+using OperationalResearch.Models.Elements;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using Matrix = OperationalResearch.Models.Elements.Matrix;
+using Vector = OperationalResearch.Models.Elements.Vector;
 
 namespace OperationalResearch.Models
 {
     internal class QuadProg
     {
         private readonly QuadraticObjectiveFunction f;
-        private readonly double[,] A;
-        private readonly double[] b;
-        public QuadProg(Matrix H, Vector linearPart, Matrix Alin, Vector blin)
-        { 
+        private readonly Polyhedron P;
+        public QuadProg(Matrix H, Vector linearPart, Polyhedron p)
+        {
             ArgumentNullException.ThrowIfNull(H, nameof(H));
             ArgumentNullException.ThrowIfNull(linearPart, nameof(linearPart));
-            ArgumentNullException.ThrowIfNull(Alin, nameof(Alin));
-            ArgumentNullException.ThrowIfNull(blin, nameof(blin));
+            ArgumentNullException.ThrowIfNull(p, nameof(p));
 
             if (!H.IsSquare)
             {
@@ -33,22 +33,22 @@ namespace OperationalResearch.Models
             }
 
             f = new QuadraticObjectiveFunction(
-                H.M.Apply(h => h.ToDouble()), 
+                H.M.Apply(h => h.ToDouble()),
                 linearPart.Get.Select(x => x.ToDouble()).ToArray());
-            if (Alin.Cols != linearPart.Size)
+            P = p;
+            if (P.Cols != linearPart.Size)
             {
                 throw new ArgumentException(
-                    $"Matrix A has {Alin.Cols} columns but {linearPart.Size} were expected.");
+                    $"Matrix A has {P.Cols} columns but {linearPart.Size} were expected.");
             }
-            if (Alin.Rows != blin.Size)
-            {
-                throw new ArgumentException(
-                    $"Vector b has {blin.Size} elements but {Alin.Rows} were expected.");
-            }
-            A = Alin.M.Apply(a => a.ToDouble());
-            b = blin.Get.Apply(bi => bi.ToDouble());
         }
-        private GoldfarbIdnani Solver { get => new(f, A, b); }
+        private GoldfarbIdnani Solver
+        {
+            get => new(
+            function: f,
+            constraintMatrix: P.A.M.Apply(a => a.ToDouble()),
+            constraintValues: P.b.ToDouble().ToArray());
+        }
         private static Vector? GetSolution(GoldfarbIdnani solver)
         {
             if (solver.Status == GoldfarbIdnaniStatus.NoPossibleSolution)
@@ -74,6 +74,64 @@ namespace OperationalResearch.Models
                 return null;
             }
             return GetSolution(solver);
+        }
+
+        public async Task<bool> MinimizeFlow(IndentWriter? Writer)
+        {
+            Writer ??= IndentWriter.Null;
+            try
+            {
+                await Writer.WriteLineAsync("Finding min through Accord.Math.QuadProg");
+                Vector? x = Minimize();
+                if (x is null)
+                {
+                    await Writer.WriteLineAsync("Problem was not solved");
+                    return false;
+                }
+
+                await Writer.WriteLineAsync($"X = {x}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
+#if DEBUG
+                if (ex.StackTrace is not null)
+                {
+                    await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
+                }
+#endif
+                return false;
+            }
+
+        }
+        public async Task<bool> MaximizeFlow(IndentWriter? Writer)
+        {
+            Writer ??= IndentWriter.Null;
+            try
+            {
+                await Writer.WriteLineAsync("Finding max through Accord.Math.QuadProg");
+                Vector? x = Maximize();
+                if (x is null)
+                {
+                    await Writer.WriteLineAsync("Problem was not solved");
+                    return false;
+                }
+
+                await Writer.WriteLineAsync($"X = {x}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
+#if DEBUG
+                if (ex.StackTrace is not null)
+                {
+                    await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
+                }
+#endif
+                return false;
+            }
         }
     }
 }

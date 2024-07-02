@@ -13,8 +13,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Matrix = OperationalResearch.Models.Matrix;
-using Vector = OperationalResearch.Models.Vector;
+using Matrix = OperationalResearch.Models.Elements.Matrix;
+using Vector = OperationalResearch.Models.Elements.Vector;
 
 namespace OperationalResearch
 {

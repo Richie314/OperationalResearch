@@ -5,6 +5,9 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Scripting.Utils;
 using OperationalResearch.Extensions;
+using OperationalResearch.Models.Elements;
+using Vector = OperationalResearch.Models.Elements.Vector;
+using Matrix = OperationalResearch.Models.Elements.Matrix;
 
 namespace OperationalResearch.Models
 {
@@ -21,7 +24,7 @@ namespace OperationalResearch.Models
                 ArgumentNullException.ThrowIfNull(value, nameof(value));
                 ArgumentNullException.ThrowIfNull(weight, nameof(weight));
                 ArgumentNullException.ThrowIfNull(volume, nameof(volume));
-                ArgumentNullException.ThrowIfNullOrWhiteSpace(label, nameof(label));
+                ArgumentException.ThrowIfNullOrWhiteSpace(label, nameof(label));
 
                 if (value.IsNegative)
                 {
@@ -146,30 +149,30 @@ namespace OperationalResearch.Models
             return Values * x.Select(q => q ? Fraction.One : Fraction.Zero).ToArray();
         }
         public async Task<Vector?> UpperBound(
-            StreamWriter? Writer = null, bool Boolean = false)
+            IndentWriter? Writer = null, bool Boolean = false)
         {
-            Writer ??= StreamWriter.Null;
+            Writer ??= IndentWriter.Null;
             await Writer.WriteLineAsync("Finding upper bound of the problem through simplex");
 
-            Fraction[,] A = Weights.Row.M.InsertRow(Volumes.Get);
+            Matrix A = Weights.Row.AddRow(Volumes);
             if (Boolean)
             {
-                var id = Matrix.Identity(N);
-                foreach (int i in id.RowsIndeces)
-                {
-                    A = A.InsertRow(id[i].Get);
-                }
+                A = A.AddRows(Matrix.Identity(N));
             }
             Vector b = new Fraction[] { TotalWeight, TotalVolume };
             if (Boolean)
-            {
-                b = b.Get.Concat(Enumerable.Repeat(Fraction.One, N)).ToArray();
+            { 
+                // Add x <= 1
+                b = b.Concat(Enumerable.Repeat(Fraction.One, N));
             }
-            await Writer.WriteLineAsync($"A|b = {new Matrix(A) | b}");
+            await Writer.WriteLineAsync($"A|b = {A | b}");
             await Writer.WriteLineAsync($"c = {Values}");
-            Simplex s = new(A, b, Values, true);
-            return await s.SolvePrimalMax(StreamWriter.Null, null, 50);
+            return await 
+                new Simplex(new Polyhedron(A, b, forcePositive: true), Values)
+                .SolvePrimalMax(IndentWriter.Null, null, 50);
         }
+
+
         public enum OrderCriteria
         {
             ByWeight,
@@ -178,7 +181,7 @@ namespace OperationalResearch.Models
             ByValueWeightRatio,
             ByValueVolumeRatio,
         }
-        private async Task<IEnumerable<int>> OrderByCriteria(StreamWriter Writer, OrderCriteria order)
+        private async Task<IEnumerable<int>> OrderByCriteria(IndentWriter Writer, OrderCriteria order)
         {
             switch (order)
             {
@@ -214,9 +217,9 @@ namespace OperationalResearch.Models
             }
         }
         private async Task<Vector?> LowerBoundBy(OrderCriteria order,
-            StreamWriter? Writer = null, bool Boolean = false)
+            IndentWriter? Writer = null, bool Boolean = false)
         {
-            Writer ??= StreamWriter.Null;
+            Writer ??= IndentWriter.Null;
             var OrderedIndices = await OrderByCriteria(Writer, order);
 
             var vals = Values[OrderedIndices];
@@ -280,9 +283,9 @@ namespace OperationalResearch.Models
             }
             return min.Get.Select(i => (int)i).ToArray();
         }
-        public async Task<int[]?> Solve(StreamWriter? Writer, bool Boolean = false)
+        public async Task<int[]?> Solve(IndentWriter? Writer, bool Boolean = false)
         {
-            Writer ??= StreamWriter.Null;
+            Writer ??= IndentWriter.Null;
             await Writer.WriteLineAsync("Lower bounds: ");
 
             Vector ValueLB = await LowerBoundBy(OrderCriteria.ByValue, null, Boolean) ?? Vector.Empty;
@@ -307,7 +310,7 @@ namespace OperationalResearch.Models
             if (Boolean)
             {
                 await Writer.WriteLineAsync("Solving with branch and bound from left to right:");
-                var boolSol = await BooleanBranchAndBound([], Writer);
+                var boolSol = await BooleanBranchAndBound([], Writer.Indent());
                 if (boolSol is null)
                 {
                     await Writer.WriteLineAsync("Branch and bound could not solve the problem");
@@ -376,16 +379,15 @@ namespace OperationalResearch.Models
         }
         public async Task<bool[]?> BooleanBranchAndBound(
             bool[] ChosenX,
-            StreamWriter? Writer = null)
+            IndentWriter? Writer = null)
         {
-            Writer ??= StreamWriter.Null;
-            string pad = string.Join("", Enumerable.Repeat("    ", ChosenX.Length));
+            Writer ??= IndentWriter.Null;
             if (ChosenX.Length == N)
             {
                 if (IsAcceptable(ChosenX))
                 {
                     await Writer.WriteLineAsync(
-                        $"{pad}X = {Function.Print(ChosenX.Select(x => x ? 1 : 0), false)} -> {Function.Print(Gain(ChosenX))} is acceptable");
+                        $"X = {Function.Print(ChosenX.Select(x => x ? 1 : 0), false)} -> {Function.Print(Gain(ChosenX))} is acceptable");
                     return ChosenX;
                 }
                 return null;
@@ -399,26 +401,26 @@ namespace OperationalResearch.Models
                 var lb = await SubProblem.LowerBound(true);
                 if (lb is null)
                 {
-                    await Writer.WriteLineAsync($"{pad}Cutting X = {X} for missing lower bound");
+                    await Writer.WriteLineAsync($"Cutting X = {X} for missing lower bound");
                     return null;
                 }
 
                 var ub = await SubProblem.UpperBound(null, true);
                 if (ub is null)
                 {
-                    await Writer.WriteLineAsync($"{pad}Cutting X = {X} for missing upper bound");
+                    await Writer.WriteLineAsync($"Cutting X = {X} for missing upper bound");
                     return null;
                 }
                 // now we have bounds
                 if (SubProblem.Gain(ub) < SubProblem.Gain(lb))
                 {
                     await Writer.WriteLineAsync(
-                        $"{pad}Cutting X = {X} for lower bound > upper bound. {SubProblem.Gain(lb)} > {SubProblem.Gain(ub)}");
+                        $"Cutting X = {X} for lower bound > upper bound. {SubProblem.Gain(lb)} > {SubProblem.Gain(ub)}");
                     return null;
                 }
 
-                var Next0Res = await BooleanBranchAndBound([.. ChosenX, false], Writer);
-                var Next1Res = await BooleanBranchAndBound([.. ChosenX, true], Writer);
+                var Next0Res = await BooleanBranchAndBound([.. ChosenX, false], Writer.Indent());
+                var Next1Res = await BooleanBranchAndBound([.. ChosenX, true], Writer.Indent());
 
                 if (Next0Res is null)
                 {
@@ -426,7 +428,7 @@ namespace OperationalResearch.Models
                     {
                         // Both results are null -> exit
                         await Writer.WriteLineAsync(
-                            $"{pad}Cutting X = {X} for being non-solving leaf");
+                            $"Cutting X = {X} for being non-solving leaf");
                         return null;
                     }
                     return Next1Res;
@@ -437,10 +439,10 @@ namespace OperationalResearch.Models
                 }
                 if (Gain(Next0Res) > Gain(Next1Res))
                 {
-                    await Writer.WriteLineAsync($"{pad}Branch {X} -> {Function.Print(Gain(Next0Res))}");
+                    await Writer.WriteLineAsync($"Branch {X} -> {Function.Print(Gain(Next0Res))}");
                     return Next0Res;
                 }
-                await Writer.WriteLineAsync($"{pad}Branch {X} -> {Function.Print(Gain(Next1Res))}");
+                await Writer.WriteLineAsync($"Branch {X} -> {Function.Print(Gain(Next1Res))}");
                 return Next1Res;
             }
             catch (ArgumentException)
@@ -449,9 +451,9 @@ namespace OperationalResearch.Models
             }
         }
 
-        public async Task<bool> SolveFlow(StreamWriter? Writer, bool isBoolean = false)
+        public async Task<bool> SolveFlow(IndentWriter? Writer, bool isBoolean = false)
         {
-            Writer ??= StreamWriter.Null;
+            Writer ??= IndentWriter.Null;
             bool exitValue = true;
             try
             {

@@ -2,6 +2,7 @@
 using Fractions;
 using Microsoft.Scripting.Utils;
 using OperationalResearch.Extensions;
+using OperationalResearch.Models.Elements;
 using System;
 using System.Collections.Generic;
 using System.Drawing.Drawing2D;
