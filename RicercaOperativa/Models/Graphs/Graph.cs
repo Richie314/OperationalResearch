@@ -1,32 +1,23 @@
 ﻿using Accord.Math;
-using Fractions;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using OperationalResearch.Extensions;
-using System.Xaml;
-using OperationalResearch.Models.Elements;
 using Matrix = OperationalResearch.Models.Elements.Matrix;
 
-namespace OperationalResearch.Models
+namespace OperationalResearch.Models.Graphs
 {
-    public partial class Graph
+    public partial class Graph<EdgeType> where EdgeType : Edge
     {        
         [Range(1, int.MaxValue)]
         public int N;
 
         [MinLength(1)]
-        public IEnumerable<Edge> Edges;
+        public IEnumerable<EdgeType> Edges;
 
-        public Graph(int n, IEnumerable<Edge>? edges)
+        public Graph(int n, IEnumerable<EdgeType>? edges)
         {
             N = n;
             Edges = edges is null ? [] : edges.Order().ToList();
         }
-        public Graph(IEnumerable<Edge>? edges)
+        public Graph(IEnumerable<EdgeType>? edges)
         {
             if (edges is null)
             {
@@ -38,29 +29,12 @@ namespace OperationalResearch.Models
                 N = Edges.Select(edge => Math.Max(edge.From, edge.To)).Max() + 1;
             }
         }
-        public Matrix BuildMatrix(bool Symmetric = false)
-        {
-            Fraction[,] m = new Fraction[N, N];
-            for (int i = 0; i < N; i++)
-            {
-                m.SetRow(i, Enumerable.Repeat(Fraction.Zero, N).ToArray());
-            }
-            foreach (Edge edge in Edges)
-            {
-                m[edge.From, edge.To] = edge.Cost;
-                if (Symmetric)
-                {
-                    m[edge.To, edge.From] = edge.Cost;
-                }
-            }
-            return new Matrix(m);
-        }
+        
         public Dictionary<int, HashSet<int>> GetConnectionDictionary(bool symmetric)
         {
             Dictionary<int, HashSet<int>> dict = new();
             foreach (var Edge in Edges)
             {
-                if (Edge.Type == Edge.EdgeType.Disabled) continue;
                 if (!dict.ContainsKey(Edge.From))
                 {
                     dict[Edge.From] = new();
@@ -78,7 +52,8 @@ namespace OperationalResearch.Models
             }
             return dict;
         }
-        public static Graph FromMatrix(Matrix m, bool makeSymmetric = false)
+        
+        public static Graph<Edge> FromMatrix(Matrix m, bool makeSymmetric = false)
         {
             ArgumentNullException.ThrowIfNull(m);
             if (m.Rows == 0 || m.Cols == 0 || m.Rows != m.Cols)
@@ -92,52 +67,34 @@ namespace OperationalResearch.Models
                 {
                     if (!m[i, j].IsZero)
                     {
-                        edges.Add(new Edge(m[i, j], i, j));
+                        edges.Add(new Edge(i, j));
                         if (makeSymmetric)
                         {
-                            edges.Add(new Edge(m[i, j], j, i));
+                            edges.Add(new Edge(j, i));
                         }
                     }
                 }
             }
-            return new Graph(m.Rows, edges);
+            return new Graph<Edge>(m.Rows, edges);
         }
-        protected Edge? FindEdge(int from , int to)
+
+        protected EdgeType? FindEdge(int from , int to)
         {
             int? matchIndex = Edges.ToArray().FirstOrNull(edge => edge.From == from && edge.To == to);
             return matchIndex.HasValue ? Edges.ElementAt(matchIndex.Value) : null;
         }
-        public Fraction Cost(IEnumerable<int> nodes, bool bidirectional = false)
-        {
-            ArgumentNullException.ThrowIfNull(nodes, nameof(nodes));
-            if (nodes.Count() <= 1)
-            {
-                return Fraction.Zero;
-            }
-            var edge = FindEdge(from: nodes.First(), to: nodes.ElementAt(1));
-            edge ??= bidirectional ? FindEdge(to: nodes.First(), from: nodes.ElementAt(1)) : edge;
-            if (edge is null)
-            {
-                throw new Exception(
-                    $"Path invalid, impossible to go from {nodes.First() + 1} to {nodes.ElementAt(1) + 1}!");
-            }
-            return edge.Cost + Cost(nodes.Skip(1), bidirectional);
-        }
-        public static Fraction Cost(IEnumerable<Edge>? edges)
-        {
-            if (edges is null || !edges.Any())
-            {
-                return Fraction.Zero;
-            }
 
-            return edges.First().Cost + Cost(edges.Skip(1));
-        }
-        public IEnumerable<Edge>? GetEdges(IEnumerable<int> nodes, bool bidirectional = false)
+        public EdgeType? this[int from , int to] => FindEdge(from, to);
+        public IEnumerable<EdgeType> this[int from] => Edges.Where(e => e.From == from);
+
+        public IEnumerable<EdgeType>? GetEdges(
+            IEnumerable<int> nodes, 
+            bool bidirectional = false)
         {
             ArgumentNullException.ThrowIfNull(nodes, nameof(nodes));
             if (nodes.Count() <= 1)
             {
-                return Enumerable.Empty<Edge>();
+                return Enumerable.Empty<EdgeType>();
             }
             var edge = FindEdge(from: nodes.First(), to: nodes.ElementAt(1));
             edge ??= bidirectional ? FindEdge(to: nodes.First(), from: nodes.ElementAt(1)) : edge;
@@ -150,47 +107,31 @@ namespace OperationalResearch.Models
             {
                 return null;
             }
-            return new List<Edge>() { edge }.Concat(rest);
+            return new List<EdgeType>() { edge }.Concat(rest);
         }
 
-        /// <summary>
-        /// Edges with cost > 0
-        /// </summary>
-        public IEnumerable<Edge> PositiveEdges
+        public int GetEdgeIndex(EdgeType edge) => GetEdgeIndex(edge.From, edge.To);
+
+        public int GetEdgeIndex(int from, int to)
         {
-            get => Edges.Where(edge => edge.Cost.IsPositive);
+            for (int edgeIndex = 0; edgeIndex < Edges.Count(); edgeIndex++)
+            {
+                if (from == Edges.ElementAt(edgeIndex).From && to == Edges.ElementAt(edgeIndex).To)
+                {
+                    return edgeIndex;
+                }
+            }
+            throw new ArgumentOutOfRangeException($"Could not find index of edge ({from}, {to})");
         }
-        /// <summary>
-        /// Edges with cost >= 0
-        /// </summary>
-        public IEnumerable<Edge> NonNegativeEdges
+        public IEnumerable<int> GetEdgeIndices(IEnumerable<EdgeType> edges) => edges.Select(GetEdgeIndex);
+        public EdgeType[] GetEdges(IEnumerable<int> basis)
         {
-            get => Edges.Where(edge => !edge.Cost.IsNegative);
-        }
-        /// <summary>
-        /// Edges with cost == 0
-        /// </summary>
-        public IEnumerable<Edge> ZeroEdges
-        {
-            get => Edges.Where(edge => edge.Cost.IsZero);
-        }
-        /// <summary>
-        /// Edges with cost <= 0
-        /// </summary>
-        public IEnumerable<Edge> NonPositiveEdges
-        {
-            get => Edges.Where(edge => !edge.Cost.IsPositive);
-        }
-        /// <summary>
-        /// Edges with cost < 0
-        /// </summary>
-        public IEnumerable<Edge> NegativeEdges
-        {
-            get => Edges.Where(edge => edge.Cost.IsNegative);
-        }
-        public IEnumerable<Edge> RequiredEdges
-        {
-            get => Edges.Where(edge => edge.Type == Edge.EdgeType.Required);
+            List<EdgeType> edges = [];
+            foreach (int i in basis)
+            {
+                edges.Add(Edges.ElementAt(i));
+            }
+            return [.. edges];
         }
 
         /// <summary>
@@ -200,12 +141,15 @@ namespace OperationalResearch.Models
         {
             get => Enumerable.Range(0, N);
         }
+
+
         /// <summary>
         /// Searches for Hamiltonian cycle by trying every possible combination
         /// This method is sync
         /// </summary>
         /// <returns>The best cycle or null if no cycle can be found</returns>
         /// <exception cref="DataMisalignedException">If permutation of the nodes creates problems</exception>
+        /*
         public IEnumerable<int>? BruteForceHamiltonCycle(bool bidirectional = false)
         {
             IEnumerable<int> BestPerm = [];
@@ -246,6 +190,7 @@ namespace OperationalResearch.Models
 
             return BestPerm.Any() ? BestPerm : null;
         }
+        */
         
         public bool HasCycle(bool symmetric = false)
         {
@@ -259,10 +204,10 @@ namespace OperationalResearch.Models
             }
             return FindAllCycles(symmetric).Any();
         }
-        public List<int[]> AllBidirectionalCicles()
-        {
-            return FindAllCycles(true).Select(c => c.ToArray()).ToList();
-        }
+        
+        public IEnumerable<int[]> AllBidirectionalCycles() =>
+            FindAllCycles(true).Select(c => c.ToArray());
+
         private List<List<int>> FindAllCycles(bool symmetric)
         {
             List<List<int>> cycles = new List<List<int>>();

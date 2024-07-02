@@ -1,35 +1,33 @@
 ﻿using Accord.Math;
 using Fractions;
+using OperationalResearch.Extensions;
 using OperationalResearch.Models.Elements;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Vector = OperationalResearch.Models.Elements.Vector;
 
-namespace OperationalResearch.Models
+namespace OperationalResearch.Models.Graphs
 {
-    partial class Graph
+    partial class CostGraph<EdgeType>
     {
         public class DijkstraResult
         {
-            public int[] P { get; }
-            public Vector PI { get; }
-            public DijkstraResult(IEnumerable<int> p, Vector pi)
+            public int[] p { get; }
+            public Vector π { get; }
+            public DijkstraResult(IEnumerable<int> p, Vector π)
             {
                 ArgumentNullException.ThrowIfNull(p, nameof(p));
-                ArgumentNullException.ThrowIfNull(pi, nameof(pi));
-                if (p.Count() != pi.Size)
+                ArgumentNullException.ThrowIfNull(π, nameof(π));
+                if (p.Count() != π.Size)
                 {
                     throw new ArgumentException(
-                        $"Cannot return from dijkstra because p and pi have different sizes ({p.Count()} != {pi.Size})");
+                        $"Cannot return from dijkstra because p and π have different sizes ({p.Count()} != {π.Size})");
                 }
-                P = p.ToArray();
-                PI = pi;
+                this.p = p.ToArray();
+                this.π = π;
             }
         }
         public async Task<DijkstraResult?> Dijkstra(
-            StreamWriter? Writer = null, int startNode = 0, int? maxIterations = 20)
+            IndentWriter? Writer = null, int startNode = 0, int? maxIterations = 20)
         {
             if (startNode < 0)
             {
@@ -39,7 +37,7 @@ namespace OperationalResearch.Models
             {
                 throw new InvalidDataException("There was an edge with cost below zero");
             }
-            Writer ??= StreamWriter.Null;
+            Writer ??= IndentWriter.Null;
 
             int[] p = Enumerable.Repeat(-2, N).ToArray();
             Vector π = Enumerable.Repeat(Fraction.FromDouble(int.MaxValue), N).ToArray();
@@ -73,7 +71,7 @@ namespace OperationalResearch.Models
 
                 bool[] updated = Enumerable.Repeat(false, N).ToArray();
 
-                foreach (Edge edge in Edges)
+                foreach (var edge in Edges)
                 {
                     if (edge.From == u)
                     {

@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OperationalResearch.Models
+namespace OperationalResearch.Models.Graphs
 {
-    partial class Graph
+    partial class CostGraph<EdgeType>
     {
         /// <summary>
         /// Static method
@@ -17,60 +17,43 @@ namespace OperationalResearch.Models
         /// <param name="edges">The edges of the graph</param>
         /// <param name="Writer">A StreamWriter to record all passages</param>
         /// <returns>The Spanning tree with lower cost, if exists</returns>
-        public static async Task<IEnumerable<Edge>?> KruskalMinimumSpanningTree(
-            IEnumerable<Edge> edges,
+        public static async Task<IEnumerable<EdgeType>?> KruskalMinimumSpanningTree(
+            IEnumerable<EdgeType> edges,
             bool symmetric,
-            StreamWriter? Writer = null)
+            IndentWriter? Writer = null)
         {
-            Writer ??= StreamWriter.Null;
-            int N = new Graph(edges).N;
-            edges = edges.OrderByCost();
+            Writer ??= IndentWriter.Null;
+            Graph<EdgeType> graph = new Graph<EdgeType>(edges);
+            graph.Edges = graph.Edges.OrderByCost();
 
             await Writer.WriteLineAsync($"Calculating Minimum Spanning Kruskal Tree...");
-            await Writer.WriteLineAsync($"Edges = {Function.Print(edges)}");
-            List<Edge> T = [];
+            await Writer.WriteLineAsync($"Edges = {Function.Print(graph.Edges)}");
+            
+            List<EdgeType> T = [];
             int h = 1;
 
-            foreach (Edge e in edges)
+            foreach (var e in edges)
             {
                 await Writer.WriteLineAsync($"Iteration #{h++}");
                 await Writer.WriteLineAsync($"T = {Function.Print(T)}");
                 await Writer.WriteLineAsync($"Edge {e}:");
-                if (e.Type == Edge.EdgeType.Disabled)
-                {
-                    await Writer.WriteLineAsync($"Edge is disabled: skip");
-                    continue;
-                }
-                List<Edge> T2 = new(T)
+                List<EdgeType> T2 = new(T)
                 {
                     e
                 };
-                Graph g2 = new Graph(T2);
-                /*
-                var dict = g2.GetConnectionDictionary(symmetric);
-                await Writer.WriteLineAsync(
-                    string.Join(Environment.NewLine,
-                    dict.Select(pair => $"{pair.Key + 1} => {Function.Print(pair.Value.ToArray())}")));
-                */
+                var g2 = new Graph<EdgeType>(T2);
                 if (g2.HasCycle(symmetric))
                 {
-                    await Writer.WriteLineAsync($"T U {{ {e} }} has a cycle -> edge is DISCARDED");
-                    if (e.Type == Edge.EdgeType.Required)
-                    {
-                        // Problem unsolvable
-                        await Writer.WriteLineAsync(
-                            $"Edge was not chosen despite being required. Problem has no solution");
-                        return null;
-                    }
+                    await Writer.Indent().WriteLineAsync($"T U {{ {e} }} has a cycle -> edge is DISCARDED");
                 }
                 else
                 {
                     T = T2;
-                    await Writer.WriteLineAsync($"T U {{ {e} }} has no cycle -> edge is CHOSEN");
+                    await Writer.Indent().WriteLineAsync($"T U {{ {e} }} has no cycle -> edge is CHOSEN");
                 }
 
                 await Writer.WriteLineAsync();
-                if (T.Count() == N - 1)
+                if (T.Count() == graph.N - 1)
                 {
                     await Writer.WriteLineAsync($"|T| = {T.Count()} = N - 1");
                     break;
@@ -87,24 +70,25 @@ namespace OperationalResearch.Models
         /// <param name="Writer">The writer to recoed the progress of the calculation</param>
         /// <returns>The tree in the form of edges, if one is found, null otherwise</returns>
         /// <exception cref="ArgumentOutOfRangeException">if k is not in the range [0, N)</exception>
-        public async Task<IEnumerable<Edge>?> FindKTree(int k, bool symmetric, StreamWriter? Writer = null)
+        public async Task<IEnumerable<EdgeType>?> FindKTree(
+            int k, bool symmetric, IndentWriter? Writer = null)
         {
             if (k < 0 || k >= N)
             {
                 throw new ArgumentOutOfRangeException(nameof(k));
             }
-            Writer ??= StreamWriter.Null;
+            Writer ??= IndentWriter.Null;
 
             await Writer.WriteLineAsync($"Calculating {(symmetric ? "bidirectional" : "unidirectional")} {k + 1}-tree");
 
-            IEnumerable<Edge> KEdges = Edges.Where(edge => edge.From == k || edge.To == k).ToList();
+            IEnumerable<EdgeType> KEdges = Edges.Where(edge => edge.From == k || edge.To == k).ToList();
             await Writer.WriteLineAsync($"{k + 1}_edges: {Function.Print(KEdges)}");
 
-            IEnumerable<Edge> NonKEdges = Edges.Where(edge => edge.From != k && edge.To != k).ToList();
+            IEnumerable<EdgeType> NonKEdges = Edges.Where(edge => edge.From != k && edge.To != k).ToList();
             await Writer.WriteLineAsync($"non_{k + 1}_edges: {Function.Print(NonKEdges)}");
 
             await Writer.WriteLineAsync($"Finding minimum spanning tree through Kruskal...");
-            IEnumerable<Edge>? Tree = await KruskalMinimumSpanningTree(NonKEdges, symmetric, Writer);
+            IEnumerable<EdgeType>? Tree = await KruskalMinimumSpanningTree(NonKEdges, symmetric, Writer);
 
             if (Tree is null)
             {

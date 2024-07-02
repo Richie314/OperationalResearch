@@ -1,5 +1,4 @@
 ﻿using OperationalResearch.Extensions;
-using OperationalResearch.Models.Elements;
 using OperationalResearch.Models.Graphs;
 using System;
 using System.Collections.Generic;
@@ -9,25 +8,19 @@ using System.Threading.Tasks;
 
 namespace OperationalResearch.Models.Problems.Solvers
 {
-    public class TspSolver(bool symmetric = false) : LinearSolverInteger
+    public class TspSolver : GraphSolver<TSP<CostEdge>, CostEdge>
     {
-        private TSP? Tsp = null;
-        private readonly bool Symmetric = symmetric;
-        public override Task<bool> SolveIntegerMaxAsync(IEnumerable<IndentWriter?> loggers)
-        {
-            throw new NotImplementedException("Only lowest cost cycle can be found!");
-        }
         public override async Task<bool> SolveIntegerMinAsync(IEnumerable<IndentWriter?> loggers)
         {
-            if (Tsp is null)
+            if (graph is null)
             {
                 throw new InvalidOperationException();
             }
-            return await Tsp.HamiltonCycleFlow(loggers.FirstOrDefault(), Symmetric);
+            return await graph.HamiltonCycleFlow(loggers.FirstOrDefault(), startingPoint);
         }
-        public override void SetData(Polyhedron domain, Vector unused)
+        public override Task<bool> SolveIntegerMaxAsync(IEnumerable<IndentWriter?> loggers)
         {
-            Tsp = new TSP(Graph.FromMatrix(domain.A), Symmetric);
+            throw new NotImplementedException("Only minimum problems can be solved");
         }
     }
 }

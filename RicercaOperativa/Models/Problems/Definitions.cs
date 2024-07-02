@@ -1,9 +1,12 @@
 ﻿using System;
 using OperationalResearch.Models.Elements;
+using OperationalResearch.Models.Graphs;
 using OperationalResearch.Models.Problems.Solvers;
 
 namespace OperationalResearch.Models.Problems
 {
+    #region LinearProgramming
+    
     /// <summary>
     /// Generic linear programming problem
     /// </summary>
@@ -15,14 +18,18 @@ namespace OperationalResearch.Models.Problems
                  new LinearSolver(startBasis)) { }
     }
 
+    #endregion
+
+    #region IntegerLinearProgramming
+
     /// <summary>
     /// Travelling salesman problem (TSP) -> find hamiltonian cycle
     /// https://en.wikipedia.org/wiki/Travelling_salesman_problem
     /// </summary>
-    public class TravellingSalesManProblem : Problem<Polyhedron, Vector, TspSolver>
+    public class TravellingSalesManProblem : Problem<TSP<CostEdge>, int?, TspSolver>
     {
-        public TravellingSalesManProblem(Matrix m, bool Symmetric = false) : 
-            base(new Polyhedron(m, Vector.Zeros(m.Rows)), Vector.Empty, new TspSolver(Symmetric)) { }
+        public TravellingSalesManProblem(TSP<CostEdge> graph, int? startNode) : 
+            base(graph, startNode, new TspSolver()) { }
     }
 
     /// <summary>
@@ -38,6 +45,25 @@ namespace OperationalResearch.Models.Problems
         { }
     }
 
+    #endregion
+
+    #region NetworkProgramming
+
+    public class MinimumCostFlowProblem : Problem<MinimumCostFlow<BoundedCostEdge>, int?, McfpSolver>
+    {
+        public MinimumCostFlowProblem(
+            MinimumCostFlow<BoundedCostEdge> g, 
+            int? startNode,
+            IEnumerable<BoundedCostEdge> T,
+            IEnumerable<BoundedCostEdge> U,
+            bool UseBounds = true) :
+            base(g, startNode, new McfpSolver(T, U, UseBounds)) { }
+    }
+
+    #endregion
+
+    #region NonLinearProgramming
+
     /// <summary>
     /// Analize a function inside a polyhedron. The function, as well as its gradient, must be written in python
     /// </summary>
@@ -50,6 +76,9 @@ namespace OperationalResearch.Models.Problems
         { }
     }
 
+    /// <summary>
+    /// Analyze a poliynomial function of multiple variables inside a polyhedron
+    /// </summary>
     public class QuadraticProblem : Problem<Polyhedron, Tuple<Matrix, Vector>, QuadraticSolver>
     {
         public QuadraticProblem(Polyhedron p, Matrix Hessian, Vector Linear) : 
@@ -58,4 +87,6 @@ namespace OperationalResearch.Models.Problems
                  new QuadraticSolver())
         { }
     }
+
+    #endregion
 }

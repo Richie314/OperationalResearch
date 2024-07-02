@@ -199,7 +199,7 @@ namespace OperationalResearch
             if (c is null)
                 return;
             Vector b = getB();
-            MinCostFlow m = new MinCostFlow(
+            MinimumCostFlow m = new MinCostFlow(
                 c, b, LowerBound(), null);
 
             var Form = new ProblemForm();
@@ -228,7 +228,7 @@ namespace OperationalResearch
                 return;
             Vector b = getB();
             var u = UpperBound();
-            MinCostFlow m = new MinCostFlow(
+            MinimumCostFlow m = new MinCostFlow(
                 c, b, LowerBound(), u);
 
             var Form = new ProblemForm();
@@ -316,7 +316,7 @@ namespace OperationalResearch
                 return;
             Vector b = getB();
             var u = UpperBound();
-            MinCostFlow m = new MinCostFlow(
+            MinimumCostFlow m = new MinCostFlow(
                 c, b, LowerBound(), u);
 
             var Form = new ProblemForm();

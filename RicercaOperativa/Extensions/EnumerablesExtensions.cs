@@ -5,12 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using Accord.Math;
 using OperationalResearch.Models;
+using OperationalResearch.Models.Graphs;
 
 namespace OperationalResearch.Extensions
 {
     public static class EnumerablesExtensions
     {
-        public static IEnumerable<int> VisitedNodes(this IEnumerable<Graph.Edge> edges)
+        public static IEnumerable<int> VisitedNodes<EdgeType>(this IEnumerable<EdgeType> edges) where EdgeType : Edge
         {
             ArgumentNullException.ThrowIfNull(edges);
             if (!edges.Any())
@@ -26,7 +27,7 @@ namespace OperationalResearch.Extensions
                 return new List<int>() { currNode, nextNode };
             }
 
-            Graph.Edge? nextEdge = null;
+            EdgeType? nextEdge = null;
 
             foreach (var edge in edges)
             {
@@ -43,7 +44,7 @@ namespace OperationalResearch.Extensions
                 return new List<int>() { currNode, nextNode };
             }
 
-            var nextArr = new List<Graph.Edge>() { nextEdge };
+            var nextArr = new List<EdgeType>() { nextEdge };
             bool ExcludedEdge = false; // exclude nextEdge only once
             foreach (var edge in edges)
             {
@@ -61,7 +62,8 @@ namespace OperationalResearch.Extensions
             // nextNode will be the first element of the sub problem
             return new int[] { currNode }.Concat(nextArr.VisitedNodes());
         }
-        public static Dictionary<int, int> MentionedNodes(this IEnumerable<Graph.Edge> edges)
+        public static Dictionary<int, int> MentionedNodes<EdgeType>(this IEnumerable<EdgeType> edges)
+            where EdgeType : Edge
         {
             Dictionary<int, int> seen = new();
             foreach (var edge in edges)
@@ -80,10 +82,17 @@ namespace OperationalResearch.Extensions
             return seen;
         }
         
-        public static IEnumerable<Graph.Edge> OrderByCost(this IEnumerable<Graph.Edge> edges)
-        {
-            return edges.OrderBy(e => e.Cost);
-        }
+        public static IEnumerable<EdgeType> OrderByCost<EdgeType>(
+            this IEnumerable<EdgeType> edges) where EdgeType : CostEdge =>
+            edges.OrderBy(e => e.Cost);
+
+        public static IEnumerable<EdgeType> From<EdgeType>(
+            this IEnumerable<EdgeType> edges, int from) where EdgeType : Edge =>
+            edges.Where(e => e.From == from);
+
+        public static IEnumerable<int> NodesReached<EdgeType>(
+            this IEnumerable<EdgeType> edges) where EdgeType : Edge =>
+            edges.Select(e => e.To).Distinct();
 
         public static IEnumerable<IEnumerable<T>> AllPermutations<T>(this IEnumerable<T> vector)
         {

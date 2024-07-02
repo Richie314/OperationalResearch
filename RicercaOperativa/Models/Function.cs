@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using OperationalResearch.Models.Graphs;
 
 namespace OperationalResearch.Models
 {
@@ -75,11 +76,11 @@ namespace OperationalResearch.Models
                 return "null";
             }
             string s = x.Value.ToString();
-            if (s.Length < 15)
+            if (s.Length < 12)
                 return s;
             return x.Value.ToDouble().ToString("N5", CultureInfo.InvariantCulture);
         }
-        public static string Print(IEnumerable<Graph.Edge>? edges)
+        public static string Print<EdgeType>(IEnumerable<EdgeType>? edges) where EdgeType : Edge
         {
             if (edges is null)
             {
@@ -101,11 +102,7 @@ namespace OperationalResearch.Models
             return "{ " + string.Join(", ", x.Select(x => (x + y).ToString())) + " }";
         }
 
-        public static int Factorial(int n)
-        {
-            if (n <= 1)
-                return 1;
-            return n * Factorial(n - 1);
-        }
+        public static int Factorial(int n) =>
+            n <= 1 ? 1 : n * Factorial(n - 1);
     }
 }

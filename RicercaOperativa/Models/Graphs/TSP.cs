@@ -1,66 +1,63 @@
 ﻿using Accord.Math;
 using Fractions;
-using OperationalResearch.Models.Elements;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using OperationalResearch.Extensions;
+using Google.OrTools.ConstraintSolver;
 
 namespace OperationalResearch.Models.Graphs
 {
-    internal class TSP : Graph
+    public class TSP<EdgeType> : CostGraph<EdgeType> where EdgeType : CostEdge
     {
-        public TSP(int n, IEnumerable<Edge>? edges, bool makeSymmetric = false) : base(n, edges)
+        private bool Bidirectional = false;
+        public TSP(int n, IEnumerable<EdgeType>? edges, bool makeSymmetric = false) : base(n, edges)
         {
-            c = BuildMatrix(makeSymmetric);
+            Bidirectional = makeSymmetric;
         }
-        public TSP(Graph g, bool makeSymmetric) : base(g.N, g.Edges)
+        private IEnumerable<EdgeType> AllEdges()
         {
-            c = BuildMatrix(makeSymmetric);
+            if (!Bidirectional)
+                return Edges;
+            List<EdgeType> edges = [.. Edges];
+            foreach (var edge in Edges)
+            {
+                EdgeType clone = (EdgeType)edge.Clone();
+                clone.From = edge.To;
+                clone.To = edge.From;
+                edges.Add(clone);
+            }
+            return edges;
         }
-        private readonly Matrix c;
-        public async Task<bool> HamiltonCycleFlow(StreamWriter? Writer = null, bool bidirectional = false)
+
+        public async Task<bool> HamiltonCycleFlow(
+            IndentWriter? Writer = null, 
+            int? startNode = null)
         {
-            Writer ??= StreamWriter.Null;
+            Writer ??= IndentWriter.Null;
             await Writer.WriteLineAsync("Finding best hamiltonian cycle");
-            bool FoundCycle = false;
+            IEnumerable<bool> Results = [
+                await SolveWithEuristichsFlow(Writer, startNode),
+                await SolveWithOrToolsFlow(Writer, startNode),
+            ];
+            return Results.Any(x => x);
+        }
+
+        #region Euristichs
+        public Task<IEnumerable<EdgeType>?> BestHamiltonCycle()
+        {
+            throw new NotImplementedException("Functionality not yet implemented");
+        }
+        public async Task<bool> SolveWithEuristichsFlow(IndentWriter Writer, int? startNode = null)
+        {
             try
             {
                 var result = await BestHamiltonCycle();
                 if (result is null)
                 {
                     await Writer.WriteLineAsync("Problem was not solved by euristichs");
-                } else {
-                    await Writer.WriteLineAsync($"Cycle: {Function.Print(result)}");
-                    await Writer.WriteLineAsync($"Cost: {Function.Print(Cost(result))}");
-                    FoundCycle = true;
+                    return false;
                 }
-            } catch (Exception ex)
-            {
-                await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
-#if DEBUG
-                if (ex.StackTrace is not null)
-                {
-                    await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
-                }
-#endif
-            }
-
-            try
-            {
-                await Writer.WriteLineAsync("Brute forcing cycle...");
-                var result = BruteForceHamiltonCycle(bidirectional);
-                if (result is null)
-                {
-                    await Writer.WriteLineAsync("Problem was not solved by brute force");
-                }
-                else
-                {
-                    await Writer.WriteLineAsync($"Brute forced cycle: {Function.Print(result)}");
-                    await Writer.WriteLineAsync($"Cost: {Function.Print(Cost(result, bidirectional))}");
-                    FoundCycle = true;
-                }
+                await Writer.WriteLineAsync($"Cycle: {Function.Print(result)}");
+                await Writer.WriteLineAsync($"Cost: {Function.Print(Cost(result))}");
+                return true;
             }
             catch (Exception ex)
             {
@@ -71,24 +68,13 @@ namespace OperationalResearch.Models.Graphs
                     await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
                 }
 #endif
+                return false;
             }
-            return FoundCycle;
-        }
-        public Task<IEnumerable<Edge>?> BestHamiltonCycle()
-        {
-            throw new NotImplementedException("Functionality not yet implemented");
-        }
-        private IEnumerable<Edge> AllEdges()
-        {
-            return c.M
-                .Apply((cost, row, col) => new Edge(cost, row, col))
-                .Reshape()
-                .Where(arc => !arc.Cost.IsZero); // Remove first diagonal
         }
 
-        public async Task<IEnumerable<Edge>?> GreedyUpperEstimate(StreamWriter Writer)
+        public async Task<IEnumerable<EdgeType>?> GreedyUpperEstimate(IndentWriter Writer)
         {
-            var ArcsByCost = AllEdges().OrderBy(arc => arc.Cost).ToList();
+            var ArcsByCost = AllEdges().OrderByCost().ToList();
             await Writer.WriteLineAsync("Finding upper estimate by ordering arcs by cost");
 
             await Writer.WriteLineAsync(
@@ -102,7 +88,7 @@ namespace OperationalResearch.Models.Graphs
                     await Writer.WriteLineAsync($"No cycle could be found!");
                     return null;
                 }
-                Edge currArc = ArcsByCost.ElementAt(startingArcIndex);
+                var currArc = ArcsByCost.ElementAt(startingArcIndex);
                 await Writer.WriteLineAsync($"Finding cycle starting by arc {currArc}");
 
                 List<int> nodes = [currArc.From];
@@ -120,9 +106,7 @@ namespace OperationalResearch.Models.Graphs
                 {
                     await Writer.WriteLineAsync(
                         $"Cycle: {string.Join('-', nodes.Select(node => (node + 1).ToString()))}");
-                    return
-                        Enumerable.Range(0, nodes.Count)
-                        .Select(i => new Edge(Fraction.One, nodes[i % nodes.Count], nodes[(i + 1) % nodes.Count]));
+                    return GetEdges(nodes, bidirectional: Bidirectional);
                 }
                 await Writer.WriteLineAsync($"Cycle not found with current starting arc");
 
@@ -131,12 +115,13 @@ namespace OperationalResearch.Models.Graphs
         }
 
         public async Task<IEnumerable<int>?> NearestNodeUpperEstimate(
-            StreamWriter Writer, int? startingNode)
+            IndentWriter Writer, int? startingNode)
         {
             var NodesToStart = startingNode.HasValue ?
                 new List<int>() { startingNode.Value } : Enumerable.Range(0, N);
             List<int>? bestCycle = null;
             Fraction bestCost = Fraction.Zero;
+            var EdgeAndReversed = AllEdges();
 
             foreach (int start in NodesToStart)
             {
@@ -145,9 +130,10 @@ namespace OperationalResearch.Models.Graphs
                 int currNode = start;
                 while (nodes.Count < N)
                 {
-                    var possibleNodes = c[currNode]
-                        .NonZeroIndeces
-                        .Where(i => !nodes.Contains(i));
+                    var possibleNodes = EdgeAndReversed
+                        .From(currNode)
+                        .NodesReached()
+                        .Where(node => !nodes.Contains(node));
 
                     if (!possibleNodes.Any())
                     {
@@ -158,12 +144,14 @@ namespace OperationalResearch.Models.Graphs
 
                     await Writer.WriteLineAsync(
                         $"Possible nodes to reach: {Function.Print(possibleNodes)}");
-                    var bestIndex = possibleNodes
-                        .Select(i => c[currNode, i])
-                        .ToArray().ArgMin();
-                    currNode = possibleNodes.ElementAt(bestIndex);
 
-                    await Writer.WriteLineAsync($"Chosen node {currNode + 1}");
+                    var newNode = EdgeAndReversed
+                        .From(currNode)
+                        .Where(edge => !nodes.Contains(edge.To))
+                        .OrderByCost().First().To;
+                    await Writer.WriteLineAsync($"Chosen node {newNode + 1}");
+
+                    currNode = newNode;
 
                     nodes.Add(currNode);
                 }
@@ -197,9 +185,83 @@ namespace OperationalResearch.Models.Graphs
 
             return bestCycle;
         }
+        #endregion
 
+        #region Library
+        /// <summary>
+        /// Solve using Google OrTools
+        /// </summary>
+        /// <param name="startNode">The starting node</param>
+        /// <returns></returns>
+        public IEnumerable<int>? SolveWithOrTools(int? startNode = null)
+        {
+            try
+            {
+                // Define the problem
+                var Matrix = BuildMatrix(Bidirectional);
+                RoutingIndexManager manager = new(N, 1, startNode ?? 0);
+                RoutingModel routing = new RoutingModel(manager);
 
+                // Tell how to search distances (costs) in the graph
+                int transitCallbackIndex = routing.RegisterTransitCallback((long fromIndex, long toIndex) =>
+                {
+                    int fromNode = manager.IndexToNode(fromIndex);
+                    int toNode = manager.IndexToNode(toIndex);
+                    return Matrix[fromNode, toNode].ToInt64();
+                });
+                routing.SetArcCostEvaluatorOfAllVehicles(transitCallbackIndex);
+                
+                // Tell which strategy to use
+                RoutingSearchParameters searchParameters = operations_research_constraint_solver.DefaultRoutingSearchParameters();
+                searchParameters.FirstSolutionStrategy = FirstSolutionStrategy.Types.Value.Automatic;
+                
+                // Actually solve the problem
+                Assignment solution = routing.SolveWithParameters(searchParameters);
 
+                // Build the path from the solution
+                List<int> path = [];
+                for (long index = routing.Start(0); !routing.IsEnd(index); index = solution.Value(routing.NextVar(index)))
+                {
+                    path.Add(manager.IndexToNode((int)index));
+                }
+                return path;
+            }
+            catch {
+#if DEBUG
+                throw;
+#else
+                return null;
+#endif
+            }
+        }
 
+        public async Task<bool> SolveWithOrToolsFlow(IndentWriter Writer, int? startNode = null)
+        {
+            try
+            {
+                await Writer.WriteLineAsync("Solving with Google OrTools...");
+                var result = SolveWithOrTools(startNode);
+                if (result is null || !result.Any())
+                {
+                    await Writer.WriteLineAsync("Problem was not solved by the library");
+                    return false;
+                }
+                await Writer.WriteLineAsync($"Found cycle: {Function.Print(result)}");
+                await Writer.WriteLineAsync($"Cost: {Function.Print(Cost(result, Bidirectional))}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
+#if DEBUG
+                if (ex.StackTrace is not null)
+                {
+                    await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
+                }
+#endif
+                return false;
+            }
+        }
+        #endregion
     }
 }
