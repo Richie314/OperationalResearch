@@ -34,7 +34,7 @@ namespace OperationalResearch.Models.Graphs
             Writer ??= IndentWriter.Null;
 
             // Set xij = 0
-            Vector x = Vector.Zero(Edges.Count());
+            Vector x = Vector.Zeros(Edges.Count());
 
             int it = 1;
             bool qEmpty = false;
@@ -64,7 +64,7 @@ namespace OperationalResearch.Models.Graphs
                         r.Add(rev);
                     }
                 }
-                r = r.ToArray().Order().ToList();
+                r = [.. r.ToArray().Order()];
                 foreach (var rij in r)
                 {
                     await Writer.WriteLineAsync($"\t{rij} with capacity = {rij.ub}");
@@ -132,11 +132,8 @@ namespace OperationalResearch.Models.Graphs
                 IEnumerable<int> Path = [t];
                 while (p[curr] >= 0)
                 {
-                    var rij = r.First(rij => rij.From == p[curr] && rij.To == curr);
-                    if (rij is null)
-                    {
+                    var rij = r.First(rij => rij.From == p[curr] && rij.To == curr) ?? 
                         throw new Exception("This should not happen :/");
-                    }
                     if (rij.ub < min)
                     {
                         min = rij.ub;

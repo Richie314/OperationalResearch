@@ -14,9 +14,9 @@ namespace OperationalResearch.Models.Problems.Solvers
         bool UseBounds = true) : 
         GraphSolver<MinimumCostFlow<BoundedCostEdge>, BoundedCostEdge>
     {
-        private bool useBounds = UseBounds;
-        private IEnumerable<BoundedCostEdge> T = startBase;
-        private IEnumerable<BoundedCostEdge> U = startFilled;
+        private readonly bool useBounds = UseBounds;
+        private readonly IEnumerable<BoundedCostEdge> T = startBase;
+        private readonly IEnumerable<BoundedCostEdge> U = startFilled;
         public override Task<bool> SolveIntegerMaxAsync(IEnumerable<IndentWriter?> loggers)
         {
             throw new NotImplementedException("Only minimum problem can be solved");

@@ -2,14 +2,14 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
     <Title>Operational Research</Title>
     <Description>Operational Research solver</Description>
-    <PackageProjectUrl></PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/Richie314/OperationalResearch</PackageProjectUrl>
     <PackageIcon>icon_small.png</PackageIcon>
     <RepositoryUrl>https://github.com/Richie314/OperationalResearch</RepositoryUrl>
   </PropertyGroup>

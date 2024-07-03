@@ -117,7 +117,7 @@ namespace OperationalResearch.Models.Graphs
                 await Writer.WriteLineAsync(
                     $"{Edges.ElementAt(pq)} is used {(forward ? "forward" : "reversed")} in cycle {string.Join("-", C.Select(i => i + 1))}");
 
-                List<EdgeType> oppositeDirection = new();
+                List<EdgeType> oppositeDirection = [];
                 for (int i = 0; i < C.Length; i++)
                 {
                     int from = C[i];
@@ -153,7 +153,7 @@ namespace OperationalResearch.Models.Graphs
                     return null;
                 }
 
-                oppositeDirection = oppositeDirection.Order().ToList();
+                oppositeDirection = [.. oppositeDirection.Order()];
                 await Writer.WriteLineAsync(
                     $"C^- = {{ {string.Join(", ", oppositeDirection.Select(e => e.ToString()))} }}");
 
@@ -212,7 +212,7 @@ namespace OperationalResearch.Models.Graphs
         {
             var xt = BasisFlow(T, U);
             var xu = u[U];
-            List<Fraction> x = new();
+            List<Fraction> x = [];
             for (int i = 0; i < Edges.Count(); i++)
             {
                 //i: index of edges in order
@@ -241,7 +241,7 @@ namespace OperationalResearch.Models.Graphs
             {
                 return null;
             }
-            startU ??= Enumerable.Empty<EdgeType>();
+            startU ??= [];
             Writer ??= IndentWriter.Null;
             await Writer.WriteLineAsync(
                 $"Edges = {{ {string.Join(", ", Edges.Select(e => e.ToString()))} }}");
@@ -392,10 +392,10 @@ namespace OperationalResearch.Models.Graphs
                     return null;
                 }
 
-                oppositeDirection = oppositeDirection.Order().ToList();
+                oppositeDirection = [.. oppositeDirection.Order()];
                 await Writer.WriteLineAsync(
                     $"C^- = {{ {string.Join(", ", oppositeDirection.Select(e => e.ToString()))} }}");
-                currentDirection = currentDirection.Order().ToList();
+                currentDirection = [.. currentDirection.Order()];
                 await Writer.WriteLineAsync(
                     $"C^+ = {{ {string.Join(", ", currentDirection.Select(e => e.ToString()))} }}");
 
@@ -429,7 +429,7 @@ namespace OperationalResearch.Models.Graphs
                         {
                             T = T.Where(i => i != GetEdgeIndex(rs)).Append(pq).ToArray();
                         }
-                        U = U.Append(GetEdgeIndex(rs)).ToArray();
+                        U = [.. U, GetEdgeIndex(rs)];
                     }
                     else
                     {

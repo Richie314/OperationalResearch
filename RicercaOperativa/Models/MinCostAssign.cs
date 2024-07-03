@@ -4,194 +4,163 @@ using Microsoft.Scripting.Utils;
 using OperationalResearch.Extensions;
 using OperationalResearch.Models.Elements;
 using System;
-using System.Collections.Generic;
-using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Google.OrTools.Graph;
+using Matrix = OperationalResearch.Models.Elements.Matrix;
+using Vector = OperationalResearch.Models.Elements.Vector;
+using Google.OrTools.Sat;
 
 namespace OperationalResearch.Models
 {
-    internal class MinCostAssign(Fraction[,] c, Fraction[,] w, Fraction[] b, bool wxEqualsB = false)
+    public class MinimumCostAssign
     {
-        private readonly Matrix w = new(w);
-        private readonly Vector b = b;
-        private readonly Matrix c = new(c);
-        private readonly bool bEquals = wxEqualsB;
+        /// <summary>
+        /// Cost matrix
+        /// </summary>
+        private readonly Matrix c;
 
-        public MinCostAssign(string[,] c, string[,] w, string[] b, bool bEq = false) : 
-            this(c.Apply(Fraction.FromString), 
-                w.Apply(Fraction.FromString), 
-                b.Apply(Fraction.FromString),
-                bEq)
+        /// <summary>
+        /// Matrix of jobs durations
+        /// </summary>
+        private readonly Matrix w;
+
+        /// <summary>
+        /// Capacity of each worker: how much time can work
+        /// </summary>
+        private readonly Vector b;
+
+        public IEnumerable<int> Workers
         {
-            if (c.Rows() != w.Rows())
+            get => Enumerable.Range(0, c.Cols);
+        }
+
+        public IEnumerable<int> Jobs
+        {
+            get => Enumerable.Range(0, c.Rows);
+        }
+
+
+        public MinimumCostAssign(Matrix costs, Matrix weights, Vector b)
+        {
+            if (costs.Rows != weights.Rows)
             {
                 throw new ArgumentException(
-                    $"Matrix c and w must have same number of rows ({c.Rows()} != {w.Rows()})");
+                    $"Matrix c and w must have same number of rows ({costs.Rows} != {weights.Rows})");
             }
-            if (c.Columns() != b.Length)
+            if (costs.Cols != weights.Cols)
             {
                 throw new ArgumentException(
-                    $"Cols of c and size of b must must be equal ({c.Columns()} != {b.Length})");
+                    $"Matrix c and w must have same number of cols ({costs.Cols} != {weights.Cols})");
             }
-            if (c.Columns() != w.Columns())
+            if (costs.Cols != b.Size)
             {
                 throw new ArgumentException(
-                    $"Matrix c and w must have same number of cols ({c.Columns()} != {w.Columns()})");
+                    $"Cols of c and size of b must must be equal ({costs.Cols} != {b.Size})");
             }
+            c = costs;
+            w = weights;
+            this.b = b;
         }
-        public MinCostAssign(string[,] c) : this(c.Apply(Fraction.FromString))
-        {
-        }
-        public MinCostAssign(Fraction[,] c) :
-            this(c,
-                c.Apply(cij => Fraction.One),
-                Enumerable.Repeat(Fraction.One, c.Rows()).ToArray(), true)
-        {
-        }
+        public MinimumCostAssign(Matrix c) :
+            this(c, new Matrix(c.M.Apply(cij => Fraction.One)), Vector.Ones(c.Cols)) { }
+
         private int N { get => c.Cols; }
         private int M { get => c.Rows; }
-        private IEnumerable<int> RowIndeces { get => c.RowsIndeces; }
-        private IEnumerable<int> ColIndeces { get => c.ColsIndeces; }
-        private Vector GetC()
+
+        private Simplex ConvertToLinearProgramming(bool FillWorkers = false)
         {
-            return c.M.Flatten();
+            Vector costs = c.M.Flatten();
+            Polyhedron polyhedron = new(
+                A: GetLinearProgrammingMatrix(FillWorkers),
+                b: GetLinearProgrammingVector(FillWorkers),
+                forcePositive: true);
+            return new Simplex(polyhedron, costs).NegateTarget;
         }
-        private Matrix GetPLMatrix()
+        private Matrix GetLinearProgrammingMatrix(bool FillWorkers = false) 
         {
-            // xi1 + xi2 + xi3 + ... + xiN <= 1 for i < M
-            var FirstPartPos = RowIndeces.Select(i =>
-            {
-                var ZeroPartsStarts = Enumerable.Repeat(Fraction.Zero, N * i).ToArray();
-                var OneParts = Enumerable.Repeat(Fraction.One, N).ToArray();
-                var ZeroPartsEnd = Enumerable.Repeat(Fraction.Zero, N * M - N - N * i).ToArray();
-                return 
-                    ZeroPartsStarts
-                    .Concatenate(OneParts)
-                    .Concatenate(ZeroPartsEnd);
-            });
-            // xi1 + xi2 + xi3 + ... + xiN >= 1 for i < M
-            var FirstPartNeg = RowIndeces.Select(i =>
-            {
-                var ZeroPartsStarts = Enumerable.Repeat(Fraction.Zero, N * i).ToArray();
-                var OneParts = Enumerable.Repeat(Fraction.MinusOne, N).ToArray();
-                var ZeroPartsEnd = Enumerable.Repeat(Fraction.Zero, N * M - N - N * i).ToArray();
-                return 
-                ZeroPartsStarts
-                .Concatenate(OneParts)
-                .Concatenate(ZeroPartsEnd);
-            });
+            // N: number of workers
+            // M: number of jobs
 
-            // w1i * x1i + w2i * x2i + w3i * x31 + ... + wMi * xMi <= bi for i < N
-            var SecondPartPos = ColIndeces.Select(i =>
-            {
-                var wCol = w.Col(i);
-                var LeadZeros = Enumerable.Repeat(Fraction.Zero, i).ToArray();
-                var TrailZeros = Enumerable.Repeat(Fraction.Zero, N - 1 - i).ToArray();
+            // Each job can be done once only
+            // xi1 + xi2 + xi3 + ... + xiN <= 1 where i : job
+            Matrix JobsOncePos = new(Jobs.Select(i =>
+                Vector.Zeros(N * i)
+                .Concat(Enumerable.Repeat(Fraction.One, N))
+                .Concat(Vector.Zeros(N * M - N - N * i)).Get).ToArray());
+            Matrix FullMatrix = JobsOncePos;
+            // xi1 + xi2 + xi3 + ... + xiN >= 1
+            Matrix JobsOnceNeg = Fraction.MinusOne * JobsOncePos;
+            FullMatrix = FullMatrix.AddRows(JobsOnceNeg);
 
-                return wCol.Get.Select(wji =>
-                    LeadZeros
-                    .Concatenate([ wji ])
-                    .Concatenate(TrailZeros))
-                .ToArray().Flatten();
-            });
-            // w1i * x1i + w2i * x2i + w3i * x31 + ... + wMi * xMi >= bi for i < N
-            
-            var SecondPartNeg = !bEquals ? 
-                Enumerable.Empty<Fraction[]>() : 
-                ColIndeces.Select(i =>
-            {
-                var wColNeg = w.Col(i) * Fraction.MinusOne;
-                var LeadZeros = Enumerable.Repeat(Fraction.Zero, i).ToArray();
-                var TrailZeros = Enumerable.Repeat(Fraction.Zero, N - 1 - i).ToArray();
+            // Workers have limit of time that can't exceed
+            // w1i * x1i + w2i * x2i + w3i * x31 + ... + wMi * xMi <= bi where i : worker
+            Matrix WorkersLimitPos = new(Workers.Select(
+                i => w.Col(i).Get
+                    .Select(wij => 
+                        Vector.Zeros(i).Concat([wij]).Concat(Vector.Zeros(N - 1 - i)).Get
+                    ).ToArray().Flatten()
+                ).ToArray());
+            FullMatrix.AddRows(WorkersLimitPos);
+            if (FillWorkers)
+            { 
+                FullMatrix.AddRows(Fraction.MinusOne * WorkersLimitPos);
+            }
 
-                return wColNeg.Get.Select(wji =>
-                    LeadZeros
-                    .Concatenate([wji])
-                    .Concatenate(TrailZeros))
-                .ToArray().Flatten();
-            });
-            
-            var FullMatrix =
-                // xij <= 1
-                Matrix.Identity(N * M).M.ToJagged() // Xij <= 1
-                    .Concat((Matrix.Identity(N * M) * Fraction.MinusOne).M.ToJagged()) // Xij >= 0
-                    .Concat(FirstPartPos)
-                    .Concat(FirstPartNeg)
-                    .Concat(SecondPartPos)
-                    .Concat(SecondPartNeg)
-                    .ToArray();
-            return new Matrix(FullMatrix);
+            // x <= 1
+            Matrix xBelowOne = Matrix.Identity(N * M);
+
+            return FullMatrix.AddRows(xBelowOne);
         }
-        private Vector GetPLVector()
+        private Vector GetLinearProgrammingVector(bool FillWorkers = false)
         {
             // xi1 + xi2 + xi3 + ... + xiN <= 1
-            var FirstPartPos = Enumerable.Repeat(Fraction.One, M);
+            var JobsOncePos = new Vector(Enumerable.Repeat(Fraction.One, M));
             // xi1 + xi2 + xi3 + ... + xiN >= 1
-            var FirstPartNeg = Enumerable.Repeat(Fraction.MinusOne, M);
+            var JobsOnceNeg = Fraction.MinusOne * JobsOncePos;
+
             // w1i * x1i + w2i * x2i + w3i * x31 + ... + wMi * xMi <= bi
-            var SecondPartPos = b.Get;
+            var WorkersLimitPos = b;
             // w1i * x1i + w2i * x2i + w3i * x31 + ... + wMi * xMi >= bi
-            var SecondPartNeg = !bEquals ? 
-                Enumerable.Empty<Fraction>() : (b * Fraction.MinusOne).Get;
+            var WorkersLimitNeg = FillWorkers ? (Fraction.MinusOne * b) : Vector.Empty;
 
-            var LeadPart = Enumerable.Repeat(Fraction.One, N * M) // Xij <= 1
-                .Concat(Enumerable.Repeat(Fraction.Zero, N * M)); // Xij >= 0
+            // x <= 1
+            var xBelowOne = Enumerable.Repeat(Fraction.One, N * M);
             
-            var FullVector = LeadPart // 2 * N * M
-                .Concat(FirstPartPos) // M
-                .Concat(FirstPartNeg) // M
-                .Concat(SecondPartPos) // N
-                .Concat(SecondPartNeg) // N
-                .ToArray();
-            return FullVector;
+            return 
+                JobsOncePos
+                .Concat(JobsOnceNeg)
+                .Concat(WorkersLimitPos)
+                .Concat(WorkersLimitNeg)
+                .Concat(xBelowOne);
         }
 
-        private string GetXRepresentation()
-        {
-            return "( " + string.Join(", ",
-                c.M.Apply((x, i, j) => $"x{i + 1}{j + 1}")
-                .Flatten() ) + " )";
-        }
+        private string GetXRepresentation() =>
+            "( " + string.Join(", ", c.M.Apply((x, i, j) => $"x{i + 1}{j + 1}").Flatten()) + " )";
 
-        private string GetTargetFunction()
-        {
-            return string.Join(" + ",
-                c.M.Apply((cij, i, j) => $"{Function.Print(cij)} * x{i + 1}{j + 1}")
-                .Flatten());
-        }
+        private string GetTargetFunctionRepresentation() =>
+            string.Join(" + ",
+                c.M.Apply((cij, i, j) => $"{Function.Print(cij)} * x{i + 1}{j + 1}").Flatten());
+
         /// <summary>
         /// x can be fractionary
         /// 0 <= x <= 1
         /// </summary>
         /// <param name="Writer"></param>
         /// <returns>The matrix of x, if it can be found</returns>
-        public async Task<Matrix?> SolveCooperative(StreamWriter? Writer = null)
+        public async Task<Matrix?> SolveCooperative(bool FillWorkers = false, IndentWriter? Writer = null)
         {
-            Writer ??= StreamWriter.Null;
+            Writer ??= IndentWriter.Null;
             await Writer.WriteLineAsync("Calculating representation of X...");
             await Writer.WriteLineAsync($"x = {GetXRepresentation()}");
 
-            await Writer.WriteLineAsync($"Finding min of {GetTargetFunction()}");
+            await Writer.WriteLineAsync($"Finding min of {GetTargetFunctionRepresentation()}");
 
             await Writer.WriteLineAsync($"A * x <= b");
-            var A = GetPLMatrix();
-            await Writer.WriteLineAsync($"A generated");
-            var B = GetPLVector();
-            await Writer.WriteLineAsync($"A|b = {A|B}");
+            Simplex s = ConvertToLinearProgramming(FillWorkers);
+            //await Writer.WriteLineAsync($"A|b = {s.A | B}");
 
-
-            Simplex s = new(
-                A.M, 
-                B, 
-                GetC() * Fraction.MinusOne, 
-                false); // We want to minimize c, not maximize
-            
             await Writer.WriteLineAsync("Solving with simplex...");
             var x = await s.SolvePrimalMax(// target function is already inverted in order to find min instead of max
-                Writer: StreamWriter.Null,
-                startBase: null,
+                Writer: IndentWriter.Null,
                 maxIterations: 50);
 
             if (x is null)
@@ -202,18 +171,18 @@ namespace OperationalResearch.Models
             return new Matrix(x.Get.Split(N));
         }
         
-        public async Task<bool> SolveCooperativeFlow(StreamWriter? Writer = null)
+        public async Task<bool> SolveCooperativeFlow(bool FillWorkers = false, IndentWriter? Writer = null)
         {
-            Writer ??= StreamWriter.Null;
-            bool exitValue = true;
+            Writer ??= IndentWriter.Null;
             try
             {
-                Matrix? x = await SolveCooperative(Writer: Writer);
+                Matrix? x = await SolveCooperative(FillWorkers, Writer);
                 if (x is null)
                 {
                     return false;
                 }
                 await Writer.WriteLineAsync($"Solution X = {x}");
+                return true;
             }
             catch (Exception ex)
             {
@@ -224,63 +193,94 @@ namespace OperationalResearch.Models
                     await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
                 }
 #endif
-                exitValue = false;
+                return false;
             }
-            return exitValue;
         }
-        public async Task<Matrix?> SolveNonCooperative(StreamWriter? Writer = null)
+        
+        
+        public async Task<Matrix?> SolveNonCooperative(IndentWriter? Writer = null)
         {
-            Writer ??= StreamWriter.Null;
-            IEnumerable<Fraction> bestX = Enumerable.Empty<Fraction>();
-            Fraction bestXCost = Fraction.Zero;
+            // https://developers.google.com/optimization/assignment/assignment_cp?hl=it#c
+            Writer ??= IndentWriter.Null;
+            await Writer.WriteLineAsync("Solving via Google.OrTools library");
 
-            var StartVector = Enumerable.Repeat(Fraction.One, N)
-                .Concat(Enumerable.Repeat(Fraction.Zero, N * M - N));
-
-            await Writer.WriteLineAsync("Brute forcing the problem of non cooperative assignment of minimum cost.");
-            await Writer.WriteLineAsync($"{N * M}! = {Function.Factorial(N * M)} guesses will be done...");
-
-            await Writer.WriteLineAsync($"Time weights w = {w}");
-
-
-            var A = GetPLMatrix();
-            var b = GetPLVector();
-
-            await Writer.WriteLineAsync($"A|b = {A | b}");
-
-            foreach (IEnumerable<Fraction> x in StartVector.AllPermutations())
+            CpModel model = new CpModel();
+            BoolVar[,] x = new BoolVar[Jobs.Count(), Workers.Count()];
+            await Writer.WriteLineAsync("Initializing variables...");
+            foreach (int worker in Workers)
             {
-                Vector X = x.ToArray();
-                // await Writer.WriteLineAsync($"Case X = {X}");
-                if (!(A * X <= b))
+                foreach (int task in Jobs)
                 {
-                    // Solution not acceptable
-                    continue;
-                }
-                Fraction currCost = GetC() * X;
-                if (currCost < bestXCost || bestX.Count() == 0)
-                {
-                    bestXCost = currCost;
-                    bestX = x;
+                    x[task, worker] = model.NewBoolVar($"x[{task},{worker}]");
                 }
             }
-            if (bestX is null || !bestX.Any())
+            await Writer.Indent().WriteLineAsync("Calculating representation of X...");
+            await Writer.Indent().WriteLineAsync($"x = {GetXRepresentation()}");
+
+            await Writer.WriteLineAsync("Setting constarints...");
+            // Each worker is assigned to at most max task size.
+            foreach (int worker in Workers)
             {
-                await Writer.WriteLineAsync($"No acceptable solution was found. Exit with failure");
+                BoolVar[] vars = new BoolVar[Jobs.Count()];
+                foreach (int task in Jobs)
+                {
+                    vars[task] = x[task, worker];
+                }
+                // Each worker has limited time
+                model.Add(LinearExpr.WeightedSum(vars, w[worker].ToInt()) <= b[worker].ToInt32());
+            }
+
+            // Each task is assigned to exactly one worker.
+            foreach (int task in Jobs)
+            {
+                List<ILiteral> workers = new List<ILiteral>();
+                foreach (int worker in Workers)
+                {
+                    workers.Add(x[task, worker]);
+                }
+                model.AddExactlyOne(workers); // A single task cannot be done more than once
+            }
+
+            await Writer.WriteLineAsync("Setting costs...");
+            LinearExprBuilder obj = LinearExpr.NewBuilder();
+            foreach (int worker in Workers)
+            {
+                foreach (int task in Jobs)
+                {
+                    obj.AddTerm(x[task, worker], c[task, worker].ToInt32()); // Add costs of each task
+                }
+            }
+            model.Minimize(obj);
+
+
+            // Solve the problem
+            await Writer.WriteLineAsync("Solving now...");
+            CpSolver solver = new CpSolver();
+            CpSolverStatus status = solver.Solve(model);
+            if (status != CpSolverStatus.Optimal && status != CpSolverStatus.Feasible)
+            {
+                await Writer.WriteLineAsync("CpSolver could not solve the problem.");
                 return null;
             }
-            await Writer.WriteLineAsync($"All guesses done: best X = {new Vector(bestX.ToArray())}");
-            await Writer.WriteLineAsync($"Cost of solution = {Function.Print(bestXCost)}");
-#if DEBUG
-            await Writer.WriteLineAsync($"Ax = {A * bestX.ToArray()}");
-            await Writer.WriteLineAsync($"b = {b}");
-#endif
-            return new Matrix(bestX.ToArray().Split(N)).T;
+
+
+            Matrix ret = new Matrix();
+            await Writer.WriteLineAsync("Building solution...");
+            foreach (int worker in Workers)
+            {
+                foreach (int task in Jobs)
+                {
+                    if (solver.Value(x[task, worker]) > 0.5)
+                    {
+                        ret[task, worker] = Fraction.One;
+                    }
+                }
+            }
+            return ret;
         }
-        public async Task<bool> SolveNonCooperativeFlow(StreamWriter? Writer = null)
+        public async Task<bool> SolveNonCooperativeFlow(IndentWriter? Writer = null)
         {
-            Writer ??= StreamWriter.Null;
-            bool exitValue = true;
+            Writer ??= IndentWriter.Null;
             try
             {
                 Matrix? x = await SolveNonCooperative(Writer: Writer);
@@ -289,6 +289,7 @@ namespace OperationalResearch.Models
                     return false;
                 }
                 await Writer.WriteLineAsync($"Solution X = {x}");
+                return true;
             }
             catch (Exception ex)
             {
@@ -299,9 +300,8 @@ namespace OperationalResearch.Models
                     await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
                 }
 #endif
-                exitValue = false;
+                return false;
             }
-            return exitValue;
         }
     }
 }

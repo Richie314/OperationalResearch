@@ -17,6 +17,9 @@ namespace OperationalResearch.Models.Elements
         /// The actual array inside the vector class
         /// </summary>
         private readonly Fraction[] v;
+
+        #region Builders
+
         public Vector(params Fraction[] v)
         {
             ArgumentNullException.ThrowIfNull(v);
@@ -33,13 +36,32 @@ namespace OperationalResearch.Models.Elements
             ArgumentNullException.ThrowIfNull(v);
             this.v = v.ToArray();
         }
+
+        #endregion
+
+        #region Converters
+
         public IEnumerable<double> ToDouble() => v.Select(v => v.ToDouble());
         public IEnumerable<decimal> ToDecimal() => v.Select(v => v.ToDecimal());
-        public static Vector Empty = new();
-        public static Vector Zero(int length) =>
-            Enumerable.Repeat(Fraction.Zero, length).ToArray();
-        public int Size { get { return v.Length; } }
-        public bool IsEmpty { get => Size == 0; }
+        public IEnumerable<int> ToInt() => v.Select(v => v.ToInt32());
+
+        public Fraction[] Get
+        {
+            get => v;
+        }
+
+        /// <summary>
+        /// Transforms the column vector to a matrix with one row
+        /// </summary>
+        public Matrix Row
+        {
+            get => new([v]);
+        }
+
+        #endregion
+
+        #region Accessing
+
         public IEnumerable<int> Indices { get => Enumerable.Range(0, Size); }
         private Vector ExtractIndices(IEnumerable<int> IndicesToExtract)
         {
@@ -55,19 +77,32 @@ namespace OperationalResearch.Models.Elements
         {
             get => ExtractIndices(IndicesToExtract);
         }
-        public Fraction[] Get
+
+        #endregion
+
+        #region StaticBuilders
+
+        public static Vector Empty = new();
+        public static Vector Zeros(int n) => Repeat(Fraction.Zero, n);
+        public static Vector Ones(int n) => Repeat(Fraction.One, n);
+        public static Vector Repeat(Fraction f, int n) => new Vector(Enumerable.Repeat(f, n));
+        public static Vector Rand(int size)
         {
-            get => v;
+            var x = Zeros(size);
+            var rnd = Random.Shared;
+            for (int i = 0; i < size; i++)
+            {
+                x[i] = new Fraction(
+                    rnd.Next(int.MinValue, int.MaxValue),
+                    rnd.Next(1, int.MaxValue));
+            }
+            return x;
         }
-        public Vector Concat(Vector? x2)
-        {
-            if (x2 is null || x2.Size == 0)
-                return this;
-            return Get.Concat(x2.Get).ToArray();
-        }
-        public Vector Concat(IEnumerable<Fraction>? x2) => 
-            x2 is null ? this : Concat((Vector)x2.ToArray());
-        public static Vector Zeros(int n) => new Vector(Enumerable.Repeat(Fraction.Zero, n));
+
+        #endregion
+
+        #region Operators
+
         public static Vector operator +(Vector a, Vector b)
         {
             ArgumentNullException.ThrowIfNull(a);
@@ -248,6 +283,14 @@ namespace OperationalResearch.Models.Elements
             }
             return a.Indices.Any(i => a[i] != b[i]);
         }
+
+        #endregion
+
+        #region Shorthands
+
+        public int Size { get { return v.Length; } }
+        public bool IsEmpty { get => Size == 0; }
+
         /// <summary>
         /// v == 0
         /// </summary>
@@ -320,19 +363,29 @@ namespace OperationalResearch.Models.Elements
         {
             get => v.Find(x => x.IsNegative);
         }
+
+        #endregion
+
         public Vector RemoveAt(int jToRemove) => v.RemoveAt(jToRemove);
-        /// <summary>
-        /// Transforms the column vector to a matrix with one row
-        /// </summary>
-        public Matrix Row
-        {
-            get => new([v]);
-        }
+
+        #region Overrides
+
         public override int GetHashCode() => base.GetHashCode();
         public override bool Equals(object? obj) => base.Equals(obj);
         public override string ToString() => 
             $"( {string.Join(", ", v.Select(x => Function.Print(x)))} )";
+        public Vector Copy() => v.ToList();
 
+        #endregion
+
+        public Vector Concat(Vector? x2)
+        {
+            if (x2 is null || x2.Size == 0)
+                return this;
+            return Get.Concat(x2.Get).ToArray();
+        }
+        public Vector Concat(IEnumerable<Fraction>? x2) =>
+            x2 is null ? this : Concat((Vector)x2.ToArray());
 
         public static Vector Sum(IEnumerable<Vector> vectors)
         {
@@ -360,18 +413,6 @@ namespace OperationalResearch.Models.Elements
             }
             return fraction;
         }
-        public static Vector Rand(int size)
-        {
-            var x = Zeros(size);
-            var rnd = Random.Shared;
-            for (int i = 0; i < size; i++)
-            {
-                x[i] = new Fraction(
-                    rnd.Next(int.MinValue, int.MaxValue), 
-                    rnd.Next(1, int.MaxValue));
-            }
-            return x;
-        }
-        public Vector Copy() => v.ToList();
+        
     }
 }
