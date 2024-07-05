@@ -141,56 +141,6 @@ namespace OperationalResearch.Models.Graphs
         {
             get => Enumerable.Range(0, N);
         }
-
-
-        /// <summary>
-        /// Searches for Hamiltonian cycle by trying every possible combination
-        /// This method is sync
-        /// </summary>
-        /// <returns>The best cycle or null if no cycle can be found</returns>
-        /// <exception cref="DataMisalignedException">If permutation of the nodes creates problems</exception>
-        /*
-        public IEnumerable<int>? BruteForceHamiltonCycle(bool bidirectional = false)
-        {
-            IEnumerable<int> BestPerm = [];
-            Fraction BestPermCost = Fraction.Zero;
-            int requiredCount = RequiredEdges.Count();
-
-            foreach (var perm in NodeList.AllPermutations())
-            {
-                if (perm.Count() != N)
-                {
-                    throw new DataMisalignedException(
-                        $"Permutation has number of element different from the number of nodes ({perm.Count()} != {N})");
-                }
-                try
-                {
-                    Fraction cost = Cost(perm, bidirectional);
-                    int currentRequiredEdges = 
-                        (GetEdges(perm) ?? Enumerable.Empty<Edge>())
-                        .Count(edge => edge.Type == Edge.EdgeType.Required);
-
-                    if (requiredCount != 0 && currentRequiredEdges < requiredCount)
-                    {
-                        continue;
-                    }
-
-                    if (cost < BestPermCost || !BestPerm.Any())
-                    {
-                        BestPermCost = cost;
-                        // transforms (A-B-C) in (A-B-C-A)
-                        BestPerm = perm.Append(perm.First());
-                    }
-                } catch
-                {
-                    continue;
-                }
-                
-            }
-
-            return BestPerm.Any() ? BestPerm : null;
-        }
-        */
         
         public bool HasCycle(bool symmetric = false)
         {
@@ -257,6 +207,8 @@ namespace OperationalResearch.Models.Graphs
             }
         }
 
+
+        public override string ToString() => string.Join(", ", Edges.Order().Select(e => e.ToString()));
     }
 
 }

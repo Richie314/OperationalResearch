@@ -313,7 +313,7 @@ namespace OperationalResearch.Models.Graphs
                 }
                 foreach (var cycle in Cycles)
                 {
-                    await Writer.WriteLineAsync(
+                    await Writer.Indent().WriteLineAsync(
                         $"T U {{ {Edges.ElementAt(pq)} }} has cycle: {string.Join("-", cycle.Select(i => i + 1))}");
                 }
                 var C = Cycles.First();
@@ -403,20 +403,20 @@ namespace OperationalResearch.Models.Graphs
                 Fraction ThetaMinus = oppositeDirection
                     .Select(GetEdgeIndex)
                     .Select(i => x[i]).Min();
-                await Writer.WriteLineAsync($"Theta^- = {Function.Print(ThetaMinus)}");
+                await Writer.WriteLineAsync($"θ^- = {Function.Print(ThetaMinus)}");
 
                 Fraction ThetaPlus = currentDirection
                     .Select(GetEdgeIndex)
                     .Select(i => u[i] - x[i]).Min();
-                await Writer.WriteLineAsync($"Theta^+ = {Function.Print(ThetaPlus)}");
+                await Writer.WriteLineAsync($"θ^+ = {Function.Print(ThetaPlus)}");
 
-                Fraction Theta = ThetaMinus > ThetaPlus ? ThetaPlus : ThetaMinus;
-                await Writer.WriteLineAsync($"Theta = {Function.Print(Theta)}");
+                Fraction θ = ThetaMinus > ThetaPlus ? ThetaPlus : ThetaMinus;
+                await Writer.WriteLineAsync($"θ = {Function.Print(θ)}");
 
                 var rs =
-                    oppositeDirection.Where(e => x[GetEdgeIndex(e)] == Theta).Concat(
+                    oppositeDirection.Where(e => x[GetEdgeIndex(e)] == θ).Concat(
                     currentDirection.Where(e =>
-                        u[GetEdgeIndex(e)] - xt[GetEdgeIndex(e)] == Theta))
+                        u[GetEdgeIndex(e)] - xt[GetEdgeIndex(e)] == θ))
                     .First();
                 await Writer.WriteLineAsync($"Exiting edge (r, s) = {rs}");
 
@@ -507,6 +507,27 @@ namespace OperationalResearch.Models.Graphs
                 {
                     await Writer.WriteLineAsync(
                         $"Could not calculate min-cut from {startNode.Value} to {endNode.Value}");
+                }
+            }
+            catch (Exception ex)
+            {
+                await Writer.WriteLineAsync($"Exception happened '{ex.Message}'");
+            }
+
+
+            // Minimum paths tree
+            try
+            {
+                var dijkstra = await Dijkstra(Writer.Indent(), startNode: startNode.Value);
+                if (dijkstra is null)
+                {
+                    await Writer.WriteLineAsync(
+                        $"Could not calculate Minimum paths tree from {startNode.Value}");
+                } else
+                {
+                    await Writer.WriteLineAsync($"Final p = {dijkstra.p}");
+                    await Writer.WriteLineAsync($"Final π = {dijkstra.π}");
+                    await Writer.WriteLineAsync($"Minimum paths {startNode.Value}-tree = {dijkstra.Graph()}");
                 }
             }
             catch (Exception ex)

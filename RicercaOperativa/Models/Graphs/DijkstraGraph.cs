@@ -25,6 +25,16 @@ namespace OperationalResearch.Models.Graphs
                 this.p = p.ToArray();
                 this.π = π;
             }
+            public Graph<Edge> Graph()
+            {
+                List<Edge> edges = [];
+                for (int dest = 0; dest < p.Length; dest++)
+                {
+                    if (p[dest] < 0) continue;
+                    edges.Add(new Edge(from: p[dest], dest));
+                }
+                return new Graph<Edge>(edges);
+            }
         }
         public async Task<DijkstraResult?> Dijkstra(
             IndentWriter? Writer = null, int startNode = 0, int? maxIterations = 20)
