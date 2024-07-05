@@ -159,6 +159,7 @@
             // 
             branchAndBound.Location = new Point(178, 324);
             branchAndBound.Name = "branchAndBound";
+            branchAndBound.PlaceholderText = "1-2, 2-3";
             branchAndBound.Size = new Size(306, 23);
             branchAndBound.TabIndex = 13;
             // 

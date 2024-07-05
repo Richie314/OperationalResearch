@@ -173,16 +173,18 @@ namespace OperationalResearch.Models.Graphs
 
         }
         public async Task<bool> FlowUnbounded(
-            IEnumerable<EdgeType>? startBase, IndentWriter? Writer = null)
+            IEnumerable<EdgeType>? startBase, 
+            int? startNode, IndentWriter? Writer = null)
         {
             Writer ??= IndentWriter.Null;
+            startNode ??= 0;
             if (startBase is null)
             {
-                await Writer.WriteLineAsync("Using 1-tree as start base");
-                var OneTree = await FindKTree(0, true, null);
-                if (OneTree is not null)
+                await Writer.WriteLineAsync($"Using {startNode.Value + 1}-tree as start base");
+                var sTree = await FindKTree(startNode.Value, true, null);
+                if (sTree is not null)
                 {
-                    startBase = OneTree;
+                    startBase = sTree;
                 }
             }
             try
@@ -472,7 +474,7 @@ namespace OperationalResearch.Models.Graphs
             endNode = endNode ?? N - 1;
             if (startBase is null)
             {
-                await Writer.WriteLineAsync($"Using {startNode.Value}-tree as start base");
+                await Writer.WriteLineAsync($"Using {startNode.Value + 1}-tree as start base");
                 var sTree = await FindKTree(startNode.Value, true, null);
                 if (sTree is not null)
                 {

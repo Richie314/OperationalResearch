@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Accord.Math;
-using OperationalResearch.Models;
+using Fractions;
 using OperationalResearch.Models.Graphs;
 
 namespace OperationalResearch.Extensions
@@ -85,6 +85,10 @@ namespace OperationalResearch.Extensions
         public static IEnumerable<EdgeType> OrderByCost<EdgeType>(
             this IEnumerable<EdgeType> edges) where EdgeType : CostEdge =>
             edges.OrderBy(e => e.Cost);
+
+        public static Fraction TotalCost<EdgeType>(
+            this IEnumerable<EdgeType> edges) where EdgeType : CostEdge =>
+            edges.Any() ? edges.First().Cost + edges.Skip(1).TotalCost() : Fraction.Zero;
 
         public static IEnumerable<EdgeType> From<EdgeType>(
             this IEnumerable<EdgeType> edges, int from) where EdgeType : Edge =>

@@ -29,7 +29,7 @@ namespace OperationalResearch.Models.Problems.Solvers
             }
             return useBounds ?
                 Domain.FlowBounded(T, U, startNode: startNode, endNode: K, Writer: loggers.FirstOrDefault()) :
-                Domain.FlowUnbounded(T, Writer: loggers.FirstOrDefault());
+                Domain.FlowUnbounded(T, startNode: startNode, Writer: loggers.FirstOrDefault());
         }
     }
 }

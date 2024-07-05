@@ -2,6 +2,8 @@
 using Fractions;
 using OperationalResearch.Extensions;
 using Google.OrTools.ConstraintSolver;
+using Matrix = OperationalResearch.Models.Elements.Matrix;
+using Vector = OperationalResearch.Models.Elements.Vector;
 
 namespace OperationalResearch.Models.Graphs
 {
@@ -47,10 +49,125 @@ namespace OperationalResearch.Models.Graphs
         }
 
         #region Euristichs
-        public Task<IEnumerable<EdgeType>?> BestHamiltonCycle()
+        public async Task<IEnumerable<EdgeType>?> BestHamiltonCycle(
+            IndentWriter Writer, 
+            int? startNode, 
+            int? k, 
+            IEnumerable<EdgeType> bnb)
         {
-            throw new NotImplementedException("Functionality not yet implemented");
+            startNode ??= 0;
+            k ??= startNode.Value;
+            var kTree = await FindKTree(k.Value, Bidirectional, Writer.Indent());
+    
+            var nearestNode = await NearestNodeUpperEstimate(Writer.Indent(), startNode);
+
+            if (kTree is null || nearestNode is null)
+            {
+                await Writer.WriteLineAsync("Could not calculate the bounds. Failure");
+                return null;
+            }
+
+            var lb = Cost(kTree);
+            await Writer.WriteLineAsync($"{k.Value + 1}-tree ({Function.Print(lb)}): {Function.Print(kTree)}");
+            var ub = Cost(nearestNode, Bidirectional);
+            await Writer.WriteLineAsync($"Nearest node from {startNode.Value + 1} ({Function.Print(ub)}): {Function.Print(nearestNode)}");
+
+
+            var bnbresult = await BranchAndBound(Writer, N, Edges, k.Value, ub, bnb, null, Bidirectional);
         }
+
+        public static async Task<Tuple<Fraction, IEnumerable<EdgeType>?>> BranchAndBound(
+            IndentWriter Writer,
+            int n, 
+            IEnumerable<EdgeType> edges, 
+            int k, 
+            Fraction ub, 
+            IEnumerable<EdgeType> bnb,
+            IEnumerable<EdgeType>? forcedEdges = null,
+            bool Bidirectional = true,
+            int pRow = 1, int pSubRow = 0)
+        {
+            CostGraph<EdgeType> CurrentGraph = new(n, edges);
+
+            IEnumerable<EdgeType>? kTree = await CurrentGraph.FindKTree(
+                k, Bidirectional, Writer: null, requiredEdges: forcedEdges);
+            if (kTree is null)
+            {
+                throw new DataMisalignedException();
+            }
+            var lb = Cost(kTree);
+
+            await Writer.WriteLineAsync($"P({pSubRow},{pRow}) -> ({Function.Print(lb)}, {Function.Print(ub)})");
+            var w = Writer.Indent();
+            await w.WriteLineAsync($"{k + 1}-tree: {Function.Print(kTree)}");
+
+            if (lb >= ub)
+            {
+                await w.WriteLineAsync($"Node closed for Lower Bound >= Upper Bound");
+                return new Tuple<Fraction, IEnumerable<EdgeType>?>(ub, null);
+            }
+
+            // Check if k-tree is solution
+            var e = Vector.Zeros(n);
+            foreach (var edge in kTree)
+            {
+                e[edge.From] += Fraction.One;
+                e[edge.To] += Fraction.One;
+            }
+            if (e == Vector.Repeat(2, n))
+            {
+                // k-tree is solution
+                await w.WriteLineAsync($"{k + 1}-tree is admissible! => P({pSubRow},{pRow}): ({Function.Print(lb)}, {Function.Print(ub)})");
+                return new Tuple<Fraction, IEnumerable<EdgeType>?>(ub, kTree);
+            }
+
+            if (!bnb.Any())
+            {
+                return new Tuple<Fraction, IEnumerable<EdgeType>?>(ub, kTree);
+            }
+
+            EdgeType currEdge = bnb.First();
+            await w.WriteLineAsync($"x_{currEdge.From + 1},{currEdge.To + 1} = 0");
+            
+            // Do without the edge
+            var removedUB = await BranchAndBound(
+                w.Indent(), 
+                n, 
+                edges.Where(e => e !=currEdge), 
+                k, 
+                ub, 
+                bnb.Skip(1),
+                forcedEdges,
+                Bidirectional,
+                2 * pRow - 1, 
+                pSubRow + 1);
+            Tuple<Fraction, IEnumerable<EdgeType>?> sol = new(ub, kTree);
+            if (removedUB.Item1 < ub)
+            {
+                sol = removedUB;
+            }
+
+            // Force the edge
+            var forcedUB = await BranchAndBound(
+                w.Indent(),
+                n,
+                edges,
+                k, 
+                sol.Item1,
+                bnb.Skip(1),
+                forcedEdges?.Append(currEdge), 
+                Bidirectional,
+                2 * pRow, 
+                pSubRow + 1);
+            if (forcedUB.Item1 < ub)
+            {
+                sol = forcedUB;
+            }
+
+            return sol;
+        }
+
+
         public async Task<bool> SolveWithEuristichsFlow(
             IndentWriter Writer, 
             int? startNode = null,
@@ -59,7 +176,14 @@ namespace OperationalResearch.Models.Graphs
         {
             try
             {
-                var result = await BestHamiltonCycle();
+                var bnb = 
+                    string.IsNullOrWhiteSpace(BnB) ? [] : 
+                  BnB.Split(',')
+                    .Select(e => new Edge(e.Trim()))
+                    .Select(e => FindEdge(e.From, e.To) ?? 
+                        throw new DataMisalignedException($"Edge {e} was not found"));
+
+                var result = await BestHamiltonCycle(Writer, startNode, k, bnb);
                 if (result is null)
                 {
                     await Writer.WriteLineAsync("Problem was not solved by euristichs");

@@ -20,7 +20,8 @@ namespace OperationalResearch.Models.Graphs
         public static async Task<IEnumerable<EdgeType>?> KruskalMinimumSpanningTree(
             IEnumerable<EdgeType> edges,
             bool symmetric,
-            IndentWriter? Writer = null)
+            IndentWriter? Writer = null,
+            IEnumerable<EdgeType>? required = null)
         {
             Writer ??= IndentWriter.Null;
             Graph<EdgeType> graph = new Graph<EdgeType>(edges);
@@ -31,9 +32,22 @@ namespace OperationalResearch.Models.Graphs
             
             List<EdgeType> T = [];
             int h = 1;
+            if (required is not null)
+            {
+                var w = Writer.Indent();
+                foreach (var reqEdge in required)
+                {
+                    await w.WriteLineAsync($"Adding edge {reqEdge} int T as it's required");
+                    T.Add(reqEdge);
+                }
+            }
 
             foreach (var e in edges)
             {
+                if (T.Contains(e))
+                {
+                    continue;
+                }
                 await Writer.WriteLineAsync($"Iteration #{h++}");
                 await Writer.WriteLineAsync($"T = {Function.Print(T)}");
                 await Writer.WriteLineAsync($"Edge {e}:");
@@ -71,7 +85,8 @@ namespace OperationalResearch.Models.Graphs
         /// <returns>The tree in the form of edges, if one is found, null otherwise</returns>
         /// <exception cref="ArgumentOutOfRangeException">if k is not in the range [0, N)</exception>
         public async Task<IEnumerable<EdgeType>?> FindKTree(
-            int k, bool symmetric, IndentWriter? Writer = null)
+            int k, bool symmetric, IndentWriter? Writer = null,
+            IEnumerable<EdgeType>? requiredEdges = null)
         {
             if (k < 0 || k >= N)
             {
@@ -88,7 +103,8 @@ namespace OperationalResearch.Models.Graphs
             await Writer.WriteLineAsync($"non_{k + 1}_edges: {Function.Print(NonKEdges)}");
 
             await Writer.WriteLineAsync($"Finding minimum spanning tree through Kruskal...");
-            IEnumerable<EdgeType>? Tree = await KruskalMinimumSpanningTree(NonKEdges, symmetric, Writer);
+            IEnumerable<EdgeType>? Tree = await KruskalMinimumSpanningTree(
+                NonKEdges, symmetric, Writer.Indent(), requiredEdges);
 
             if (Tree is null)
             {
