@@ -463,34 +463,57 @@ namespace OperationalResearch.Models.Graphs
         public async Task<bool> FlowBounded(
             IEnumerable<EdgeType>? startBase,
             IEnumerable<EdgeType>? startU, 
+            int? startNode = null,
+            int? endNode = null,
             IndentWriter? Writer = null)
         {
             Writer ??= IndentWriter.Null;
+            startNode = startNode ?? 0;
+            endNode = endNode ?? N - 1;
             if (startBase is null)
             {
-                await Writer.WriteLineAsync("Using 1-tree as start base");
-                var OneTree = await FindKTree(0, true, null);
-                if (OneTree is not null)
+                await Writer.WriteLineAsync($"Using {startNode.Value}-tree as start base");
+                var sTree = await FindKTree(startNode.Value, true, null);
+                if (sTree is not null)
                 {
-                    startBase = OneTree;
+                    startBase = sTree;
                 }
             }
+            bool solved = false;
+            // Flow of min cost
             try
             {
                 var sol = await SolveBounded(startBase, startU, Writer);
                 if (sol is null)
                 {
                     await Writer.WriteLineAsync("Solution is null");
-                    return false;
+                    solved = false;
+                } else
+                {
+                    await Writer.WriteLineAsync("Solution is " + Function.Print(sol));
+                    solved = true;
                 }
-                await Writer.WriteLineAsync("Solution is " + Function.Print(sol));
-                return true;
             }
             catch (Exception ex)
             {
                 await Writer.WriteLineAsync($"Exception happened '{ex.Message}'");
-                return false;
+                return solved;
             }
+
+            // Min-cut and max-flow
+            try
+            {
+                if (!await MinFlowMaxCut(startNode.Value, endNode.Value, Writer.Indent()))
+                {
+                    await Writer.WriteLineAsync(
+                        $"Could not calculate min-cut from {startNode.Value} to {endNode.Value}");
+                }
+            }
+            catch (Exception ex)
+            {
+                await Writer.WriteLineAsync($"Exception happened '{ex.Message}'");
+            }
+            return solved;
         }
 
     }

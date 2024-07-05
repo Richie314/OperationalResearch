@@ -113,7 +113,7 @@ namespace OperationalResearch.PageForms
                 string boolParse = 
                     string.IsNullOrWhiteSpace((string?)matrix[colToCheck, row].Value) ?
                         "False" : (string)matrix[colToCheck, row].Value;
-                if (bool.Parse(boolParse))
+                if (!bool.Parse(boolParse))
                 {
                     continue;
                 }

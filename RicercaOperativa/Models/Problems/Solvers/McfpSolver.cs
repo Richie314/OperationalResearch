@@ -28,7 +28,7 @@ namespace OperationalResearch.Models.Problems.Solvers
                 throw new InvalidOperationException("Problem not yet initialized");
             }
             return useBounds ?
-                Domain.FlowBounded(T, U, Writer: loggers.FirstOrDefault()) :
+                Domain.FlowBounded(T, U, startNode: startNode, endNode: K, Writer: loggers.FirstOrDefault()) :
                 Domain.FlowUnbounded(T, Writer: loggers.FirstOrDefault());
         }
     }
