@@ -12,6 +12,10 @@ namespace OperationalResearch.Models.Graphs
         {
             Bidirectional = makeSymmetric;
         }
+        public TSP(IEnumerable<EdgeType>? edges, bool makeSymmetric = false) : base(edges)
+        {
+            Bidirectional = makeSymmetric;
+        }
         private IEnumerable<EdgeType> AllEdges()
         {
             if (!Bidirectional)
@@ -29,12 +33,14 @@ namespace OperationalResearch.Models.Graphs
 
         public async Task<bool> HamiltonCycleFlow(
             IndentWriter? Writer = null, 
-            int? startNode = null)
+            int? startNode = null,
+            int? k = null,
+            string? BnB = null)
         {
             Writer ??= IndentWriter.Null;
             await Writer.WriteLineAsync("Finding best hamiltonian cycle");
             IEnumerable<bool> Results = [
-                await SolveWithEuristichsFlow(Writer, startNode),
+                await SolveWithEuristichsFlow(Writer, startNode, k, BnB),
                 await SolveWithOrToolsFlow(Writer, startNode),
             ];
             return Results.Any(x => x);
@@ -45,7 +51,11 @@ namespace OperationalResearch.Models.Graphs
         {
             throw new NotImplementedException("Functionality not yet implemented");
         }
-        public async Task<bool> SolveWithEuristichsFlow(IndentWriter Writer, int? startNode = null)
+        public async Task<bool> SolveWithEuristichsFlow(
+            IndentWriter Writer, 
+            int? startNode = null,
+            int? k = null,
+            string? BnB = null)
         {
             try
             {

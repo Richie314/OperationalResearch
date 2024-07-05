@@ -1,17 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using Microsoft.Scripting.Utils;
-using OperationalResearch.Models;
+using OperationalResearch.ViewForms;
 using OperationalResearch.Models.Problems;
 
-namespace RicercaOperativa
+namespace OperationalResearch.PageForms
 {
     public partial class QuadraticProgrammingForm : Form
     {
@@ -98,7 +91,6 @@ namespace RicercaOperativa
             }
         }
 
-
         private async void maximizeBtn_Click(object sender, EventArgs e)
         {
             var LinearPart = LinearPartString();
@@ -114,7 +106,9 @@ namespace RicercaOperativa
             }
             maximizeBtn.Enabled = minimizeBtn.Enabled = false;
 
-            var Form = new ProblemForm();
+            QuadraticProblem problem = new(Constarints, Hessian, LinearPart);
+
+            var Form = new ProblemForm<QuadraticProblem>(problem, "QuadProg");
             void closeFormCallback(object? sender, FormClosedEventArgs e)
             {
                 maximizeBtn.Enabled = minimizeBtn.Enabled = true;
@@ -122,11 +116,7 @@ namespace RicercaOperativa
             Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
             Form.Show();
 
-            Problem p = new(
-                Constarints,
-                [],
-                new QuadraticProgrammingSolver(Hessian, LinearPart));
-            if (await p.SolveMax(loggers: new StreamWriter?[] { Form.Writer }))
+            if (await problem.SolveMax([ Form.Writer ]))
             {
                 MessageBox.Show(
                     "Quadratic Programming problem solved",
@@ -141,7 +131,62 @@ namespace RicercaOperativa
                     MessageBoxIcon.Error);
             }
             maximizeBtn.Enabled = minimizeBtn.Enabled = true;
+
+            if (problem.Solver.Domain?.Cols == 2)
+            {
+                var graphForm = new CartesianForm([], problem.Solver.Domain);
+                graphForm.Show();
+            }
         }
+        private async void minimizeBtn_Click(object sender, EventArgs e)
+        {
+            var LinearPart = LinearPartString();
+            var Hessian = HessianGridStr();
+            if (Hessian is null)
+            {
+                return;
+            }
+            var Constarints = ConstraintGridStr();
+            if (Constarints is null)
+            {
+                return;
+            }
+            maximizeBtn.Enabled = minimizeBtn.Enabled = false;
+
+            QuadraticProblem problem = new(Constarints, Hessian, LinearPart);
+
+            var Form = new ProblemForm<QuadraticProblem>(problem, "QuadProg");
+            void closeFormCallback(object? sender, FormClosedEventArgs e)
+            {
+                maximizeBtn.Enabled = minimizeBtn.Enabled = true;
+            };
+            Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
+            Form.Show();
+
+            if (await problem.SolveMin([Form.Writer]))
+            {
+                MessageBox.Show(
+                    "Quadratic Programming problem solved",
+                    "Problem solved", MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show(
+                    "Quadratic Programming problem could not be solved",
+                    "Error", MessageBoxButtons.OKCancel,
+                    MessageBoxIcon.Error);
+            }
+            maximizeBtn.Enabled = minimizeBtn.Enabled = true;
+
+            if (problem.Solver.Domain?.Cols == 2)
+            {
+                var graphForm = new CartesianForm([], problem.Solver.Domain);
+                graphForm.Show();
+            }
+        }
+
+
         private string[][]? ConstraintGridStr()
         {
             var list = new List<string[]>();
@@ -215,48 +260,5 @@ namespace RicercaOperativa
             return [.. terms];
         }
 
-        private async void minimizeBtn_Click(object sender, EventArgs e)
-        {
-            var LinearPart = LinearPartString();
-            var Hessian = HessianGridStr();
-            if (Hessian is null)
-            {
-                return;
-            }
-            var Constarints = ConstraintGridStr();
-            if (Constarints is null)
-            {
-                return;
-            }
-            maximizeBtn.Enabled = minimizeBtn.Enabled = false;
-
-            var Form = new ProblemForm();
-            void closeFormCallback(object? sender, FormClosedEventArgs e)
-            {
-                maximizeBtn.Enabled = minimizeBtn.Enabled = true;
-            };
-            Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
-            Form.Show();
-
-            Problem p = new(
-                Constarints,
-                [],
-                new QuadraticProgrammingSolver(Hessian, LinearPart));
-            if (await p.SolveMin(loggers: new StreamWriter?[] { Form.Writer }))
-            {
-                MessageBox.Show(
-                    "Quadratic Programming problem solved",
-                    "Problem solved", MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show(
-                    "Quadratic Programming problem could not be solved",
-                    "Error", MessageBoxButtons.OKCancel,
-                    MessageBoxIcon.Error);
-            }
-            maximizeBtn.Enabled = minimizeBtn.Enabled = true;
-        }
     }
 }

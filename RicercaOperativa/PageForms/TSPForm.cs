@@ -1,17 +1,9 @@
-﻿using OperationalResearch.Models;
-using OperationalResearch.Models.Problems;
-using RicercaOperativa;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System;
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+using OperationalResearch.Models.Problems;
+using OperationalResearch.ViewForms;
 
-namespace OperationalResearch
+namespace OperationalResearch.PageForms
 {
     public partial class TSPForm : Form
     {
@@ -74,7 +66,13 @@ namespace OperationalResearch
                 return;
             }
 
-            var Form = new ProblemForm();
+            string BnB = branchAndBound.Text;
+            string k = this.k.Text;
+            string startNode = this.startNode.Text;
+
+            TravellingSalesManProblem problem = new(mainGridStr, startNode, k, BnB, bidirectional: considerSymmetric.Checked);
+
+            var Form = new ProblemForm<TravellingSalesManProblem>(problem);
             void closeFormCallback(object? sender, FormClosedEventArgs e)
             {
                 findHamiltonCycleBtn.Enabled = true;
@@ -82,12 +80,7 @@ namespace OperationalResearch
             Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
             Form.Show();
 
-            Problem p = new(
-                solver: new TravellingSalesmanProblemSolver(considerSymmetric.Checked),
-                sMatrix: mainGridStr,
-                sVecB: [],
-                sVecC: []);
-            if (await p.SolveMin(loggers: new StreamWriter?[] { Form.Writer }))
+            if (await problem.SolveMin([Form.Writer]))
             {
                 MessageBox.Show(
                     "TSP solved",
@@ -148,97 +141,6 @@ namespace OperationalResearch
                     row => row.Select(x => string.IsNullOrWhiteSpace(x) ? "0" : x).ToArray()).ToList();
             }
             return [.. list];
-        }
-
-        private async void showKTreeBtn_Click(object sender, EventArgs e)
-        {
-            string input = Microsoft.VisualBasic.Interaction.InputBox(
-                "K = ", "Chose the node to exclude", string.Empty, 0, 0);
-            if (string.IsNullOrWhiteSpace(input) || !int.TryParse(input, out int value))
-            {
-                return;
-            }
-            value -= 1;
-            if (value < 0 || value >= N)
-            {
-                return;
-            }
-            findHamiltonCycleBtn.Enabled = false;
-            string[][]? mainGridStr = MainGridStr();
-            if (mainGridStr is null || mainGridStr.Length == 0)
-            {
-                findHamiltonCycleBtn.Enabled = true;
-                return;
-            }
-            var solver = new TravellingSalesmanProblemSolver(considerSymmetric.Checked);
-            var problem = new Problem(mainGridStr, [], [], solver);
-            solver.SetMainMatrix(problem.getMainMatrix());
-
-            var Form = new ProblemForm();
-            void closeFormCallback(object? sender, FormClosedEventArgs e)
-            {
-                findHamiltonCycleBtn.Enabled = true;
-            };
-            Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
-            Form.Show();
-
-            var g = await solver.GetGraph.FindKTree(value, considerSymmetric.Checked, Form.Writer);
-            if (g is null)
-            {
-                findHamiltonCycleBtn.Enabled = true;
-                return;
-            }
-
-            new GraphForm(new Graph(g)).Show(Form);
-        }
-
-        private async void nearestNodeBtn_Click(object sender, EventArgs e)
-        {
-            string input = Microsoft.VisualBasic.Interaction.InputBox(
-                "Starting node = ", "Chose the node to start from", string.Empty, 0, 0);
-            if (string.IsNullOrWhiteSpace(input) || !int.TryParse(input, out int value))
-            {
-                return;
-            }
-            value -= 1;
-            if (value < 0 || value >= N)
-            {
-                return;
-            }
-            findHamiltonCycleBtn.Enabled = false;
-            string[][]? mainGridStr = MainGridStr();
-            if (mainGridStr is null || mainGridStr.Length == 0)
-            {
-                findHamiltonCycleBtn.Enabled = true;
-                return;
-            }
-            var solver = new TravellingSalesmanProblemSolver(considerSymmetric.Checked);
-            var problem = new Problem(mainGridStr, [], [], solver);
-            solver.SetMainMatrix(problem.getMainMatrix());
-
-            var Form = new ProblemForm();
-            void closeFormCallback(object? sender, FormClosedEventArgs e)
-            {
-                findHamiltonCycleBtn.Enabled = true;
-            };
-            Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
-            Form.Show();
-
-            var G = solver.GetGraph;
-            var g = await G.NearestNodeUpperEstimate(Form.Writer, value);
-            if (g is null)
-            {
-                findHamiltonCycleBtn.Enabled = true;
-                return;
-            }
-            var edges = G.GetEdges(g, considerSymmetric.Checked);
-            if (edges is null)
-            {
-                findHamiltonCycleBtn.Enabled = true;
-                return;
-            }
-
-            new GraphForm(new Graph(N, edges)).Show(Form);
         }
     }
 

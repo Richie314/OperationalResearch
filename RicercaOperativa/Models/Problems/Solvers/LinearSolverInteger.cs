@@ -10,6 +10,8 @@ namespace OperationalResearch.Models.Problems.Solvers
 {
     public abstract class LinearSolverInteger : ISolving<Polyhedron, Vector>
     {
+        public Polyhedron? Domain { get; set; } = null;
+        public Vector? CoDomain { get; set; } = null;
         public async Task<bool> SolveMaxAsync(IEnumerable<IndentWriter?> loggers) =>
             await SolveIntegerMaxAsync(loggers);
         public async Task<bool> SolveMinAsync(IEnumerable<IndentWriter?> loggers) =>

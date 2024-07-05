@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace OperationalResearch.Extensions
 {
-    public class ConCurrentStreamWriter : StreamWriter
+    public class ConCurrentStreamWriter : IndentWriter
     {
         private readonly ConcurrentQueue<string> _stringQueue = new();
         private bool _disposing;

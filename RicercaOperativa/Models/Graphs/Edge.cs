@@ -31,6 +31,8 @@ namespace OperationalResearch.Models.Graphs
             From = int.Parse(pair[0]) - 1;
             To = int.Parse(pair[1]) - 1;
         }
+
+        public string Label { get => string.Empty; }
         
         public override string ToString() => 
             $"({From + 1}, {To + 1})";

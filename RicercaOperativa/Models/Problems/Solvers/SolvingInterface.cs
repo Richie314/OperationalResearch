@@ -9,6 +9,8 @@ namespace OperationalResearch.Models.Problems.Solvers
 {
     public interface ISolving<TDomain, TCoDomain>
     {
+        public TDomain? Domain { get; set; }
+        public TCoDomain? CoDomain { get; set; }
         public Task<bool> SolveMaxAsync(IEnumerable<IndentWriter?> loggers);
         public Task<bool> SolveMinAsync(IEnumerable<IndentWriter?> loggers);
 

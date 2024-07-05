@@ -9,20 +9,19 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Accord.Math;
 using OperationalResearch.Models;
+using OperationalResearch.Models.Elements;
 using OperationalResearch.Models.Problems;
 using OperationalResearch.ViewForms;
 using Matrix = OperationalResearch.Models.Elements.Matrix;
 
-namespace RicercaOperativa
+namespace OperationalResearch.PageForms
 {
     public partial class LinearProgrammingForm_Primal : Form
     {
         private int EquationsCount = 3;
         private int VariablesCount = 3;
-        private bool IntSolutions = false;
-        public LinearProgrammingForm_Primal(bool IntSolutions = false)
+        public LinearProgrammingForm_Primal()
         {
-            this.IntSolutions = IntSolutions;
             InitializeComponent();
         }
 
@@ -119,11 +118,6 @@ namespace RicercaOperativa
                 EquationsCount = (int)equationsCountInput.Value;
                 VariablesCount = (int)variablesCountInput.Value;
                 GenerateGrid();
-                if (IntSolutions)
-                {
-                    Text = "Integer Linear Programming - Primal Form";
-                    startSimplexBtn.Text = "Solve for ints";
-                }
             }
             catch (Exception err)
             {
@@ -145,7 +139,7 @@ namespace RicercaOperativa
             }
         }
 
-        private async Task SolveLP()
+        private async Task SolveProblem()
         {
             startSimplexBtn.Enabled = false;
             string[][]? mainGridStr = MainGridStr();
@@ -154,26 +148,28 @@ namespace RicercaOperativa
                 startSimplexBtn.Enabled = true;
                 return;
             }
-            var primalForm = new ProblemForm();
+
+            LinearProgrammingProblem problem = new(
+                mainGridStr,
+                MainVectorStr(),
+                xNonNegativeCheckbox.Checked,
+                GetStartBasis());
+
+            var realForm = new ProblemForm<LinearProgrammingProblem>(problem, "Simplex");
             void closeFormCallback(object? sender, FormClosedEventArgs e)
             {
                 startSimplexBtn.Enabled = true;
             };
-            primalForm.FormClosed += new FormClosedEventHandler(closeFormCallback);
-            primalForm.Show();
-            int[]? startBase = GetStartBase();
+            realForm.FormClosed += new FormClosedEventHandler(closeFormCallback);
+            realForm.Show();
 
-            Problem p = new(
-                solver: new LinearProgrammingPrimal(startBase, xNonNegativeCheckbox.Checked),
-                sMatrixAndB: mainGridStr,
-                sVecC: MainVectorStr());
-            if (p.getMainMatrix().Columns() == 2)
-            {
-                var graphForm = new CartesianForm(
-                    new Matrix(p.getMainMatrix()) | p.getMainVetcor());
-                graphForm.Show();
-            }
-            if (await p.SolveMax(loggers: new StreamWriter?[] { primalForm.Writer, null }))
+            bool realSolved = await problem.SolveMax(loggers: [realForm.Writer]);
+
+            var intForm = new ProblemForm<LinearProgrammingProblem>(problem, "Libraries");
+            realForm.Show();
+
+            bool intSolved = await problem.SolveIntegerMax(loggers: [intForm.Writer]);
+            if (realSolved)
             {
                 MessageBox.Show(
                     "Linear Programming problem solved",
@@ -187,61 +183,18 @@ namespace RicercaOperativa
                     "Error", MessageBoxButtons.OKCancel,
                     MessageBoxIcon.Error);
             }
-            startSimplexBtn.Enabled = true;
-        }
-        private async Task SolveILP()
-        {
-            startSimplexBtn.Enabled = false;
-            string[][]? mainGridStr = MainGridStr();
-            if (mainGridStr is null || mainGridStr.Length == 0)
-            {
-                startSimplexBtn.Enabled = true;
-                return;
-            }
-            var primalForm = new ProblemForm();
-            void closeFormCallback(object? sender, FormClosedEventArgs e)
-            {
-                startSimplexBtn.Enabled = true;
-            };
-            primalForm.FormClosed += new FormClosedEventHandler(closeFormCallback);
-            primalForm.Show();
 
-            Problem p = new(
-                solver: new IntegerLinearProgrammingPrimal(xNonNegativeCheckbox.Checked),
-                sMatrixAndB: mainGridStr,
-                sVecC: MainVectorStr());
-            if (p.getMainMatrix().Columns() == 2)
+            if (problem.Solver.Domain?.Cols == 2)
             {
-                var graphForm = new CartesianForm(
-                    new Matrix(p.getMainMatrix()) | p.getMainVetcor());
+                var graphForm = new CartesianForm([], problem.Solver.Domain);
                 graphForm.Show();
             }
-            if (await p.SolveMax(loggers: new StreamWriter?[] { primalForm.Writer }))
-            {
-                MessageBox.Show(
-                    "Integer Linear Programming problem solved",
-                    "Problem solved", MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show(
-                    "Integer Linear Programming problem could not be solved",
-                    "Error", MessageBoxButtons.OKCancel,
-                    MessageBoxIcon.Error);
-            }
+
             startSimplexBtn.Enabled = true;
         }
         private async void startSimplexBtn_Click(object sender, EventArgs e)
         {
-            if (IntSolutions)
-            {
-                await SolveILP();
-            } else
-            {
-                await SolveLP();
-            }
-
+            await SolveProblem();
         }
         private string[] MainVectorStr()
         {
@@ -283,23 +236,14 @@ namespace RicercaOperativa
             }
             return [.. list];
         }
-        private int[]? GetStartBase()
+        private string[]? GetStartBasis()
         {
             string value = startBaseInput.Text;
             if (string.IsNullOrWhiteSpace(value))
             {
                 return null;
             }
-            try
-            {
-                return value.Split(
-                    ",", StringSplitOptions.RemoveEmptyEntries)
-                    .Select(x => Convert.ToInt32(x.Trim()) - 1).ToArray();
-            }
-            catch
-            {
-                return null;
-            }
+            return value.Split(",", StringSplitOptions.RemoveEmptyEntries);
         }
 
     }

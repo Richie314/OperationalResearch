@@ -1,24 +1,21 @@
 ﻿using OperationalResearch.Extensions;
+using OperationalResearch.Models.Problems;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
-namespace RicercaOperativa
+namespace OperationalResearch.ViewForms
 {
-    public partial class ProblemForm : Form
+    public partial class ProblemForm<ProblemType> : Form
+        where ProblemType : IProblem
     {
         private readonly string methodName;
-        public ProblemForm(string? methodName = null)
+        public ProblemType Problem;
+        public readonly MemoryStream Stream;
+        public ProblemForm(ProblemType p, string? methodName = null)
         {
+            Problem = p;
             InitializeComponent();
-            MemoryStream stream = new();
-            Writer = new ConCurrentStreamWriter(stream, textBox);
+            Stream = new();
+            Writer = new ConCurrentStreamWriter(Stream, textBox);
             this.methodName = methodName ?? string.Empty;
         }
         public ConCurrentStreamWriter Writer { get; private set; }

@@ -3,7 +3,8 @@ using OperationalResearch.Models.Problems.Solvers;
 
 namespace OperationalResearch.Models.Problems
 {
-    public class Problem<Domain, CoDomain, SolverClass> where SolverClass : ISolving<Domain, CoDomain>
+    public class Problem<Domain, CoDomain, SolverClass> : IProblem 
+        where SolverClass : ISolving<Domain, CoDomain>
     {
         public readonly SolverClass Solver;
         public Problem(Domain domain, CoDomain coDomain, SolverClass solver)

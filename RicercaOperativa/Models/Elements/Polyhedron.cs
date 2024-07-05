@@ -163,8 +163,45 @@ namespace OperationalResearch.Models.Elements
                 vector: mat.Select(row => row.Last()).ToArray(),
                 ForcePositive: ForcePositive);
 
+        public static Polyhedron FromRow(Vector matrixRow, Fraction limit) =>
+            new Polyhedron(matrixRow.Row, new Vector(limit), false);
+
         public Polyhedron Copy() => new Polyhedron(A.Copy(), b.Copy(), ForcePositive);
         public Polyhedron RemoveEquation(int index) =>
             new Polyhedron(A[A.RowsIndeces.Where(j => j != index)], b.RemoveAt(index));
+
+        public static Polyhedron operator & (Polyhedron? l, Polyhedron? r)
+        {
+            if (l is null)
+            {
+                if (r is null)
+                {
+                    throw new ArgumentNullException(nameof(l));
+                }
+                return r;
+            }
+            if (r is null)
+            {
+                return l;
+            }
+
+            if (l.Cols != r.Cols)
+            {
+                throw new ArgumentException("Polyhedrons are in different spaces");
+            }
+
+            var leftMatrix = (l.A | l.b).M.ToJagged();
+            var rightMatrix = (r.A | r.b).M.ToJagged();
+            foreach (var equation in rightMatrix)
+            {
+                if (leftMatrix.Contains(equation)) // Do not duplicate rows
+                    continue;
+                leftMatrix = leftMatrix.Append(equation).ToArray();
+            }
+            var fullMatrix = new Matrix(leftMatrix);
+            var matrix = fullMatrix.GetCols(l.A.ColsIndeces);
+            var vector = fullMatrix.Col(fullMatrix.Cols - 1);
+            return new Polyhedron(matrix, vector, l.ForcePositive || r.ForcePositive);
+        }
     }
 }

@@ -1,18 +1,9 @@
-﻿using OperationalResearch.Models.Problems;
+﻿using OperationalResearch.ViewForms;
 using OperationalResearch.Models;
-using RicercaOperativa;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using OperationalResearch.Models.Problems;
 
-namespace OperationalResearch
+namespace OperationalResearch.PageForms
 {
     public partial class KnapsnackForm : Form
     {
@@ -45,9 +36,9 @@ namespace OperationalResearch
                 mainGrid.Columns[i].Name = "#" + i;
                 mainGrid.Columns[i].Width = 50;
             }
-            mainGrid.Rows.Add(new string[] { "Values" });//.Concat(Enumerable.Repeat(string.Empty, N))
-            mainGrid.Rows.Add(new string[] { "Volumes" });//.Concat(Enumerable.Repeat(string.Empty, N))
-            mainGrid.Rows.Add(new string[] { "Weights" });//.Concat(Enumerable.Repeat(string.Empty, N))
+            mainGrid.Rows.Add(["Values"]);
+            mainGrid.Rows.Add(["Volumes"]);
+            mainGrid.Rows.Add(["Weights"]);
         }
         private void applyItemsBtn_Click(object sender, EventArgs e)
         {
@@ -61,7 +52,7 @@ namespace OperationalResearch
                 MessageBox.Show(
                     err.Message, "An error happened",
                     MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                    MessageBoxIcon.Error);
             }
         }
 
@@ -69,16 +60,31 @@ namespace OperationalResearch
         {
             solveBtn.Enabled = false;
 
-            var mainGridStr = GetMatrix();
-            var mainVectorStr = GetVec();
+            var revenues = Revenues();
+            var volumes = Volumes();
+            var weights = Weights();
 
-            if (mainGridStr is null)
+            if (revenues is null || volumes is null)
             {
+                MessageBox.Show(
+                    "There are blank cells in the input," + Environment.NewLine +
+                    "The algorithms cannot run with unknown values." + Environment.NewLine,
+                    "Fill blank cells first",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
                 solveBtn.Enabled = true;
                 return;
             }
 
-            var Form = new ProblemForm();
+            KnapsnakProblem problem = new(
+                revenues, 
+                volumes.Item1, 
+                volumes.Item2, 
+                weights?.Item1, 
+                weights?.Item2, 
+                boolean.Checked);
+
+            var Form = new ProblemForm<KnapsnakProblem>(problem, "Knapsnack");
             void closeFormCallback(object? sender, FormClosedEventArgs e)
             {
                 solveBtn.Enabled = true;
@@ -86,12 +92,7 @@ namespace OperationalResearch
             Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
             Form.Show();
 
-            Problem p = new(
-                solver: new KnapsnackProblemSolver(boolean.Checked),
-                sMatrix: mainGridStr,
-                sVecB: new string[0],
-                sVecC: mainVectorStr);
-            if (await p.SolveMax(loggers: new StreamWriter?[] { Form.Writer }))
+            if (await problem.SolveMax([ Form.Writer ]))
             {
                 MessageBox.Show(
                     "Knapsnack problem solved",
@@ -106,44 +107,42 @@ namespace OperationalResearch
                     MessageBoxIcon.Error);
             }
         }
-        private string[][]? GetMatrix()
+
+        private IEnumerable<string>? Revenues()
         {
-            var list = new List<string[]>();
-            bool containsBlank = false;
-            for (int row = 0; row < mainGrid.RowCount; row++)
+            List<string> currRow = [];
+            for (int col = 1; col < mainGrid.ColumnCount - 1; col++)
             {
-                List<string> currRow = [];
-                for (int col = 1; col < mainGrid.ColumnCount - 1; col++)
-                {
-                    containsBlank |= string.IsNullOrWhiteSpace((string)mainGrid[col, row].Value);
-                    currRow.Add((string)mainGrid[col, row].Value);
-                }
-                list.Add([.. currRow]);
-            }
-            if (containsBlank)
-            {
-                if (DialogResult.Yes != MessageBox.Show(
-                    "There are blank cells in the input," + Environment.NewLine +
-                    "The algorithms cannot run with unknown values." + Environment.NewLine +
-                    "Do you want to fill in with zeros?",
-                    "Blank cells",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Warning))
+                if (string.IsNullOrWhiteSpace((string)mainGrid[col, 0].Value))
                 {
                     return null;
                 }
-                list = list.Select(
-                    row => row.Select(x => string.IsNullOrWhiteSpace(x) ? "0" : x).ToArray()).ToList();
+                currRow.Add((string)mainGrid[col, 0].Value);
             }
-            return [.. list];
+            return currRow;
         }
-        private string[] GetVec()
+
+        private Tuple<IEnumerable<string>, string>? GetRow(int index)
         {
-            return new string[] {
-                (string)mainGrid[N + 1, 1].Value,
-                (string)mainGrid[N + 1, 2].Value
-            }.Select(x => string.IsNullOrWhiteSpace(x) ? "1" : x).ToArray();
+            if (string.IsNullOrWhiteSpace((string)mainGrid[mainGrid.ColumnCount - 1, index].Value))
+            {
+                return null;
+            }
+
+            List<string> currRow = [];
+            for (int col = 1; col < mainGrid.ColumnCount - 1; col++)
+            {
+                if (string.IsNullOrWhiteSpace((string)mainGrid[col, index].Value))
+                {
+                    return null;
+                }
+                currRow.Add((string)mainGrid[col, index].Value);
+            }
+            return new Tuple<IEnumerable<string>, string>(currRow, (string)mainGrid[mainGrid.ColumnCount - 1, index].Value);
         }
+
+        private Tuple<IEnumerable<string>, string>? Volumes() => GetRow(1);
+        private Tuple<IEnumerable<string>, string>? Weights() => GetRow(2);
 
         private void KnapsnackForm_Load(object sender, EventArgs e)
         {

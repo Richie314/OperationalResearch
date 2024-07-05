@@ -10,43 +10,32 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using OperationalResearch.Models;
+using OperationalResearch.Models.Graphs;
 
-namespace RicercaOperativa
+namespace OperationalResearch.ViewForms
 {
-    public partial class GraphForm : Form
+    public partial class GraphForm<GraphType, GraphEdge> : Form
+        where GraphType : Graph<GraphEdge>
+        where GraphEdge : Edge
     {
-        private readonly Graph GraphToShow;
-        public GraphForm(Graph graphToDisplay)
+        private readonly GraphType GraphToShow;
+        public GraphForm(GraphType graphToDisplay)
         {
             InitializeComponent();
             GraphToShow = graphToDisplay;
 
             graphViewer = new Microsoft.Msagl.GraphViewerGdi.GViewer();
-            //create a graph object 
+            // create a graph object 
             Microsoft.Msagl.Drawing.Graph graph = new("graph");
-            //create the graph content 
-            foreach (var Edge in graphToDisplay.Edges)
+
+            // create the graph content 
+            foreach (GraphEdge Edge in graphToDisplay.Edges)
             {
                 var e = graph.AddEdge(
-                    (Edge.From + 1).ToString(), Function.Print(Edge.Cost), (Edge.To + 1).ToString());
-                switch (Edge.Type)
-                {
-                    case Graph.Edge.EdgeType.Standard:
-                        e.Attr.LineWidth = 1;
-                        e.Attr.Weight = 1;
-                        e.Attr.Color = Microsoft.Msagl.Drawing.Color.Blue;
-                        break;
-                    case Graph.Edge.EdgeType.Required:
-                        e.Attr.LineWidth = 2;
-                        e.Attr.Weight = 2;
-                        e.Attr.Color = Microsoft.Msagl.Drawing.Color.Green;
-                        break;
-                    case Graph.Edge.EdgeType.Disabled:
-                        e.Attr.LineWidth = 1;
-                        e.Attr.Weight = 2;
-                        e.Attr.Color = Microsoft.Msagl.Drawing.Color.Red;
-                        break;
-                }
+                    (Edge.From + 1).ToString(), Edge.Label, (Edge.To + 1).ToString());
+                e.Attr.LineWidth = 1;
+                e.Attr.Weight = 1;
+                e.Attr.Color = Microsoft.Msagl.Drawing.Color.Blue;
             }
             foreach (var Node in graph.Nodes)
             {

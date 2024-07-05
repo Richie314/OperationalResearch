@@ -1,4 +1,5 @@
 ﻿using OperationalResearch.Extensions;
+using OperationalResearch.Models.Elements;
 using OperationalResearch.Models.Graphs;
 using System;
 using System.Collections.Generic;
@@ -12,11 +13,11 @@ namespace OperationalResearch.Models.Problems.Solvers
     {
         public override async Task<bool> SolveIntegerMinAsync(IEnumerable<IndentWriter?> loggers)
         {
-            if (graph is null)
+            if (Domain is null)
             {
                 throw new InvalidOperationException();
             }
-            return await graph.HamiltonCycleFlow(loggers.FirstOrDefault(), startingPoint);
+            return await Domain.HamiltonCycleFlow(loggers.FirstOrDefault(), startNode, K, BnBInstantiate);
         }
         public override Task<bool> SolveIntegerMaxAsync(IEnumerable<IndentWriter?> loggers)
         {

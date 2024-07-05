@@ -6,6 +6,10 @@ namespace OperationalResearch.Models.Problems.Solvers
     public class QuadraticSolver : ISolving<Polyhedron, Tuple<Matrix, Vector>>
     {
         private QuadProg? quadProg = null;
+
+        public Polyhedron? Domain { get; set; } = null;
+        public Tuple<Matrix, Vector>? CoDomain { get; set; } = null;
+
         public async Task<bool> SolveMaxAsync(IEnumerable<IndentWriter?> loggers)
         {
             if (quadProg is null)
@@ -34,6 +38,8 @@ namespace OperationalResearch.Models.Problems.Solvers
 
         public void SetData(Polyhedron p, Tuple<Matrix, Vector> codomain)
         {
+            Domain = p;
+            CoDomain = codomain;
             quadProg = new QuadProg(codomain.Item1, codomain.Item2, p);
         }
     }

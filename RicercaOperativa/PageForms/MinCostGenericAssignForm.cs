@@ -1,15 +1,8 @@
 ﻿using Accord.Math;
-using OperationalResearch.Models;
 using OperationalResearch.Models.Problems;
-using RicercaOperativa;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+using OperationalResearch.ViewForms;
 
-namespace OperationalResearch
+namespace OperationalResearch.PageForms
 {
     public partial class MinCostGenericAssignForm : Form
     {
@@ -195,7 +188,9 @@ namespace OperationalResearch
                 return;
             }
 
-            var Form = new ProblemForm();
+            GeneralizedMinimumCostAssignmentProblem problem = new(costMatrix, timeMatrix, maxTimeVector, fillWorkers: false);
+
+            var Form = new ProblemForm<GeneralizedMinimumCostAssignmentProblem>(problem);
             void closeFormCallback(object? sender, FormClosedEventArgs e)
             {
                 button.Enabled = true;
@@ -203,12 +198,7 @@ namespace OperationalResearch
             Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
             Form.Show();
 
-            Problem p = new(
-                solver: new MinCostGenericAssignSolver(),
-                sMatrix: costMatrix,
-                sVecB: timeMatrix.Flatten(),
-                sVecC: maxTimeVector);
-            if (await p.SolveMin(loggers: new StreamWriter?[] { Form.Writer }))
+            if (await problem.SolveMin([ Form.Writer ]))
             {
                 MessageBox.Show(
                     "Integer Linear Programming problem solved",

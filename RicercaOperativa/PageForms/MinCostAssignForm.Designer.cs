@@ -1,4 +1,4 @@
-﻿namespace OperationalResearch
+﻿namespace OperationalResearch.PageForms
 {
     partial class MinCostAssignForm
     {
@@ -33,8 +33,7 @@
             matrix = new DataGridView();
             n = new NumericUpDown();
             setNumBtn = new Button();
-            solveCooperativeBtn = new Button();
-            solveNonCooperativeBtn = new Button();
+            solveBtn = new Button();
             ((System.ComponentModel.ISupportInitialize)matrix).BeginInit();
             ((System.ComponentModel.ISupportInitialize)n).BeginInit();
             SuspendLayout();
@@ -58,7 +57,7 @@
             matrix.Margin = new Padding(3, 2, 3, 2);
             matrix.Name = "matrix";
             matrix.RowHeadersWidth = 51;
-            matrix.Size = new Size(679, 242);
+            matrix.Size = new Size(679, 283);
             matrix.TabIndex = 1;
             // 
             // n
@@ -85,37 +84,23 @@
             // 
             // solveCooperativeBtn
             // 
-            solveCooperativeBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            solveCooperativeBtn.Cursor = Cursors.Hand;
-            solveCooperativeBtn.Location = new Point(10, 300);
-            solveCooperativeBtn.Margin = new Padding(3, 2, 3, 2);
-            solveCooperativeBtn.Name = "solveCooperativeBtn";
-            solveCooperativeBtn.Size = new Size(329, 38);
-            solveCooperativeBtn.TabIndex = 4;
-            solveCooperativeBtn.Text = "Solve as Cooperative";
-            solveCooperativeBtn.UseVisualStyleBackColor = true;
-            solveCooperativeBtn.Click += solveCooperativeBtn_Click;
-            // 
-            // solveNonCooperativeBtn
-            // 
-            solveNonCooperativeBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            solveNonCooperativeBtn.Cursor = Cursors.Hand;
-            solveNonCooperativeBtn.Location = new Point(364, 300);
-            solveNonCooperativeBtn.Margin = new Padding(3, 2, 3, 2);
-            solveNonCooperativeBtn.Name = "solveNonCooperativeBtn";
-            solveNonCooperativeBtn.Size = new Size(329, 38);
-            solveNonCooperativeBtn.TabIndex = 5;
-            solveNonCooperativeBtn.Text = "Solve as non Cooperative";
-            solveNonCooperativeBtn.UseVisualStyleBackColor = true;
-            solveNonCooperativeBtn.Click += solveNonCooperativeBtn_Click;
+            solveBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            solveBtn.Cursor = Cursors.Hand;
+            solveBtn.Location = new Point(479, 12);
+            solveBtn.Margin = new Padding(3, 2, 3, 2);
+            solveBtn.Name = "solveBtn";
+            solveBtn.Size = new Size(210, 35);
+            solveBtn.TabIndex = 4;
+            solveBtn.Text = "Solve";
+            solveBtn.UseVisualStyleBackColor = true;
+            solveBtn.Click += solveBtn_Click;
             // 
             // MinCostAssignForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(700, 346);
-            Controls.Add(solveNonCooperativeBtn);
-            Controls.Add(solveCooperativeBtn);
+            Controls.Add(solveBtn);
             Controls.Add(setNumBtn);
             Controls.Add(n);
             Controls.Add(matrix);
@@ -137,7 +122,6 @@
         private DataGridView matrix;
         private NumericUpDown n;
         private Button setNumBtn;
-        private Button solveCooperativeBtn;
-        private Button solveNonCooperativeBtn;
+        private Button solveBtn;
     }
 }

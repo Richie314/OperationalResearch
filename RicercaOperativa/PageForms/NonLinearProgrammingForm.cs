@@ -4,14 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Xml.Serialization;
+using OperationalResearch.ViewForms;
 
-namespace RicercaOperativa
+namespace OperationalResearch.PageForms
 {
     public partial class NonLinearProgrammingForm : Form
     {
@@ -112,7 +107,6 @@ namespace RicercaOperativa
         {
             try
             {
-
                 EquationsCount = (int)numberOfEquationsInput.Value;
                 VariablesCount = (int)dimensionOfSpaceInput.Value;
                 GenerateGrid();
@@ -124,53 +118,6 @@ namespace RicercaOperativa
             }
         }
 
-        private async void solveMinButton_Click(object sender, EventArgs e)
-        {
-            solveMinButton.Enabled = false;
-            string[][]? mainGrid = MainGridStr();
-            if (mainGrid is null || mainGrid.Length == 0)
-            {
-                solveMinButton.Enabled = true;
-                return;
-            }
-            var dialogForm1 = new ProblemForm("Projected Gradient");
-            var dialogForm2 = new ProblemForm("Franke-Wolfe");
-            bool OneFormDisposed = false;
-            void closeFormCallback(object? sender, FormClosedEventArgs e)
-            {
-                if (OneFormDisposed)
-                {
-                    solveMinButton.Enabled = true;
-                }
-                OneFormDisposed = true;
-            };
-            dialogForm1.FormClosed += new FormClosedEventHandler(closeFormCallback);
-            dialogForm1.Show();
-            dialogForm2.FormClosed += new FormClosedEventHandler(closeFormCallback);
-            dialogForm2.Show();
-
-            Problem p = new(
-                solver: new NonLinearProgramming(pythonInput.Text, GetStartingPoint()),
-                sMatrixAndB: mainGrid,
-                sVecC: []);
-
-            if (await p.SolveMin(
-                new StreamWriter[] { dialogForm1.Writer, dialogForm2.Writer }
-                ))
-            {
-                MessageBox.Show(
-                    "Non Linear Programming problem solved",
-                    "Problem solved", MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show(
-                    "Non Linear Programming problem could not be solved",
-                    "Error", MessageBoxButtons.OKCancel,
-                    MessageBoxIcon.Error);
-            }
-        }
         private string[][]? MainGridStr()
         {
             var list = new List<string[]>();
@@ -216,7 +163,7 @@ namespace RicercaOperativa
             return arr;
         }
 
-        private async void solveMaxButton_Click(object sender, EventArgs e)
+        private async void solveMinButton_Click(object sender, EventArgs e)
         {
             solveMinButton.Enabled = false;
             string[][]? mainGrid = MainGridStr();
@@ -225,8 +172,11 @@ namespace RicercaOperativa
                 solveMinButton.Enabled = true;
                 return;
             }
-            var dialogForm1 = new ProblemForm("Projected Gradient");
-            var dialogForm2 = new ProblemForm("Franke-Wolfe");
+
+            NonLinearProblem problem = new(mainGrid, pythonInput.Text, startingPoint: GetStartingPoint());
+
+            var dialogForm1 = new ProblemForm<NonLinearProblem>(problem, "Projected Gradient");
+            var dialogForm2 = new ProblemForm<NonLinearProblem>(problem, "Franke-Wolfe");
             bool OneFormDisposed = false;
             void closeFormCallback(object? sender, FormClosedEventArgs e)
             {
@@ -241,14 +191,56 @@ namespace RicercaOperativa
             dialogForm2.FormClosed += new FormClosedEventHandler(closeFormCallback);
             dialogForm2.Show();
 
-            Problem p = new(
-                solver: new NonLinearProgramming(pythonInput.Text, GetStartingPoint()),
-                sMatrixAndB: mainGrid,
-                sVecC: []);
+            if (await problem.SolveMin([dialogForm1.Writer, dialogForm2.Writer]))
+            {
+                MessageBox.Show(
+                    "Non Linear Programming problem solved",
+                    "Problem solved", MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show(
+                    "Non Linear Programming problem could not be solved",
+                    "Error", MessageBoxButtons.OKCancel,
+                    MessageBoxIcon.Error);
+            }
 
-            if (await p.SolveMax(
-                new StreamWriter[] { dialogForm1.Writer, dialogForm2.Writer }
-                ))
+            if (problem.Solver.Domain?.Cols == 2)
+            {
+                var graphForm = new CartesianForm([], problem.Solver.Domain);
+                graphForm.Show();
+            }
+        }
+        private async void solveMaxButton_Click(object sender, EventArgs e)
+        {
+            solveMinButton.Enabled = false;
+            string[][]? mainGrid = MainGridStr();
+            if (mainGrid is null || mainGrid.Length == 0)
+            {
+                solveMinButton.Enabled = true;
+                return;
+            }
+
+            NonLinearProblem problem = new(mainGrid, pythonInput.Text, startingPoint: GetStartingPoint());
+
+            var dialogForm1 = new ProblemForm<NonLinearProblem>(problem, "Projected Gradient");
+            var dialogForm2 = new ProblemForm<NonLinearProblem>(problem, "Franke-Wolfe");
+            bool OneFormDisposed = false;
+            void closeFormCallback(object? sender, FormClosedEventArgs e)
+            {
+                if (OneFormDisposed)
+                {
+                    solveMinButton.Enabled = true;
+                }
+                OneFormDisposed = true;
+            };
+            dialogForm1.FormClosed += new FormClosedEventHandler(closeFormCallback);
+            dialogForm1.Show();
+            dialogForm2.FormClosed += new FormClosedEventHandler(closeFormCallback);
+            dialogForm2.Show();
+
+            if (await problem.SolveMax([dialogForm1.Writer, dialogForm2.Writer]))
             {
                 MessageBox.Show(
                     "Non Linear Programming problem solved",

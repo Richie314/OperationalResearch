@@ -1,75 +1,45 @@
 ﻿using Accord.Math;
-using Fractions;
-using OperationalResearch.Models;
-using OperationalResearch.Models.Graphs;
 using OperationalResearch.Models.Problems;
-using RicercaOperativa;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+using OperationalResearch.ViewForms;
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using Matrix = OperationalResearch.Models.Elements.Matrix;
 using Vector = OperationalResearch.Models.Elements.Vector;
 
-namespace OperationalResearch
+namespace OperationalResearch.PageForms
 {
     public partial class MinCostFlowForm : Form
     {
-        private int N;
+        private int EdgeCount { get => (int) edges.Value; }
+        private int NodeCount { get => (int)nodes.Value; }
         public MinCostFlowForm()
         {
             InitializeComponent();
         }
         private void GenerateGrid()
         {
-            matrix.Rows.Clear();
-            boundsGrid.Rows.Clear();
+            // Edges grid
 
-            matrix.ColumnCount = N + 2;
-            boundsGrid.ColumnCount = N + 1;
-
-            matrix.RowHeadersVisible = false;
-            boundsGrid.RowHeadersVisible = false;
-
-            for (int i = 0; i < matrix.ColumnCount - 1; i++)
+            while (matrix.Rows.Count > EdgeCount)
             {
-                matrix.Columns[i].DefaultCellStyle.Alignment =
-                    DataGridViewContentAlignment.MiddleCenter;
-                boundsGrid.Columns[i].DefaultCellStyle.Alignment =
-                    DataGridViewContentAlignment.MiddleCenter;
-
-                if (i == 0)
-                {
-                    matrix.Columns[i].Name = "From\\To";
-                    boundsGrid.Columns[i].Name = "From\\To";
-                    matrix.Columns[i].Width = 50;
-                    boundsGrid.Columns[i].Width = 50;
-                    continue;
-                }
-                matrix.Columns[i].Name = i.ToString();
-                boundsGrid.Columns[i].Name = i.ToString();
-                matrix.Columns[i].Width = 50;
-                boundsGrid.Columns[i].Width = 50;
+                matrix.Rows.RemoveAt(matrix.Rows.Count - 1);
             }
-            matrix.Columns[N + 1].Name = "b";
-            matrix.Columns[N + 1].Width = 70;
-            matrix.Columns[N + 1].DefaultCellStyle.Alignment =
-                DataGridViewContentAlignment.MiddleRight;
-
-            for (int i = 0; i < N; i++)
+            while (matrix.Rows.Count < EdgeCount)
             {
-                string[] row = new string[N + 1];
-                row[0] = (i + 1).ToString();
-                row[i + 1] = "0";
+                string[] row = new string[matrix.ColumnCount];
                 matrix.Rows.Add(row);
-                boundsGrid.Rows.Add(row);
-                matrix.Rows[i].Height = 20;
-                boundsGrid.Rows[i].Height = 20;
+                matrix.Rows[matrix.Rows.Count - 1].Height = 20;
+            }
+
+            // Node balances grid
+
+            while (balances.Rows.Count > NodeCount)
+            {
+                balances.Rows.RemoveAt(balances.Rows.Count - 1);
+            }
+            while (balances.Rows.Count < NodeCount)
+            {
+                balances.Rows.Add([""]);
+                balances.Rows[balances.Rows.Count - 1].Height = 20;
             }
         }
 
@@ -77,7 +47,6 @@ namespace OperationalResearch
         {
             try
             {
-                N = (int)n.Value;
                 GenerateGrid();
             }
             catch (Exception err)
@@ -89,11 +58,10 @@ namespace OperationalResearch
             }
         }
 
-        private void TravellingSalesmanProblemForm_Load(object sender, EventArgs e)
+        private void MinCostFlowForm_Load(object sender, EventArgs e)
         {
             try
             {
-                N = (int)n.Value;
                 GenerateGrid();
             }
             catch (Exception err)
@@ -111,9 +79,9 @@ namespace OperationalResearch
             for (int row = 0; row < matrix.RowCount; row++)
             {
                 List<string> currRow = [];
-                for (int col = 1; col < matrix.ColumnCount - 1; col++)
+                for (int col = 0; col < matrix.ColumnCount - 2; col++)
                 {
-                    containsBlank |= string.IsNullOrWhiteSpace((string)matrix[col, row].Value);
+                    containsBlank = containsBlank || string.IsNullOrWhiteSpace((string)matrix[col, row].Value);
                     currRow.Add((string)matrix[col, row].Value);
                 }
                 list.Add([.. currRow]);
@@ -131,119 +99,102 @@ namespace OperationalResearch
                     return null;
                 }
                 list = list.Select(
-                    row => row.Select(x => string.IsNullOrWhiteSpace(x) ? "0" : x).ToArray()).ToList();
+                    row => row.Select(x => string.IsNullOrWhiteSpace(x) ? "0" : x).ToArray())
+                    .Where(row => row.Any(cell => cell != "0") // Ignore blank rows
+                    ).ToList();
             }
             return [.. list];
         }
-        private static Matrix? StrToFraction(string[][]? s)
-        {
-            if (s is null)
-                return null;
-            return new Matrix(s.Apply(row => row.Apply(Fraction.FromString)));
-        }
-        private Matrix LowerBound()
-        {
-            return new Matrix(
-                Enumerable.Repeat(
-                Enumerable.Repeat(Fraction.Zero, N).ToArray(), N).ToArray());
-        }
-        private Matrix? UpperBound()
+        private string[][]? getStartBasis()
         {
             var list = new List<string[]>();
-            for (int row = 0; row < boundsGrid.RowCount; row++)
+            for (int row = 0; row < matrix.RowCount; row++)
             {
-                List<string> currRow = [];
-                for (int col = 1; col < boundsGrid.ColumnCount; col++)
+                if (!(bool)matrix["Tree", row].Value)
                 {
-                    currRow.Add((string)boundsGrid[col, row].Value);
+                    continue;
+                }
+                List<string> currRow = [];
+                for (int col = 0; col < matrix.ColumnCount - 2; col++)
+                {
+                    currRow.Add((string)matrix[col, row].Value);
                 }
                 list.Add([.. currRow]);
             }
-            list = list.Select(
-                row => row.Select(x => string.IsNullOrWhiteSpace(x) ? "0" : x).ToArray()).ToList();
-            string[][] m = list.ToArray();
-            return new Matrix(m.Apply(row => row.Apply(Fraction.FromString)));
+            return [.. list];
         }
-        private BoundedGraphEdge[]? getStartBase()
+        private string[][]? getSaturatedArcs()
         {
-            if (string.IsNullOrWhiteSpace(startBase.Text))
-                return null;
-            return startBase.Text
-                .Split(',', StringSplitOptions.TrimEntries)
-                .Select(pair => new BoundedGraphEdge(new Graph.Edge(pair)))
-                .ToArray();
-        }
-        private BoundedGraphEdge[]? getStartU()
-        {
-            if (string.IsNullOrWhiteSpace(startU.Text))
-                return null;
-            return startU.Text
-                .Split(',', StringSplitOptions.TrimEntries)
-                .Select(pair => new BoundedGraphEdge(new Graph.Edge(pair)))
-                .ToArray();
-        }
-        private Vector getB()
-        {
-            List<Fraction> list = new List<Fraction>();
-            for (int i = 0; i < N; i++)
+            var list = new List<string[]>();
+            for (int row = 0; row < matrix.RowCount; row++)
             {
-                string s = (string)matrix[N + 1, i].Value;
-                s = string.IsNullOrWhiteSpace(s) ? "0" : s;
-                list.Add(Fraction.FromString(s));
+                if (!(bool)matrix["Saturated", row].Value)
+                {
+                    continue;
+                }
+                List<string> currRow = [];
+                for (int col = 0; col < matrix.ColumnCount - 2; col++)
+                {
+                    currRow.Add((string)matrix[col, row].Value);
+                }
+                list.Add([.. currRow]);
+            }
+            return [.. list];
+        }
+        private string[] NodeBalances()
+        {
+            var list = new List<string>();
+            for (int row = 0; row < matrix.RowCount; row++)
+            {
+                string? s = (string)matrix["b", row].Value;
+                list.Add(string.IsNullOrWhiteSpace(s) ? "0" : s);
             }
             return list.ToArray();
-        }
-        private async void button1_Click(object sender, EventArgs e)
-        {
-            var c = StrToFraction(MainGridStr());
-            if (c is null)
-                return;
-            Vector b = getB();
-            MinimumCostFlow m = new MinCostFlow(
-                c, b, LowerBound(), null);
-
-            var Form = new ProblemForm();
-            Form.Show();
-            if (await m.FlowUnbounded(getStartBase(), Form.Writer))
-            {
-                MessageBox.Show(
-                    "Network Programming problem solved",
-                    "Problem solved", MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show(
-                    "Network Programming problem could not be solved",
-                    "Error", MessageBoxButtons.OKCancel,
-                    MessageBoxIcon.Error);
-            }
-
         }
 
         private async void button2_Click(object sender, EventArgs e)
         {
-            var c = StrToFraction(MainGridStr());
-            if (c is null)
+            button2.Enabled = false;
+            var mainGridStr = MainGridStr();
+            if (mainGridStr is null)
+            {
+                button2.Enabled = true;
                 return;
-            Vector b = getB();
-            var u = UpperBound();
-            MinimumCostFlow m = new MinCostFlow(
-                c, b, LowerBound(), u);
+            }
+            var startTree = getStartBasis();
+            var saturated = getSaturatedArcs();
+            var balances = NodeBalances();
+            var startNodeStr = startNode.Text;
+            var endNodeStr = endNode.Text;
 
-            var Form = new ProblemForm();
+            MinimumCostFlowProblem problem = new(
+                mainGridStr,
+                balances,
+                startNodeStr,
+                endNodeStr,
+                startTree,
+                saturated,
+                true);
+
+            var Form = new ProblemForm<MinimumCostFlowProblem>(problem, "Simplex for networks");
+            void closeFormCallback(object? sender, FormClosedEventArgs e)
+            {
+                button2.Enabled = true;
+            };
+            Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
             Form.Show();
-            if (await m.FlowBounded(getStartBase(), getStartU(), Form.Writer))
+
+            if (await problem.SolveMin([Form.Writer]))
             {
                 MessageBox.Show(
-                    "Network Programming problem solved",
+                    "Flow problem solved",
                     "Problem solved", MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
             }
             else
             {
                 MessageBox.Show(
-                    "Network Programming problem could not be solved",
+                    "Flow problem could not be solved",
                     "Error", MessageBoxButtons.OKCancel,
                     MessageBoxIcon.Error);
             }
@@ -251,83 +202,12 @@ namespace OperationalResearch
 
         private async void button3_Click(object sender, EventArgs e)
         {
-            string input = Microsoft.VisualBasic.Interaction.InputBox(
-                "K = ", "Node to start from", string.Empty, 0, 0);
-            if (string.IsNullOrWhiteSpace(input) || !int.TryParse(input, out int value))
-            {
-                return;
-            }
-            value -= 1;
-            if (value < 0 || value >= N)
-            {
-                return;
-            }
-            var m = StrToFraction(MainGridStr());
-            if (m is null)
-                return;
-            Graph g = Graph.FromMatrix(m);
 
-            var Form = new ProblemForm();
-            Form.Show();
-            try
-            {
-                var res = await g.Dijkstra(Form.Writer, startNode: value);
-                if (res is null)
-                {
-                    await Form.Writer.WriteLineAsync("Probem not solved");
-                } else
-                {
-                    await Form.Writer.WriteLineAsync($"Solution:");
-                    await Form.Writer.WriteLineAsync($"p = {Function.Print(res.P)}");
-                    await Form.Writer.WriteLineAsync($"π = {res.PI}");
-                }
-            }
-            catch (Exception ex)
-            {
-                await Form.Writer.WriteLineAsync(ex.ToString());
-            }
         }
 
         private async void button4_Click(object sender, EventArgs e)
         {
-            string input = Microsoft.VisualBasic.Interaction.InputBox(
-                "s-t", "Node to start from and arrive to", "1-" + N, 0, 0);
-            if (string.IsNullOrWhiteSpace(input) || !input.Contains('-'))
-            {
-                return;
-            }
-            string[] parts = input.Split('-');
-            if (parts.Length != 2)
-            {
-                return;
-            }
-            if (!int.TryParse(parts[0], out int s) || !int.TryParse(parts[1], out int t))
-            {
-                return;
-            }
-            s--; t--;
-            if (s < 0 || s >= N || t < 0 || t >= N)
-            {
-                return;
-            }
 
-            var c = StrToFraction(MainGridStr());
-            if (c is null)
-                return;
-            Vector b = getB();
-            var u = UpperBound();
-            MinimumCostFlow m = new MinCostFlow(
-                c, b, LowerBound(), u);
-
-            var Form = new ProblemForm();
-            Form.Show();
-            try
-            {
-                await m.MinFlowMaxCut(s, t, Form.Writer);
-            }
-            catch (Exception ex) { 
-                await Form.Writer.WriteLineAsync(ex.ToString());
-            }
         }
     }
 

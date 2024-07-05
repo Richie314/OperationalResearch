@@ -13,7 +13,9 @@ namespace OperationalResearch.Models.Problems.Solvers
         private Simplex? simplex = null;
 
         public int[]? startBasis = startBasis;
-        
+        public Polyhedron? Domain { get; set; } = null;
+        public Vector? CoDomain { get; set; } = null;
+
         public async Task<bool> SolveMaxAsync(IEnumerable<IndentWriter?> loggers)
         {
             if (simplex is null)

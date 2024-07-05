@@ -1,4 +1,4 @@
-﻿namespace RicercaOperativa
+﻿namespace OperationalResearch
 {
     partial class StartForm
     {

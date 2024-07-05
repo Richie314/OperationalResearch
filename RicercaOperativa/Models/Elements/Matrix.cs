@@ -56,6 +56,10 @@ namespace OperationalResearch.Models.Elements
             Enumerable.Repeat(Enumerable.Repeat(Fraction.Zero, cols).ToArray(), rows).ToArray())
         {
         }
+
+        public Matrix(string[][] matrix) :
+            this(matrix.Apply((s, i, j) => Fraction.FromString(s.Trim())))
+        { }
         public int Rows { get => m.Rows(); }
         public int Cols { get => m.Columns(); }
         public Matrix T { get => new(m.Transpose()); }

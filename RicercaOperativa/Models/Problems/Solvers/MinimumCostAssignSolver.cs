@@ -7,7 +7,9 @@ namespace OperationalResearch.Models.Problems.Solvers
     public class SimpleMinimumCostAssignSolver : ISolving<Matrix, bool>
     {
         private MinimumCostAssign? solver = null;
-        private bool fillWorkers = false;
+
+        public Matrix? Domain { get; set; } = null;
+        public bool CoDomain { get; set; } = false;
 
         public Task<bool> SolveMaxAsync(IEnumerable<IndentWriter?> loggers)
         {
@@ -25,7 +27,7 @@ namespace OperationalResearch.Models.Problems.Solvers
             {
                 throw new InvalidOperationException("Problem not yet initialized");
             }
-            return await solver.SolveCooperativeFlow(fillWorkers, loggers.FirstOrDefault());
+            return await solver.SolveCooperativeFlow(FillWorkers: CoDomain, loggers.FirstOrDefault());
         }
         public async Task<bool> SolveIntegerMinAsync(IEnumerable<IndentWriter?> loggers)
         {
@@ -37,14 +39,18 @@ namespace OperationalResearch.Models.Problems.Solvers
         }
         public void SetData(Matrix costs, bool fillWorkers)
         {
+            Domain = costs;
+            CoDomain = fillWorkers;
             solver = new MinimumCostAssign(costs);
-            this.fillWorkers = fillWorkers;
         }
     }
-    public class GeneralizedMinimumCostAssignSolver : ISolving<Tuple<Matrix, Matrix, Vector>, bool>
+    public class GeneralizedMinimumCostAssignSolver : 
+        ISolving<Tuple<Matrix, Matrix, Vector>, bool>
     {
         private MinimumCostAssign? solver = null;
-        private bool fillWorkers = false;
+
+        public Tuple<Matrix, Matrix, Vector>? Domain { get; set; } = null;
+        public bool CoDomain { get; set; } = false;
 
         public Task<bool> SolveMaxAsync(IEnumerable<IndentWriter?> loggers)
         {
@@ -62,7 +68,7 @@ namespace OperationalResearch.Models.Problems.Solvers
             {
                 throw new InvalidOperationException("Problem not yet initialized");
             }
-            return await solver.SolveCooperativeFlow(fillWorkers, loggers.FirstOrDefault());
+            return await solver.SolveCooperativeFlow(FillWorkers: CoDomain, loggers.FirstOrDefault());
         }
         public async Task<bool> SolveIntegerMinAsync(IEnumerable<IndentWriter?> loggers)
         {
@@ -74,8 +80,9 @@ namespace OperationalResearch.Models.Problems.Solvers
         }
         public void SetData(Tuple<Matrix, Matrix, Vector> domain, bool fillWorkers)
         {
+            Domain = domain;
             solver = new MinimumCostAssign(domain.Item1, domain.Item2, domain.Item3);
-            this.fillWorkers = fillWorkers;
+            CoDomain = fillWorkers;
         }
     }
 }

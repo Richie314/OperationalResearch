@@ -21,5 +21,7 @@ namespace OperationalResearch.Models.Graphs
         }
         public CostEdge(Edge e) : this(Fraction.One, e.From, e.To)
         { }
+
+        public new string Label { get => Function.Print(Cost); }
     }
 }

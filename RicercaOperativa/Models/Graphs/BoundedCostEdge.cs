@@ -29,5 +29,17 @@ namespace OperationalResearch.Models.Graphs
         }
         public BoundedCostEdge(CostEdge e):this(e.Cost, e.From, e.To, null, null)
         { }
+
+        public BoundedCostEdge(string from, string to, string cost, string? lb, string? ub) :
+            this(from: int.Parse(from), to: int.Parse(to), cost: Fraction.FromString(cost),
+                lb: string.IsNullOrWhiteSpace(lb) ? null : Fraction.FromString(lb),
+                ub: string.IsNullOrWhiteSpace(ub) ? null : Fraction.FromString(ub))
+        { }
+
+        public BoundedCostEdge(string[] v) :
+            this(from: v[0], to: v[1], cost: v[2], lb: v.Length > 3 ? v[3] : null, ub: v.Length >= 4 ? v[4] : null)
+        { }
+
+        public new string Label { get => $"({base.Label}, {Function.Print(lb)}, {Function.Print(ub)})"; }
     }
 }

@@ -37,6 +37,13 @@ namespace OperationalResearch.Models.Elements
             this.v = v.ToArray();
         }
 
+        public static Vector? FromString(IEnumerable<string>? v)
+        {
+            if (v is null || v.Any(string.IsNullOrWhiteSpace))
+                return null;
+            return v.Select(Fraction.FromString).ToArray();
+        }
+
         #endregion
 
         #region Converters

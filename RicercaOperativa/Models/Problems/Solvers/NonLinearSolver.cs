@@ -9,6 +9,8 @@ namespace OperationalResearch.Models.Problems.Solvers
         private ProjectedGradient? projectedGradient = null;
         private FrankWolfe? frankWolfe = null;
         private Vector? startingPoint = startingPoint;
+        public Polyhedron? Domain { get; set; } = null;
+        public string? CoDomain { get; set; } = null;
         public async Task<bool> SolveMinAsync(IEnumerable<IndentWriter?> writers)
         {
             if (projectedGradient is null || frankWolfe is null)
@@ -48,6 +50,8 @@ namespace OperationalResearch.Models.Problems.Solvers
         public void SetData(Polyhedron p, string pythonString)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(pythonString);
+            Domain = p;
+            CoDomain = pythonString;
             projectedGradient = new ProjectedGradient(p, pythonString);
             frankWolfe = new FrankWolfe(p, pythonString);
         }

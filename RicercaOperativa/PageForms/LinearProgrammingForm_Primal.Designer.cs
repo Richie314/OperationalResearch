@@ -1,4 +1,4 @@
-﻿namespace RicercaOperativa
+﻿namespace OperationalResearch.PageForms
 {
     partial class LinearProgrammingForm_Primal
     {
@@ -162,9 +162,9 @@
             label4.AutoSize = true;
             label4.Location = new Point(260, 508);
             label4.Name = "label4";
-            label4.Size = new Size(121, 15);
+            label4.Size = new Size(123, 15);
             label4.TabIndex = 13;
-            label4.Text = "Starting Base indexes:";
+            label4.Text = "Starting Basis indexes:";
             // 
             // xNonNegativeCheckbox
             // 

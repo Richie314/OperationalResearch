@@ -1,6 +1,6 @@
-﻿namespace RicercaOperativa
+﻿namespace OperationalResearch.ViewForms
 {
-    partial class ProblemForm
+    partial class ProblemForm<ProblemType>
     {
         /// <summary>
         /// Required designer variable.

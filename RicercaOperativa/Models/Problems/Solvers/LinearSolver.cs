@@ -1,4 +1,5 @@
-﻿using OperationalResearch.Extensions;
+﻿using Google.OrTools.ConstraintSolver;
+using OperationalResearch.Extensions;
 using OperationalResearch.Models.Elements;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,9 @@ namespace OperationalResearch.Models.Problems.Solvers
         private GoogleIntegerOperationWrapper? googleSolver = null;
 
         public int[]? startBasis = startBasis;
+
+        public Polyhedron? Domain { get; set; } = null;
+        public Vector? CoDomain { get; set; } = null;
         
         public async Task<bool> SolveMaxAsync(IEnumerable<IndentWriter?> loggers)
         {
@@ -53,6 +57,8 @@ namespace OperationalResearch.Models.Problems.Solvers
 
         public void SetData(Polyhedron domain, Vector codomain)
         {
+            Domain = domain;
+            CoDomain = codomain;
             simplex = new Simplex(domain, codomain);
             googleSolver = new GoogleIntegerOperationWrapper(domain, codomain);
         }

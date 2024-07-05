@@ -10,5 +10,6 @@ namespace OperationalResearch.Models.Elements
     internal struct Point2
     {
         public Fraction x, y;
+        public string Label { get; set; }
     }
 }

@@ -1,17 +1,8 @@
-﻿using OperationalResearch.Models;
+﻿using System.Data;
+using OperationalResearch.ViewForms;
 using OperationalResearch.Models.Problems;
-using RicercaOperativa;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
-namespace OperationalResearch
+namespace OperationalResearch.PageForms
 {
     public partial class MinCostAssignForm : Form
     {
@@ -63,30 +54,41 @@ namespace OperationalResearch
             }
         }
 
-        private async void solveCooperativeBtn_Click(object sender, EventArgs e)
+        private async void solveBtn_Click(object sender, EventArgs e)
         {
-            solveCooperativeBtn.Enabled = solveNonCooperativeBtn.Enabled = false;
+            solveBtn.Enabled  = false;
             string[][]? mainGridStr = MainGridStr();
             if (mainGridStr is null || mainGridStr.Length == 0)
             {
-                solveCooperativeBtn.Enabled = solveNonCooperativeBtn.Enabled = true;
+                solveBtn.Enabled = true;
                 return;
             }
 
-            var Form = new ProblemForm();
+            SimpleMinimumCostAssignmentProblem problem = new(mainGridStr, true);
+
+            bool closedOneWindow = false;
+
+            var RealForm = new ProblemForm<SimpleMinimumCostAssignmentProblem>(problem, "Simplex (real results)");
             void closeFormCallback(object? sender, FormClosedEventArgs e)
             {
-                solveCooperativeBtn.Enabled = solveNonCooperativeBtn.Enabled = true;
+                if (!closedOneWindow)
+                {
+                    closedOneWindow = true;
+                    return;
+                }
+                solveBtn.Enabled = true;
             };
-            Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
-            Form.Show();
+            RealForm.FormClosed += new FormClosedEventHandler(closeFormCallback);
+            RealForm.Show();
 
-            Problem p = new(
-                solver: new MinCostAssignSolver(isCooperative: true),
-                sMatrix: mainGridStr,
-                sVecB: new string[0],
-                sVecC: new string[0]);
-            if (await p.SolveMin(loggers: new StreamWriter?[] { Form.Writer }))
+            var IntegerForm = new ProblemForm<SimpleMinimumCostAssignmentProblem>(problem, "Libray (integer results)");
+            IntegerForm.FormClosed += new FormClosedEventHandler(closeFormCallback);
+            IntegerForm.Show();
+
+            bool realResult = await problem.SolveMin(loggers: [RealForm.Writer]);
+            bool intsResult = await problem.SolveIntegerMin(loggers: [RealForm.Writer]);
+
+            if (realResult || intsResult)
             {
                 MessageBox.Show(
                     "Linear Programming problem solved",
@@ -149,45 +151,6 @@ namespace OperationalResearch
             return [.. list];
         }
 
-        private async void solveNonCooperativeBtn_Click(object sender, EventArgs e)
-        {
-            solveCooperativeBtn.Enabled = solveNonCooperativeBtn.Enabled = false;
-            string[][]? mainGridStr = MainGridStr();
-            if (mainGridStr is null || mainGridStr.Length == 0)
-            {
-                solveCooperativeBtn.Enabled = solveNonCooperativeBtn.Enabled = true;
-                return;
-            }
-
-            var Form = new ProblemForm();
-            void closeFormCallback(object? sender, FormClosedEventArgs e)
-            {
-                solveCooperativeBtn.Enabled = solveNonCooperativeBtn.Enabled = true;
-            };
-            Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
-            Form.Show();
-
-            Problem p = new(
-                solver: new MinCostAssignSolver(isCooperative: false),
-                sMatrix: mainGridStr,
-                sVecB: new string[0],
-                sVecC: new string[0]);
-            if (await p.SolveMin(loggers: new StreamWriter?[] { Form.Writer }))
-            {
-                MessageBox.Show(
-                    "Integer Linear Programming problem solved",
-                    "Problem solved", MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show(
-                    "Integer Linear Programming problem could not be solved",
-                    "Error", MessageBoxButtons.OKCancel,
-                    MessageBoxIcon.Error);
-            }
-            solveCooperativeBtn.Enabled = solveNonCooperativeBtn.Enabled = true;
-        }
     }
 
 }

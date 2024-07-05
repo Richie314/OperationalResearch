@@ -9,8 +9,9 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using OperationalResearch.Models;
 using OperationalResearch.Models.Problems;
+using OperationalResearch.ViewForms;
 
-namespace RicercaOperativa
+namespace OperationalResearch.PageForms
 {
     public partial class LinearProgrammingForm_Dual : Form
     {
@@ -95,21 +96,18 @@ namespace RicercaOperativa
                 startSimplexBtn.Enabled = true;
                 return;
             }
-            var dualForm = new ProblemForm();
+
+            LinearProgrammingDualProblem problem = new(mainGridStr, MainVectorStr(), xNonNegativeCheckbox.Checked, GetStartBasis());
+
+            var dualForm = new ProblemForm<LinearProgrammingDualProblem>(problem, "Simplex");
             void closeFormCallback(object? sender, FormClosedEventArgs e)
             {
                 startSimplexBtn.Enabled = true;
             };
             dualForm.FormClosed += new FormClosedEventHandler(closeFormCallback);
             dualForm.Show();
-            int[]? startBase = GetStartBase();
- 
-            Problem p = new(
-                solver: new LinearProgrammingDual(startBase, xNonNegativeCheckbox.Checked),
-                sMatrixAndB: mainGridStr,
-                sVecC: MainVectorStr());
 
-            if (await p.SolveMin(new StreamWriter[] { dualForm.Writer }))
+            if (await problem.SolveMin([ dualForm.Writer ]))
             {
                 MessageBox.Show(
                     "Linear Programming problem solved", 
@@ -164,21 +162,14 @@ namespace RicercaOperativa
             }
             return [.. list];
         }
-        private int[]? GetStartBase()
+        private string[]? GetStartBasis()
         {
             string value = startBaseInput.Text;
             if (string.IsNullOrWhiteSpace(value))
             {
                 return null;
             }
-            try
-            {
-                return value.Split(
-                    ",", StringSplitOptions.RemoveEmptyEntries)
-                    .Select(x => Convert.ToInt32(x.Trim()) - 1).ToArray();
-            } catch {
-                return null;
-            }
+            return value.Split(",", StringSplitOptions.RemoveEmptyEntries);
         }
     }
 }

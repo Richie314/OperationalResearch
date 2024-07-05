@@ -1,10 +1,7 @@
-using OperationalResearch.Models;
-using System.Windows.Controls;
-using OperationalResearch;
-using OperationalResearch.Models.Problems;
 using OperationalResearch.ViewForms;
+using OperationalResearch.PageForms;
 
-namespace RicercaOperativa
+namespace OperationalResearch
 {
     public partial class StartForm : Form
     {
@@ -39,7 +36,7 @@ namespace RicercaOperativa
         }
         private void productionRevenueMaximazationToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var NewForm = new LinearProgrammingForm_Primal(IntSolutions: true);
+            var NewForm = new LinearProgrammingForm_Primal();
             NewForm.Show();
         }
 
@@ -86,7 +83,7 @@ namespace RicercaOperativa
 
         private void webviewToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var NewForm = new CartesianForm();
+            var NewForm = new CartesianForm([]);
             NewForm.Show();
         }
     }

@@ -26,6 +26,8 @@ namespace OperationalResearch.Models.Problems.Solvers
         }
         public override void SetData(Polyhedron domain, Vector codomain)
         {
+            Domain = domain;
+            CoDomain = codomain;
             Knapsnack = new(
                 volume: domain.b[0],
                 weight: domain.b[1],

@@ -1,4 +1,4 @@
-﻿namespace RicercaOperativa
+﻿namespace OperationalResearch.PageForms
 {
     partial class LinearProgrammingForm_Dual
     {

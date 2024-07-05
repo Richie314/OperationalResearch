@@ -1,4 +1,4 @@
-﻿namespace OperationalResearch
+﻿namespace OperationalResearch.PageForms
 {
     partial class KnapsnackForm
     {

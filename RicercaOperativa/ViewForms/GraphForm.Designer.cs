@@ -1,6 +1,6 @@
-﻿namespace RicercaOperativa
+﻿namespace OperationalResearch.ViewForms
 {
-    partial class GraphForm
+    partial class GraphForm<GraphType, GraphEdge>
     {
         /// <summary>
         /// Required designer variable.
