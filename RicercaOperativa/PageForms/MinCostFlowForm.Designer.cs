@@ -31,13 +31,6 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MinCostFlowForm));
             label1 = new Label();
             matrix = new DataGridView();
-            From = new DataGridViewTextBoxColumn();
-            To = new DataGridViewTextBoxColumn();
-            Cost = new DataGridViewTextBoxColumn();
-            Minimum = new DataGridViewTextBoxColumn();
-            Capacity = new DataGridViewTextBoxColumn();
-            Tree = new DataGridViewCheckBoxColumn();
-            Saturated = new DataGridViewCheckBoxColumn();
             edges = new NumericUpDown();
             setNumBtn = new Button();
             button2 = new Button();
@@ -50,6 +43,13 @@
             label5 = new Label();
             startNode = new NumericUpDown();
             endNode = new NumericUpDown();
+            From = new DataGridViewTextBoxColumn();
+            To = new DataGridViewTextBoxColumn();
+            Cost = new DataGridViewTextBoxColumn();
+            Minimum = new DataGridViewTextBoxColumn();
+            Capacity = new DataGridViewTextBoxColumn();
+            Tree = new DataGridViewCheckBoxColumn();
+            Saturated = new DataGridViewCheckBoxColumn();
             ((System.ComponentModel.ISupportInitialize)matrix).BeginInit();
             ((System.ComponentModel.ISupportInitialize)edges).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nodes).BeginInit();
@@ -81,52 +81,6 @@
             matrix.RowHeadersWidth = 51;
             matrix.Size = new Size(837, 434);
             matrix.TabIndex = 1;
-            // 
-            // From
-            // 
-            From.Frozen = true;
-            From.HeaderText = "From";
-            From.Name = "From";
-            // 
-            // To
-            // 
-            To.Frozen = true;
-            To.HeaderText = "To";
-            To.Name = "To";
-            // 
-            // Cost
-            // 
-            Cost.Frozen = true;
-            Cost.HeaderText = "Cost";
-            Cost.Name = "Cost";
-            // 
-            // Minimum
-            // 
-            Minimum.Frozen = true;
-            Minimum.HeaderText = "Minimum";
-            Minimum.Name = "Minimum";
-            // 
-            // Capacity
-            // 
-            Capacity.Frozen = true;
-            Capacity.HeaderText = "Capacity";
-            Capacity.Name = "Capacity";
-            // 
-            // Tree
-            // 
-            Tree.Frozen = true;
-            Tree.HeaderText = "Tree";
-            Tree.Name = "Tree";
-            Tree.Resizable = DataGridViewTriState.True;
-            Tree.SortMode = DataGridViewColumnSortMode.Automatic;
-            // 
-            // Saturated
-            // 
-            Saturated.Frozen = true;
-            Saturated.HeaderText = "Satureted";
-            Saturated.Name = "Saturated";
-            Saturated.Resizable = DataGridViewTriState.True;
-            Saturated.SortMode = DataGridViewColumnSortMode.Automatic;
             // 
             // edges
             // 
@@ -208,9 +162,11 @@
             // 
             // b
             // 
+            b.DataPropertyName = "b";
             b.Frozen = true;
             b.HeaderText = "b";
             b.Name = "b";
+            b.SortMode = DataGridViewColumnSortMode.NotSortable;
             // 
             // label4
             // 
@@ -251,6 +207,68 @@
             endNode.Size = new Size(57, 23);
             endNode.TabIndex = 21;
             endNode.Value = new decimal(new int[] { 7, 0, 0, 0 });
+            // 
+            // From
+            // 
+            From.DataPropertyName = "From";
+            From.Frozen = true;
+            From.HeaderText = "From";
+            From.Name = "From";
+            From.SortMode = DataGridViewColumnSortMode.NotSortable;
+            // 
+            // To
+            // 
+            To.DataPropertyName = "To";
+            To.Frozen = true;
+            To.HeaderText = "To";
+            To.Name = "To";
+            To.SortMode = DataGridViewColumnSortMode.NotSortable;
+            // 
+            // Cost
+            // 
+            Cost.DataPropertyName = "Cost";
+            Cost.Frozen = true;
+            Cost.HeaderText = "Cost";
+            Cost.Name = "Cost";
+            Cost.SortMode = DataGridViewColumnSortMode.NotSortable;
+            // 
+            // Minimum
+            // 
+            Minimum.DataPropertyName = "Minimum";
+            Minimum.Frozen = true;
+            Minimum.HeaderText = "Minimum";
+            Minimum.Name = "Minimum";
+            Minimum.SortMode = DataGridViewColumnSortMode.NotSortable;
+            // 
+            // Capacity
+            // 
+            Capacity.DataPropertyName = "Capacity";
+            Capacity.Frozen = true;
+            Capacity.HeaderText = "Capacity";
+            Capacity.Name = "Capacity";
+            Capacity.SortMode = DataGridViewColumnSortMode.NotSortable;
+            // 
+            // Tree
+            // 
+            Tree.DataPropertyName = "Tree";
+            Tree.FalseValue = "False";
+            Tree.Frozen = true;
+            Tree.HeaderText = "Tree";
+            Tree.IndeterminateValue = "False";
+            Tree.Name = "Tree";
+            Tree.Resizable = DataGridViewTriState.True;
+            Tree.TrueValue = "True";
+            // 
+            // Saturated
+            // 
+            Saturated.DataPropertyName = "Saturated";
+            Saturated.FalseValue = "False";
+            Saturated.Frozen = true;
+            Saturated.HeaderText = "Satureted";
+            Saturated.IndeterminateValue = "False";
+            Saturated.Name = "Saturated";
+            Saturated.Resizable = DataGridViewTriState.True;
+            Saturated.TrueValue = "True";
             // 
             // MinCostFlowForm
             // 
@@ -301,6 +319,7 @@
         private Label label5;
         private NumericUpDown startNode;
         private NumericUpDown endNode;
+        private DataGridViewTextBoxColumn b;
         private DataGridViewTextBoxColumn From;
         private DataGridViewTextBoxColumn To;
         private DataGridViewTextBoxColumn Cost;
@@ -308,6 +327,5 @@
         private DataGridViewTextBoxColumn Capacity;
         private DataGridViewCheckBoxColumn Tree;
         private DataGridViewCheckBoxColumn Saturated;
-        private DataGridViewTextBoxColumn b;
     }
 }

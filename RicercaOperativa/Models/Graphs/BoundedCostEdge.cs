@@ -31,7 +31,7 @@ namespace OperationalResearch.Models.Graphs
         { }
 
         public BoundedCostEdge(string from, string to, string cost, string? lb, string? ub) :
-            this(from: int.Parse(from), to: int.Parse(to), cost: Fraction.FromString(cost),
+            this(from: int.Parse(from) - 1, to: int.Parse(to) - 1, cost: Fraction.FromString(cost),
                 lb: string.IsNullOrWhiteSpace(lb) ? null : Fraction.FromString(lb),
                 ub: string.IsNullOrWhiteSpace(ub) ? null : Fraction.FromString(ub))
         { }

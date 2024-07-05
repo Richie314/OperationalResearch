@@ -105,12 +105,15 @@ namespace OperationalResearch.PageForms
             }
             return [.. list];
         }
-        private string[][]? getStartBasis()
+        private string[][]? getStartTreeOrSaturated(int colToCheck)
         {
             var list = new List<string[]>();
             for (int row = 0; row < matrix.RowCount; row++)
             {
-                if (!(bool)matrix["Tree", row].Value)
+                string boolParse = 
+                    string.IsNullOrWhiteSpace((string?)matrix[colToCheck, row].Value) ?
+                        "False" : (string)matrix[colToCheck, row].Value;
+                if (bool.Parse(boolParse))
                 {
                     continue;
                 }
@@ -123,30 +126,14 @@ namespace OperationalResearch.PageForms
             }
             return [.. list];
         }
-        private string[][]? getSaturatedArcs()
-        {
-            var list = new List<string[]>();
-            for (int row = 0; row < matrix.RowCount; row++)
-            {
-                if (!(bool)matrix["Saturated", row].Value)
-                {
-                    continue;
-                }
-                List<string> currRow = [];
-                for (int col = 0; col < matrix.ColumnCount - 2; col++)
-                {
-                    currRow.Add((string)matrix[col, row].Value);
-                }
-                list.Add([.. currRow]);
-            }
-            return [.. list];
-        }
+        private string[][]? getStartBasis() => getStartTreeOrSaturated(5);
+        private string[][]? getSaturatedArcs() => getStartTreeOrSaturated(6);
         private string[] NodeBalances()
         {
             var list = new List<string>();
-            for (int row = 0; row < matrix.RowCount; row++)
+            for (int row = 0; row < balances.RowCount; row++)
             {
-                string? s = (string)matrix["b", row].Value;
+                string? s = (string)balances[0, row].Value;
                 list.Add(string.IsNullOrWhiteSpace(s) ? "0" : s);
             }
             return list.ToArray();
@@ -156,7 +143,7 @@ namespace OperationalResearch.PageForms
         {
             button2.Enabled = false;
             var mainGridStr = MainGridStr();
-            if (mainGridStr is null)
+            if (mainGridStr is null || mainGridStr.Length == 0)
             {
                 button2.Enabled = true;
                 return;
@@ -198,16 +185,6 @@ namespace OperationalResearch.PageForms
                     "Error", MessageBoxButtons.OKCancel,
                     MessageBoxIcon.Error);
             }
-        }
-
-        private async void button3_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private async void button4_Click(object sender, EventArgs e)
-        {
-
         }
     }
 

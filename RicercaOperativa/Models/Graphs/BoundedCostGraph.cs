@@ -10,20 +10,14 @@ namespace OperationalResearch.Models.Graphs
         public BoundedCostGraph(int n, IEnumerable<EdgeType>? edges) :
             base(n, edges)
         {
-            E = new Matrix(n - 1, Edges.Count());
+            E = new Matrix(n, Edges.Count());
             for (int edgeIndex = 0; edgeIndex < Edges.Count(); edgeIndex++)
             {
-                if (Edges.ElementAt(edgeIndex).From > 0)
-                {
-                    // skip first row
-                    E[Edges.ElementAt(edgeIndex).From - 1, edgeIndex] = Fraction.MinusOne;
-                }
-                if (Edges.ElementAt(edgeIndex).To > 0)
-                {
-                    // skip first row
-                    E[Edges.ElementAt(edgeIndex).To - 1, edgeIndex] = Fraction.One;
-                }
+                var edge = Edges.ElementAt(edgeIndex);
+                E[edge.From, edgeIndex] = Fraction.MinusOne;
+                E[edge.To, edgeIndex] = Fraction.One;
             }
+            E = E[E.RowsIndeces.Where(i => i != 0)]; // skip first row
         }
         public Vector u { get => Edges.Select(e => e.ub).ToArray(); }
         public Vector l { get => Edges.Select(e => e.lb).ToArray(); }
