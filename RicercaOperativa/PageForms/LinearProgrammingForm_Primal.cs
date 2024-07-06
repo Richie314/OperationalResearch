@@ -139,13 +139,13 @@ namespace OperationalResearch.PageForms
             }
         }
 
-        private async Task SolveProblem()
+        private async Task SolveProblem(bool max = true)
         {
-            startSimplexBtn.Enabled = false;
+            maximizeBtn.Enabled = minimizeBtn.Enabled = false;
             string[][]? mainGridStr = MainGridStr();
             if (mainGridStr is null || mainGridStr.Length == 0)
             {
-                startSimplexBtn.Enabled = true;
+                maximizeBtn.Enabled = minimizeBtn.Enabled = true;
                 return;
             }
 
@@ -158,17 +158,21 @@ namespace OperationalResearch.PageForms
             var realForm = new ProblemForm<LinearProgrammingProblem>(problem, "Simplex");
             void closeFormCallback(object? sender, FormClosedEventArgs e)
             {
-                startSimplexBtn.Enabled = true;
+                maximizeBtn.Enabled = minimizeBtn.Enabled = true;
             };
             realForm.FormClosed += new FormClosedEventHandler(closeFormCallback);
             realForm.Show();
 
-            bool realSolved = await problem.SolveMax(loggers: [realForm.Writer]);
+            bool realSolved = max ?
+                await problem.SolveMax(loggers: [realForm.Writer]) :
+                await problem.SolveMin(loggers: [realForm.Writer]);
 
             var intForm = new ProblemForm<LinearProgrammingProblem>(problem, "Libraries");
             realForm.Show();
 
-            bool intSolved = await problem.SolveIntegerMax(loggers: [intForm.Writer]);
+            bool intSolved = max ?
+                await problem.SolveIntegerMax(loggers: [intForm.Writer]) :
+                await problem.SolveIntegerMin(loggers: [intForm.Writer]);
             if (realSolved)
             {
                 MessageBox.Show(
@@ -190,12 +194,14 @@ namespace OperationalResearch.PageForms
                 graphForm.Show();
             }
 
-            startSimplexBtn.Enabled = true;
+            maximizeBtn.Enabled = minimizeBtn.Enabled = true;
         }
-        private async void startSimplexBtn_Click(object sender, EventArgs e)
-        {
-            await SolveProblem();
-        }
+
+        private async void maximizeBtn_Click(object sender, EventArgs e) =>
+            await SolveProblem(true);
+        private async void minimizeBtn_Click(object sender, EventArgs e) =>
+            await SolveProblem(false);
+
         private string[] MainVectorStr()
         {
             List<string> list = [];

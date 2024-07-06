@@ -45,17 +45,21 @@
             mainGrid.AllowUserToDeleteRows = false;
             mainGrid.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             mainGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            mainGrid.Location = new Point(12, 51);
+            mainGrid.Location = new Point(14, 96);
+            mainGrid.Margin = new Padding(3, 4, 3, 4);
             mainGrid.Name = "mainGrid";
-            mainGrid.Size = new Size(676, 275);
+            mainGrid.RowHeadersWidth = 51;
+            mainGrid.Size = new Size(648, 386);
             mainGrid.TabIndex = 0;
             // 
             // applyItemsBtn
             // 
+            applyItemsBtn.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             applyItemsBtn.Cursor = Cursors.Hand;
-            applyItemsBtn.Location = new Point(256, 7);
+            applyItemsBtn.Location = new Point(214, 16);
+            applyItemsBtn.Margin = new Padding(3, 4, 3, 4);
             applyItemsBtn.Name = "applyItemsBtn";
-            applyItemsBtn.Size = new Size(75, 34);
+            applyItemsBtn.Size = new Size(120, 62);
             applyItemsBtn.TabIndex = 1;
             applyItemsBtn.Text = "Apply";
             applyItemsBtn.UseVisualStyleBackColor = true;
@@ -64,38 +68,41 @@
             // boolean
             // 
             boolean.AutoSize = true;
-            boolean.Location = new Point(350, 14);
+            boolean.Location = new Point(31, 54);
+            boolean.Margin = new Padding(3, 4, 3, 4);
             boolean.Name = "boolean";
-            boolean.Size = new Size(69, 19);
+            boolean.Size = new Size(177, 24);
             boolean.TabIndex = 2;
-            boolean.Text = "Boolean";
+            boolean.Text = "Use boolean variables";
             boolean.UseVisualStyleBackColor = true;
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(27, 15);
+            label1.Location = new Point(28, 20);
             label1.Name = "label1";
-            label1.Size = new Size(97, 15);
+            label1.Size = new Size(121, 20);
             label1.TabIndex = 3;
             label1.Text = "Number of items";
             // 
             // numberOfItems
             // 
-            numberOfItems.Location = new Point(130, 12);
+            numberOfItems.Location = new Point(149, 16);
+            numberOfItems.Margin = new Padding(3, 4, 3, 4);
             numberOfItems.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
             numberOfItems.Name = "numberOfItems";
-            numberOfItems.Size = new Size(120, 23);
+            numberOfItems.Size = new Size(59, 27);
             numberOfItems.TabIndex = 4;
             numberOfItems.Value = new decimal(new int[] { 3, 0, 0, 0 });
             // 
             // solveBtn
             // 
-            solveBtn.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            solveBtn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             solveBtn.Cursor = Cursors.Hand;
-            solveBtn.Location = new Point(445, 4);
+            solveBtn.Location = new Point(354, 16);
+            solveBtn.Margin = new Padding(3, 4, 3, 4);
             solveBtn.Name = "solveBtn";
-            solveBtn.Size = new Size(241, 43);
+            solveBtn.Size = new Size(308, 62);
             solveBtn.TabIndex = 5;
             solveBtn.Text = "Solve";
             solveBtn.UseVisualStyleBackColor = true;
@@ -103,9 +110,9 @@
             // 
             // KnapsnackForm
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(700, 338);
+            ClientSize = new Size(675, 498);
             Controls.Add(solveBtn);
             Controls.Add(numberOfItems);
             Controls.Add(label1);
@@ -113,7 +120,7 @@
             Controls.Add(applyItemsBtn);
             Controls.Add(mainGrid);
             Icon = (Icon)resources.GetObject("$this.Icon");
-            Margin = new Padding(3, 2, 3, 2);
+            MinimumSize = new Size(693, 545);
             Name = "KnapsnackForm";
             Text = "Knapsnack's Problemm";
             Load += KnapsnackForm_Load;

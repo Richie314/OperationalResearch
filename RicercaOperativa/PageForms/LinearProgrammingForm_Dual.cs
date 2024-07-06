@@ -86,14 +86,13 @@ namespace OperationalResearch.PageForms
             }
         }
 
-
-        private async void startSimplexBtn_Click(object sender, EventArgs e)
+        private async Task Solve(bool min = true)
         {
-            startSimplexBtn.Enabled = false;
+            maximizeBtn.Enabled = minimizeBtn.Enabled = false;
             string[][]? mainGridStr = MainGridStr();
             if (mainGridStr is null || mainGridStr.Length == 0)
             {
-                startSimplexBtn.Enabled = true;
+                maximizeBtn.Enabled = minimizeBtn.Enabled = true;
                 return;
             }
 
@@ -102,26 +101,30 @@ namespace OperationalResearch.PageForms
             var dualForm = new ProblemForm<LinearProgrammingDualProblem>(problem, "Simplex");
             void closeFormCallback(object? sender, FormClosedEventArgs e)
             {
-                startSimplexBtn.Enabled = true;
+                maximizeBtn.Enabled = minimizeBtn.Enabled = true;
             };
             dualForm.FormClosed += new FormClosedEventHandler(closeFormCallback);
             dualForm.Show();
 
-            if (await problem.SolveMin([ dualForm.Writer ]))
+            if (min ? await problem.SolveMin([dualForm.Writer]) : await problem.SolveMax([dualForm.Writer]))
             {
                 MessageBox.Show(
-                    "Linear Programming problem solved", 
+                    "Linear Programming problem solved",
                     "Problem solved", MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
-            } else
+            }
+            else
             {
                 MessageBox.Show(
-                    "Linear Programming problem could not be solved", 
+                    "Linear Programming problem could not be solved",
                     "Error", MessageBoxButtons.OKCancel,
                     MessageBoxIcon.Error);
             }
 
         }
+        private async void maximizeBtn_Click(object sender, EventArgs e) => await Solve(false);
+        private async void minimizeBtn_Click(object sender, EventArgs e) => await Solve(true);
+
         private string[] MainVectorStr()
         {
             List<string> list = [];
@@ -171,5 +174,6 @@ namespace OperationalResearch.PageForms
             }
             return value.Split(",", StringSplitOptions.RemoveEmptyEntries);
         }
+
     }
 }

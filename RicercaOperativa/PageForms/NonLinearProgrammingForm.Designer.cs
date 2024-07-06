@@ -48,10 +48,12 @@
             // 
             // button1
             // 
+            button1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             button1.Cursor = Cursors.Hand;
-            button1.Location = new Point(599, 27);
+            button1.Location = new Point(282, 20);
+            button1.Margin = new Padding(3, 4, 3, 4);
             button1.Name = "button1";
-            button1.Size = new Size(87, 34);
+            button1.Size = new Size(129, 74);
             button1.TabIndex = 0;
             button1.Text = "Apply";
             button1.UseVisualStyleBackColor = true;
@@ -60,64 +62,73 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(28, 37);
+            label1.Location = new Point(25, 28);
             label1.Name = "label1";
-            label1.Size = new Size(111, 15);
+            label1.Size = new Size(140, 20);
             label1.TabIndex = 1;
             label1.Text = "Dimension of space";
             // 
             // dimensionOfSpaceInput
             // 
-            dimensionOfSpaceInput.Location = new Point(164, 34);
+            dimensionOfSpaceInput.Location = new Point(186, 24);
+            dimensionOfSpaceInput.Margin = new Padding(3, 4, 3, 4);
             dimensionOfSpaceInput.Name = "dimensionOfSpaceInput";
-            dimensionOfSpaceInput.Size = new Size(120, 23);
+            dimensionOfSpaceInput.Size = new Size(81, 27);
             dimensionOfSpaceInput.TabIndex = 2;
             dimensionOfSpaceInput.Value = new decimal(new int[] { 2, 0, 0, 0 });
             // 
             // pythonInput
             // 
+            pythonInput.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             pythonInput.Font = new Font("CaskaydiaCove NF", 11.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            pythonInput.Location = new Point(12, 223);
+            pythonInput.Location = new Point(14, 319);
+            pythonInput.Margin = new Padding(3, 4, 3, 4);
             pythonInput.Multiline = true;
             pythonInput.Name = "pythonInput";
             pythonInput.PlaceholderText = "Insert the python code for the functions here";
             pythonInput.ScrollBars = ScrollBars.Both;
-            pythonInput.Size = new Size(776, 159);
+            pythonInput.Size = new Size(886, 259);
             pythonInput.TabIndex = 3;
             // 
             // matrix
             // 
             matrix.AllowUserToAddRows = false;
             matrix.AllowUserToDeleteRows = false;
+            matrix.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             matrix.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            matrix.Location = new Point(12, 67);
+            matrix.Location = new Point(14, 99);
+            matrix.Margin = new Padding(3, 4, 3, 4);
             matrix.Name = "matrix";
-            matrix.Size = new Size(776, 150);
+            matrix.RowHeadersWidth = 51;
+            matrix.Size = new Size(887, 215);
             matrix.TabIndex = 4;
             // 
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(314, 37);
+            label2.Location = new Point(25, 61);
             label2.Name = "label2";
-            label2.Size = new Size(120, 15);
+            label2.Size = new Size(150, 20);
             label2.TabIndex = 5;
             label2.Text = "Number of equations";
             // 
             // numberOfEquationsInput
             // 
-            numberOfEquationsInput.Location = new Point(440, 35);
+            numberOfEquationsInput.Location = new Point(186, 60);
+            numberOfEquationsInput.Margin = new Padding(3, 4, 3, 4);
             numberOfEquationsInput.Name = "numberOfEquationsInput";
-            numberOfEquationsInput.Size = new Size(120, 23);
+            numberOfEquationsInput.Size = new Size(81, 27);
             numberOfEquationsInput.TabIndex = 6;
             numberOfEquationsInput.Value = new decimal(new int[] { 4, 0, 0, 0 });
             // 
             // solveMinButton
             // 
+            solveMinButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             solveMinButton.Cursor = Cursors.Hand;
-            solveMinButton.Location = new Point(12, 396);
+            solveMinButton.Location = new Point(457, 586);
+            solveMinButton.Margin = new Padding(3, 4, 3, 4);
             solveMinButton.Name = "solveMinButton";
-            solveMinButton.Size = new Size(187, 34);
+            solveMinButton.Size = new Size(443, 45);
             solveMinButton.TabIndex = 7;
             solveMinButton.Text = "Minimize with all methods";
             solveMinButton.UseVisualStyleBackColor = true;
@@ -125,10 +136,11 @@
             // 
             // label3
             // 
+            label3.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label3.AutoSize = true;
-            label3.Location = new Point(212, 393);
+            label3.Location = new Point(417, 7);
             label3.Name = "label3";
-            label3.Size = new Size(289, 15);
+            label3.Size = new Size(363, 20);
             label3.TabIndex = 8;
             label3.Text = "Starting Point, if empty a random one will be guessed";
             // 
@@ -136,18 +148,23 @@
             // 
             startPointInput.AllowUserToAddRows = false;
             startPointInput.AllowUserToDeleteRows = false;
+            startPointInput.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             startPointInput.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            startPointInput.Location = new Point(205, 416);
+            startPointInput.Location = new Point(417, 31);
+            startPointInput.Margin = new Padding(3, 4, 3, 4);
             startPointInput.Name = "startPointInput";
-            startPointInput.Size = new Size(583, 53);
+            startPointInput.RowHeadersWidth = 51;
+            startPointInput.Size = new Size(483, 63);
             startPointInput.TabIndex = 9;
             // 
             // solveMaxButton
             // 
+            solveMaxButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             solveMaxButton.Cursor = Cursors.Hand;
-            solveMaxButton.Location = new Point(12, 438);
+            solveMaxButton.Location = new Point(12, 586);
+            solveMaxButton.Margin = new Padding(3, 4, 3, 4);
             solveMaxButton.Name = "solveMaxButton";
-            solveMaxButton.Size = new Size(187, 34);
+            solveMaxButton.Size = new Size(439, 45);
             solveMaxButton.TabIndex = 10;
             solveMaxButton.Text = "Maximize with all methods";
             solveMaxButton.UseVisualStyleBackColor = true;
@@ -155,9 +172,9 @@
             // 
             // NonLinearProgrammingForm
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 483);
+            ClientSize = new Size(914, 644);
             Controls.Add(solveMaxButton);
             Controls.Add(startPointInput);
             Controls.Add(label3);
@@ -170,6 +187,8 @@
             Controls.Add(label1);
             Controls.Add(button1);
             Icon = (Icon)resources.GetObject("$this.Icon");
+            Margin = new Padding(3, 4, 3, 4);
+            MinimumSize = new Size(932, 691);
             Name = "NonLinearProgrammingForm";
             Text = "Non Linear Programming";
             Load += NonLinearProgrammingForm_Load;

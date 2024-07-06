@@ -58,7 +58,7 @@
             // 
             costsMatrix.AllowUserToAddRows = false;
             costsMatrix.AllowUserToDeleteRows = false;
-            costsMatrix.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            costsMatrix.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             costsMatrix.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             costsMatrix.Location = new Point(12, 137);
             costsMatrix.Name = "costsMatrix";
@@ -77,10 +77,11 @@
             // 
             // setNumBtn
             // 
+            setNumBtn.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             setNumBtn.Cursor = Cursors.Hand;
             setNumBtn.Location = new Point(416, 27);
             setNumBtn.Name = "setNumBtn";
-            setNumBtn.Size = new Size(125, 61);
+            setNumBtn.Size = new Size(231, 61);
             setNumBtn.TabIndex = 3;
             setNumBtn.Text = "Apply";
             setNumBtn.UseVisualStyleBackColor = true;
@@ -106,9 +107,8 @@
             // 
             // label3
             // 
-            label3.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label3.AutoSize = true;
-            label3.Location = new Point(12, 99);
+            label3.Location = new Point(12, 102);
             label3.Name = "label3";
             label3.Size = new Size(106, 20);
             label3.TabIndex = 7;
@@ -118,7 +118,7 @@
             // 
             timeMatrix.AllowUserToAddRows = false;
             timeMatrix.AllowUserToDeleteRows = false;
-            timeMatrix.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            timeMatrix.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
             timeMatrix.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             timeMatrix.Location = new Point(676, 137);
             timeMatrix.Name = "timeMatrix";
@@ -128,7 +128,7 @@
             // 
             // label4
             // 
-            label4.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            label4.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label4.AutoSize = true;
             label4.Location = new Point(676, 102);
             label4.Name = "label4";
@@ -138,6 +138,7 @@
             // 
             // button
             // 
+            button.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             button.Cursor = Cursors.Hand;
             button.Location = new Point(676, 27);
             button.Name = "button";
@@ -163,6 +164,7 @@
             Controls.Add(costsMatrix);
             Controls.Add(label1);
             Icon = (Icon)resources.GetObject("$this.Icon");
+            MinimumSize = new Size(1315, 651);
             Name = "MinCostGenericAssignForm";
             Text = "MinCostAssignForm";
             Load += MinCostAssignForm_Load;

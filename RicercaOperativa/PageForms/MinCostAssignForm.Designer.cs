@@ -41,11 +41,11 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(24, 22);
+            label1.Location = new Point(14, 29);
             label1.Name = "label1";
-            label1.Size = new Size(152, 15);
+            label1.Size = new Size(204, 20);
             label1.TabIndex = 0;
-            label1.Text = "NumberOfWorkersAndJobs";
+            label1.Text = "Number of Workers and Tasks";
             // 
             // matrix
             // 
@@ -53,43 +53,40 @@
             matrix.AllowUserToDeleteRows = false;
             matrix.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             matrix.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            matrix.Location = new Point(10, 52);
-            matrix.Margin = new Padding(3, 2, 3, 2);
+            matrix.Location = new Point(11, 69);
             matrix.Name = "matrix";
             matrix.RowHeadersWidth = 51;
-            matrix.Size = new Size(679, 283);
+            matrix.Size = new Size(776, 377);
             matrix.TabIndex = 1;
             // 
             // n
             // 
-            n.Location = new Point(208, 20);
-            n.Margin = new Padding(3, 2, 3, 2);
+            n.Location = new Point(238, 27);
             n.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
             n.Name = "n";
-            n.Size = new Size(131, 23);
+            n.Size = new Size(150, 27);
             n.TabIndex = 2;
             n.Value = new decimal(new int[] { 3, 0, 0, 0 });
             // 
             // setNumBtn
             // 
+            setNumBtn.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             setNumBtn.Cursor = Cursors.Hand;
-            setNumBtn.Location = new Point(364, 12);
-            setNumBtn.Margin = new Padding(3, 2, 3, 2);
+            setNumBtn.Location = new Point(416, 16);
             setNumBtn.Name = "setNumBtn";
-            setNumBtn.Size = new Size(97, 35);
+            setNumBtn.Size = new Size(111, 47);
             setNumBtn.TabIndex = 3;
             setNumBtn.Text = "Apply";
             setNumBtn.UseVisualStyleBackColor = true;
             setNumBtn.Click += setNumBtn_Click;
             // 
-            // solveCooperativeBtn
+            // solveBtn
             // 
-            solveBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            solveBtn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             solveBtn.Cursor = Cursors.Hand;
-            solveBtn.Location = new Point(479, 12);
-            solveBtn.Margin = new Padding(3, 2, 3, 2);
+            solveBtn.Location = new Point(547, 16);
             solveBtn.Name = "solveBtn";
-            solveBtn.Size = new Size(210, 35);
+            solveBtn.Size = new Size(240, 47);
             solveBtn.TabIndex = 4;
             solveBtn.Text = "Solve";
             solveBtn.UseVisualStyleBackColor = true;
@@ -97,18 +94,18 @@
             // 
             // MinCostAssignForm
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(700, 346);
+            ClientSize = new Size(800, 461);
             Controls.Add(solveBtn);
             Controls.Add(setNumBtn);
             Controls.Add(n);
             Controls.Add(matrix);
             Controls.Add(label1);
             Icon = (Icon)resources.GetObject("$this.Icon");
-            Margin = new Padding(3, 2, 3, 2);
+            MinimumSize = new Size(818, 508);
             Name = "MinCostAssignForm";
-            Text = "MinCostAssignForm";
+            Text = "Minimum Cost Assignment";
             Load += MinCostAssignForm_Load;
             ((System.ComponentModel.ISupportInitialize)matrix).EndInit();
             ((System.ComponentModel.ISupportInitialize)n).EndInit();

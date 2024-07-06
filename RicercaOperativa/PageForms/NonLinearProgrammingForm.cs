@@ -61,22 +61,18 @@ namespace OperationalResearch.PageForms
             pythonInput.Clear();
             string libs = "import math" + Environment.NewLine;
             string comment =
-                "# Expect input to be made of floats. Return the same number of floats as a tuple" + Environment.NewLine +
-                "# Return a single float in the main function" + Environment.NewLine +
-                "# Return the same number of floats as a tuple in the gradient function" + Environment.NewLine +
-                "# Use 4 spaces instead of tabs!" + Environment.NewLine +
-                "# Do not import strange libraries" + Environment.NewLine;
+                "# Expect input to be made of floats" + Environment.NewLine +
+                "# Return a single float in the main function and a tuple in its gradient" + Environment.NewLine +
+                "# Use 4 spaces instead of tabs!" + Environment.NewLine;
 
             IEnumerable<string> xArray = Enumerable.Range(1, VariablesCount).Select(i => $"x{i}");
             IEnumerable<string> xFloatArray = xArray.Select(x => $"{x}: float");
             IEnumerable<string> xSquareArray = xArray.Select(x => $"{x}**2");
             string f =
                 "def f(" + string.Join(", ", xFloatArray.ToArray()) + "):" + Environment.NewLine +
-                "    # The function to minimize, remember to use 4 spaces instead of tabs" + Environment.NewLine +
                 "    return (" + string.Join(" + ", xSquareArray.ToArray()) + ") / 2" + Environment.NewLine;
             string grad =
                 "def gradF(" + string.Join(", ", xFloatArray.ToArray()) + "):" + Environment.NewLine +
-                "    # Code here, remember to use 4 spaces instead of tabs" + Environment.NewLine +
                 "    return " + string.Join(", ", xArray.ToArray()) + Environment.NewLine;
             string wholeScript =
                 libs +

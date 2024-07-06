@@ -50,9 +50,9 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(24, 22);
+            label1.Location = new Point(27, 29);
             label1.Name = "label1";
-            label1.Size = new Size(100, 15);
+            label1.Size = new Size(125, 20);
             label1.TabIndex = 0;
             label1.Text = "Number of nodes";
             // 
@@ -62,30 +62,28 @@
             matrix.AllowUserToDeleteRows = false;
             matrix.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             matrix.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            matrix.Location = new Point(10, 52);
-            matrix.Margin = new Padding(3, 2, 3, 2);
+            matrix.Location = new Point(12, 141);
             matrix.Name = "matrix";
             matrix.RowHeadersWidth = 51;
-            matrix.Size = new Size(679, 240);
+            matrix.Size = new Size(874, 430);
             matrix.TabIndex = 1;
             // 
             // n
             // 
-            n.Location = new Point(147, 20);
-            n.Margin = new Padding(3, 2, 3, 2);
+            n.Location = new Point(168, 27);
             n.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
             n.Name = "n";
-            n.Size = new Size(131, 23);
+            n.Size = new Size(98, 27);
             n.TabIndex = 2;
             n.Value = new decimal(new int[] { 5, 0, 0, 0 });
             // 
             // setNumBtn
             // 
+            setNumBtn.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             setNumBtn.Cursor = Cursors.Hand;
-            setNumBtn.Location = new Point(297, 12);
-            setNumBtn.Margin = new Padding(3, 2, 3, 2);
+            setNumBtn.Location = new Point(281, 25);
             setNumBtn.Name = "setNumBtn";
-            setNumBtn.Size = new Size(97, 35);
+            setNumBtn.Size = new Size(111, 60);
             setNumBtn.TabIndex = 3;
             setNumBtn.Text = "Apply";
             setNumBtn.UseVisualStyleBackColor = true;
@@ -93,12 +91,11 @@
             // 
             // findHamiltonCycleBtn
             // 
-            findHamiltonCycleBtn.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            findHamiltonCycleBtn.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             findHamiltonCycleBtn.Cursor = Cursors.Hand;
-            findHamiltonCycleBtn.Location = new Point(10, 296);
-            findHamiltonCycleBtn.Margin = new Padding(3, 2, 3, 2);
+            findHamiltonCycleBtn.Location = new Point(12, 92);
             findHamiltonCycleBtn.Name = "findHamiltonCycleBtn";
-            findHamiltonCycleBtn.Size = new Size(157, 51);
+            findHamiltonCycleBtn.Size = new Size(868, 45);
             findHamiltonCycleBtn.TabIndex = 4;
             findHamiltonCycleBtn.Text = "Find Hamiltonian Cycle";
             findHamiltonCycleBtn.UseVisualStyleBackColor = true;
@@ -106,77 +103,82 @@
             // 
             // considerSymmetric
             // 
-            considerSymmetric.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             considerSymmetric.AutoSize = true;
             considerSymmetric.Checked = true;
             considerSymmetric.CheckState = CheckState.Checked;
-            considerSymmetric.Location = new Point(494, 313);
+            considerSymmetric.Location = new Point(27, 61);
+            considerSymmetric.Margin = new Padding(3, 4, 3, 4);
             considerSymmetric.Name = "considerSymmetric";
-            considerSymmetric.Size = new Size(194, 19);
+            considerSymmetric.Size = new Size(239, 24);
             considerSymmetric.TabIndex = 6;
             considerSymmetric.Text = "Consider Problem as symmetric";
             considerSymmetric.UseVisualStyleBackColor = true;
             // 
             // k
             // 
-            k.Location = new Point(446, 19);
-            k.Margin = new Padding(3, 2, 3, 2);
+            k.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            k.Location = new Point(499, 19);
             k.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
             k.Name = "k";
-            k.Size = new Size(38, 23);
+            k.Size = new Size(43, 27);
             k.TabIndex = 9;
             k.Value = new decimal(new int[] { 5, 0, 0, 0 });
             // 
             // label2
             // 
+            label2.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label2.AutoSize = true;
-            label2.Location = new Point(411, 22);
+            label2.Location = new Point(457, 23);
             label2.Name = "label2";
-            label2.Size = new Size(28, 15);
+            label2.Size = new Size(36, 20);
             label2.TabIndex = 10;
             label2.Text = "K = ";
             // 
             // label3
             // 
+            label3.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label3.AutoSize = true;
-            label3.Location = new Point(501, 24);
+            label3.Location = new Point(398, 57);
             label3.Name = "label3";
-            label3.Size = new Size(75, 15);
+            label3.Size = new Size(96, 20);
             label3.TabIndex = 11;
             label3.Text = "Start node = ";
             // 
             // startNode
             // 
-            startNode.Location = new Point(582, 20);
-            startNode.Margin = new Padding(3, 2, 3, 2);
+            startNode.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            startNode.Location = new Point(497, 55);
             startNode.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
             startNode.Name = "startNode";
-            startNode.Size = new Size(39, 23);
+            startNode.Size = new Size(45, 27);
             startNode.TabIndex = 12;
             startNode.Value = new decimal(new int[] { 5, 0, 0, 0 });
             // 
             // branchAndBound
             // 
-            branchAndBound.Location = new Point(178, 324);
+            branchAndBound.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            branchAndBound.Location = new Point(560, 56);
+            branchAndBound.Margin = new Padding(3, 4, 3, 4);
             branchAndBound.Name = "branchAndBound";
             branchAndBound.PlaceholderText = "1-2, 2-3";
-            branchAndBound.Size = new Size(306, 23);
+            branchAndBound.Size = new Size(320, 27);
             branchAndBound.TabIndex = 13;
             // 
             // label4
             // 
+            label4.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label4.AutoSize = true;
-            label4.Location = new Point(178, 304);
+            label4.Location = new Point(560, 23);
             label4.Name = "label4";
-            label4.Size = new Size(136, 15);
+            label4.Size = new Size(170, 20);
             label4.TabIndex = 14;
             label4.Text = "Branch and Bound order";
             // 
             // TSPForm
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(700, 355);
+            ClientSize = new Size(898, 583);
             Controls.Add(label4);
             Controls.Add(branchAndBound);
             Controls.Add(startNode);
@@ -190,7 +192,7 @@
             Controls.Add(matrix);
             Controls.Add(label1);
             Icon = (Icon)resources.GetObject("$this.Icon");
-            Margin = new Padding(3, 2, 3, 2);
+            MinimumSize = new Size(916, 630);
             Name = "TSPForm";
             Text = "Travelling Salesman's Problem";
             Load += TravellingSalesmanProblemForm_Load;
