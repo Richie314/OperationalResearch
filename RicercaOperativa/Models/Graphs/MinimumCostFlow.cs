@@ -315,7 +315,7 @@ namespace OperationalResearch.Models.Graphs
                 }
                 foreach (var cycle in Cycles)
                 {
-                    await Writer.Indent().WriteLineAsync(
+                    await Writer.Indent.WriteLineAsync(
                         $"T U {{ {Edges.ElementAt(pq)} }} has cycle: {string.Join("-", cycle.Select(i => i + 1))}");
                 }
                 var C = Cycles.First();
@@ -505,7 +505,7 @@ namespace OperationalResearch.Models.Graphs
             // Min-cut and max-flow
             try
             {
-                if (!await MinFlowMaxCut(startNode.Value, endNode.Value, Writer.Indent()))
+                if (!await MinFlowMaxCut(startNode.Value, endNode.Value, Writer.Indent))
                 {
                     await Writer.WriteLineAsync(
                         $"Could not calculate min-cut from {startNode.Value} to {endNode.Value}");
@@ -520,7 +520,7 @@ namespace OperationalResearch.Models.Graphs
             // Minimum paths tree
             try
             {
-                var dijkstra = await Dijkstra(Writer.Indent(), startNode: startNode.Value);
+                var dijkstra = await Dijkstra(Writer.Indent, startNode: startNode.Value);
                 if (dijkstra is null)
                 {
                     await Writer.WriteLineAsync(

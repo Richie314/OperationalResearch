@@ -98,6 +98,13 @@ namespace OperationalResearch.Extensions
             this IEnumerable<EdgeType> edges) where EdgeType : Edge =>
             edges.Select(e => e.To).Distinct();
 
+        public static IEnumerable<EdgeType> TouchNode<EdgeType>(this IEnumerable<EdgeType> edges, int node) 
+            where EdgeType : Edge =>
+            edges.Where(e => e.From == node || e.To == node);
+        public static IEnumerable<EdgeType> DoNotTouchNode<EdgeType>(this IEnumerable<EdgeType> edges, int node)
+            where EdgeType : Edge =>
+            edges.Where(e => e.From != node && e.To != node);
+
         public static IEnumerable<IEnumerable<T>> AllPermutations<T>(this IEnumerable<T> vector)
         {
             ArgumentNullException.ThrowIfNull(vector, nameof(vector));

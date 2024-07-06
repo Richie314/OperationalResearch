@@ -50,7 +50,7 @@ namespace OperationalResearch.Models.Graphs
             Writer ??= IndentWriter.Null;
 
             int[] p = Enumerable.Repeat(-2, N).ToArray();
-            Vector π = Enumerable.Repeat(Fraction.FromDouble(int.MaxValue), N).ToArray();
+            Vector π = Enumerable.Repeat(Fraction.PositiveInfinity, N).ToArray();
             int[] Q = [startNode];
 
             p[startNode] = startNode;

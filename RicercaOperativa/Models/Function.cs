@@ -75,6 +75,18 @@ namespace OperationalResearch.Models
             {
                 return "null";
             }
+            if (x.Value.IsNaN)
+            {
+                return "NaN";
+            }
+            if (x.Value.IsPositiveInfinity)
+            {
+                return "+∞";
+            }
+            if (x.Value.IsNegativeInfinity)
+            {
+                return "-∞";
+            }
             string s = x.Value.ToString();
             if (s.Length < 12)
                 return s;

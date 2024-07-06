@@ -214,8 +214,8 @@ namespace OperationalResearch.Models
                     x[task, worker] = model.NewBoolVar($"x[{task},{worker}]");
                 }
             }
-            await Writer.Indent().WriteLineAsync("Calculating representation of X...");
-            await Writer.Indent().WriteLineAsync($"x = {GetXRepresentation()}");
+            await Writer.Indent.WriteLineAsync("Calculating representation of X...");
+            await Writer.Indent.WriteLineAsync($"x = {GetXRepresentation()}");
 
             await Writer.WriteLineAsync("Setting constarints...");
             // Each worker is assigned to at most max task size.

@@ -67,7 +67,7 @@ namespace OperationalResearch.Models
             {
                 await Writer.WriteLineAsync();
                 await Writer.WriteLineAsync();
-                Writer.WriteLine($"Step #{step}:");
+                await Writer.WriteLineAsync($"Step #{step}:");
 
                 Matrix A_B = A[B];
                 await Writer.WriteLineAsync($"A_B = {A_B}");
@@ -132,7 +132,7 @@ namespace OperationalResearch.Models
 
                     try
                     {
-                        await Gomory(Writer.Indent(), P, x, B);
+                        await Gomory(Writer.Indent, P, x, B);
                     } catch (Exception ex)
                     {
                         await Writer.WriteLineAsync(

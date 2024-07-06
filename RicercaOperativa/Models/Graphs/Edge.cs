@@ -77,11 +77,20 @@ namespace OperationalResearch.Models.Graphs
                 return false;
             }
 
-            throw new NotImplementedException();
+            return this == (Edge)obj;
         }
 
         public override int GetHashCode() => base.GetHashCode();
 
         public object Clone() => MemberwiseClone();
+
+        private object GetReversed()
+        {
+            var clone = Clone();
+            ((Edge)clone).From = To;
+            ((Edge)clone).To = From;
+            return clone;
+        }
+        public object Reversed { get => GetReversed(); }
     }
 }

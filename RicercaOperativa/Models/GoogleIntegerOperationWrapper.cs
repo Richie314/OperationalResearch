@@ -106,7 +106,7 @@ namespace OperationalResearch.Models
 #if DEBUG
                 if (!string.IsNullOrWhiteSpace(ex.StackTrace))
                 {
-                    await Writer.Indent().WriteLineAsync($"Stack Trace: {ex.StackTrace}");
+                    await Writer.Indent.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
                 }
 #endif
                 return false;
@@ -142,7 +142,7 @@ namespace OperationalResearch.Models
 #if DEBUG
                 if (!string.IsNullOrWhiteSpace(ex.StackTrace))
                 {
-                    await Writer.Indent().WriteLineAsync($"Stack Trace: {ex.StackTrace}");
+                    await Writer.Indent.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
                 }
 #endif
                 return false;

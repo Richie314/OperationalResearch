@@ -370,6 +370,14 @@ namespace OperationalResearch.Models.Elements
         {
             get => v.Find(x => x.IsNegative);
         }
+        public int[] FractionaryIndeces
+        {
+            get => v.Find(x => x.Denominator != 1);
+        }
+        public int[] integerIndeces
+        {
+            get => v.Find(x => x.Denominator == 1);
+        }
 
         #endregion
 

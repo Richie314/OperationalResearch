@@ -131,13 +131,13 @@ namespace OperationalResearch.Models.Python
             await Writer.WriteLineAsync($"λ = {λ}");
             if (λ.IsPositiveOrZero) // lambda >= 0
             {
-                await Writer.Indent().WriteLineAsync($"λ >= 0.");
-                await Writer.Indent().WriteLineAsync($"Exit with success.");
+                await Writer.Indent.WriteLineAsync($"λ >= 0.");
+                await Writer.Indent.WriteLineAsync($"Exit with success.");
                 return xk;
             }
             else
             {
-                await Writer.Indent().WriteLineAsync($"λ has at least one component below zero.");
+                await Writer.Indent.WriteLineAsync($"λ has at least one component below zero.");
             }
             // J has at least 1 element here
             // J == {} => dk == -gradF(xk)

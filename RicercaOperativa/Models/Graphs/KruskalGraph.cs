@@ -34,15 +34,15 @@ namespace OperationalResearch.Models.Graphs
             int h = 1;
             if (required is not null)
             {
-                var w = Writer.Indent();
-                foreach (var reqEdge in required)
+                var w = Writer.Indent;
+                foreach (var reqEdge in required.Order())
                 {
                     await w.WriteLineAsync($"Adding edge {reqEdge} int T as it's required");
                     T.Add(reqEdge);
                 }
             }
 
-            foreach (var e in edges)
+            foreach (var e in graph.Edges)
             {
                 if (T.Contains(e))
                 {
@@ -58,12 +58,12 @@ namespace OperationalResearch.Models.Graphs
                 var g2 = new Graph<EdgeType>(T2);
                 if (g2.HasCycle(symmetric))
                 {
-                    await Writer.Indent().WriteLineAsync($"T U {{ {e} }} has a cycle -> edge is DISCARDED");
+                    await Writer.Indent.WriteLineAsync($"T U {{ {e} }} has a cycle -> edge is DISCARDED");
                 }
                 else
                 {
                     T = T2;
-                    await Writer.Indent().WriteLineAsync($"T U {{ {e} }} has no cycle -> edge is CHOSEN");
+                    await Writer.Indent.WriteLineAsync($"T U {{ {e} }} has no cycle -> edge is CHOSEN");
                 }
 
                 await Writer.WriteLineAsync();
@@ -96,15 +96,21 @@ namespace OperationalResearch.Models.Graphs
 
             await Writer.WriteLineAsync($"Calculating {(symmetric ? "bidirectional" : "unidirectional")} {k + 1}-tree");
 
-            IEnumerable<EdgeType> KEdges = Edges.Where(edge => edge.From == k || edge.To == k).ToList();
+            IEnumerable<EdgeType> KEdges = Edges.TouchNode(k);
             await Writer.WriteLineAsync($"{k + 1}_edges: {Function.Print(KEdges)}");
 
-            IEnumerable<EdgeType> NonKEdges = Edges.Where(edge => edge.From != k && edge.To != k).ToList();
+            IEnumerable<EdgeType> NonKEdges = Edges.DoNotTouchNode(k);
             await Writer.WriteLineAsync($"non_{k + 1}_edges: {Function.Print(NonKEdges)}");
+
+            if (requiredEdges is not null)
+            {
+                await Writer.WriteLineAsync($"Required edges: {Function.Print(requiredEdges.Order())}");
+            }
 
             await Writer.WriteLineAsync($"Finding minimum spanning tree through Kruskal...");
             IEnumerable<EdgeType>? Tree = await KruskalMinimumSpanningTree(
-                NonKEdges, symmetric, Writer.Indent(), requiredEdges);
+                NonKEdges, symmetric, Writer.Indent, 
+                requiredEdges?.DoNotTouchNode(k));
 
             if (Tree is null)
             {
@@ -113,8 +119,40 @@ namespace OperationalResearch.Models.Graphs
             }
             await Writer.WriteLineAsync($"Kruskal MSP = {Function.Print(Tree)}");
 
+
+            var kTouchingReq = 
+                (requiredEdges ?? Enumerable.Empty<EdgeType>()).TouchNode(k);
+
             // Concat k-edges to the found tree
-            return Tree.Concat(KEdges.OrderByCost().Take(2));
+            var finaleTree = Tree
+                .Concat(kTouchingReq)
+                .Concat(KEdges.OrderByCost()
+                    .Where(e => !kTouchingReq.Contains(e))
+                    .Take(2 - kTouchingReq.Count())).Order();
+
+            // Check if the tree satisfies the requirementes
+            /*foreach (var reqEdge in requiredEdges ?? Enumerable.Empty<EdgeType>())
+            {
+                if (finaleTree.Contains(reqEdge))
+                {
+                    continue;
+                }
+                if (!symmetric)
+                {
+                    await Writer.WriteLineAsync($"Final {k + 1}-tree does not contain {reqEdge}!");
+                    await Writer.WriteLineAsync($"The tree would have been {Function.Print(finaleTree)}");
+                    return null;
+                }
+
+                if (finaleTree.Contains((EdgeType)reqEdge.Reversed))
+                {
+                    await Writer.WriteLineAsync($"Final {k + 1}-tree does not contain {(EdgeType)reqEdge.Reversed}!");
+                    await Writer.WriteLineAsync($"The tree would have been {Function.Print(finaleTree)}");
+                    return null;
+                }
+            }*/
+
+            return finaleTree;
         }
     }
 }

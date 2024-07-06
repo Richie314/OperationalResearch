@@ -310,7 +310,7 @@ namespace OperationalResearch.Models
             if (Boolean)
             {
                 await Writer.WriteLineAsync("Solving with branch and bound from left to right:");
-                var boolSol = await BooleanBranchAndBound([], Writer.Indent());
+                var boolSol = await BooleanBranchAndBound([], Writer.Indent);
                 if (boolSol is null)
                 {
                     await Writer.WriteLineAsync("Branch and bound could not solve the problem");
@@ -419,8 +419,8 @@ namespace OperationalResearch.Models
                     return null;
                 }
 
-                var Next0Res = await BooleanBranchAndBound([.. ChosenX, false], Writer.Indent());
-                var Next1Res = await BooleanBranchAndBound([.. ChosenX, true], Writer.Indent());
+                var Next0Res = await BooleanBranchAndBound([.. ChosenX, false], Writer.Indent);
+                var Next1Res = await BooleanBranchAndBound([.. ChosenX, true], Writer.Indent);
 
                 if (Next0Res is null)
                 {
