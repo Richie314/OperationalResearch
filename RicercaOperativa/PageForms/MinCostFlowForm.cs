@@ -25,9 +25,8 @@ namespace OperationalResearch.PageForms
             }
             while (matrix.Rows.Count < EdgeCount)
             {
-                string[] row = new string[matrix.ColumnCount];
-                matrix.Rows.Add(row);
-                matrix.Rows[matrix.Rows.Count - 1].Height = 20;
+                matrix.Rows.Add();
+                //matrix.Rows[matrix.Rows.Count - 1].Height = 23;
             }
 
             // Node balances grid
@@ -39,7 +38,7 @@ namespace OperationalResearch.PageForms
             while (balances.Rows.Count < NodeCount)
             {
                 balances.Rows.Add([""]);
-                balances.Rows[balances.Rows.Count - 1].Height = 20;
+                //balances.Rows[balances.Rows.Count - 1].Height = 20;
             }
         }
 

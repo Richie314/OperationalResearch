@@ -130,28 +130,6 @@ namespace OperationalResearch.Models.Graphs
                     .Where(e => !kTouchingReq.Contains(e))
                     .Take(2 - kTouchingReq.Count())).Order();
 
-            // Check if the tree satisfies the requirementes
-            /*foreach (var reqEdge in requiredEdges ?? Enumerable.Empty<EdgeType>())
-            {
-                if (finaleTree.Contains(reqEdge))
-                {
-                    continue;
-                }
-                if (!symmetric)
-                {
-                    await Writer.WriteLineAsync($"Final {k + 1}-tree does not contain {reqEdge}!");
-                    await Writer.WriteLineAsync($"The tree would have been {Function.Print(finaleTree)}");
-                    return null;
-                }
-
-                if (finaleTree.Contains((EdgeType)reqEdge.Reversed))
-                {
-                    await Writer.WriteLineAsync($"Final {k + 1}-tree does not contain {(EdgeType)reqEdge.Reversed}!");
-                    await Writer.WriteLineAsync($"The tree would have been {Function.Print(finaleTree)}");
-                    return null;
-                }
-            }*/
-
             return finaleTree;
         }
     }

@@ -36,12 +36,8 @@
     <Compile Update="PageForms\LinearProgrammingForm_Dual.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="PageForms\QuadraticProgrammingForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="PageForms\MinCostGenericAssignForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Update="PageForms\QuadraticProgrammingForm.cs" />
+    <Compile Update="PageForms\MinCostGenericAssignForm.cs" />
     <Compile Update="PageForms\MinCostFlowForm.cs" />
     <Compile Update="PageForms\TSPForm.cs" />
     <Compile Update="Properties\Resources.Designer.cs">
