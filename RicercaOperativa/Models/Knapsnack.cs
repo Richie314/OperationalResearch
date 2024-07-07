@@ -94,6 +94,8 @@ namespace OperationalResearch.Models
 
             Items = weights.Indices.Select(i => new Item(values[i], weights[i], volumes[i], labels[i])).ToArray();
         }
+        
+        
         private Knapsnack GetSubProblem(int[] chosenValues)
         {
             if (chosenValues.Length == 0)
@@ -116,6 +118,93 @@ namespace OperationalResearch.Models
                 values: RemainingItems.Select(i => i.Value).ToArray(),
                 labels: RemainingItems.Select(i => i.Label).ToArray());
         }
+
+        private Knapsnack GetSubProblem(Dictionary<int, int> setVariables)
+        {
+            if (setVariables.Count == 0)
+            {
+                return this;
+            }
+            if (setVariables.Count >= N)
+            {
+                throw new InvalidOperationException("No sub problem can be extracted");
+            }
+
+            Vector x = Vector.Zeros(N);
+            foreach (KeyValuePair<int, int> kvp in setVariables)
+            {
+                x[kvp.Key] = new Fraction(kvp.Value);
+            }
+            Fraction usedVolume = x * Volumes, usedWeight = x * Weights;
+
+
+            List<Item> RemainingItems = [];
+            foreach (var i in Enumerable.Range(0, N))
+            {
+                if (setVariables.ContainsKey(i)) 
+                    continue;
+                RemainingItems.Add(Items[i]);
+            }
+            
+            return new Knapsnack(
+                volume: TotalVolume - usedVolume,
+                weight: TotalWeight - usedWeight,
+                volumes: RemainingItems.Select(i => i.Volume).ToArray(),
+                weights: RemainingItems.Select(i => i.Weight).ToArray(),
+                values: RemainingItems.Select(i => i.Value).ToArray(),
+                labels: RemainingItems.Select(i => i.Label).ToArray());
+        }
+
+        private Knapsnack GetSubProblem(Dictionary<int, bool> setVariables) =>
+            GetSubProblem(
+                new Dictionary<int, int>(
+                    setVariables.Select((v, u) => new KeyValuePair<int, int>(v.Key, v.Value ? 1 : 0))
+                ));
+
+        private static bool[] BuildSolution(
+            Dictionary<int, bool> setVariables, IEnumerable<bool> remaining)
+        {
+            var v = Enumerable.Repeat(-1, setVariables.Count + remaining.Count()).ToArray();
+            foreach (var kvp in setVariables)
+            {
+                v[kvp.Key] = kvp.Value ? 1 : 0;
+            }
+            foreach (var r in remaining)
+            {
+                var index = v.IndexOf(-1);
+                v[index] = r ? 1 : 0;
+            }
+            if (v.IndexOf(-1) >= 0)
+            {
+                throw new DataMisalignedException("Not all variables were reconstructed");
+            }
+            return v.Select(i => i > 0).ToArray();
+        }
+
+        private static Vector BuildSolution(
+            Dictionary<int, bool> setVariables, Vector remaining)
+        {
+            if (remaining.NegativeIndexes.Length != 0)
+            {
+                throw new ArgumentException("Cannot give negative varibles in input");
+            }
+            Vector v = Vector.Repeat(Fraction.MinusOne, setVariables.Count + remaining.Size);
+            foreach (var kvp in setVariables)
+            {
+                v[kvp.Key] = kvp.Value ? Fraction.One : Fraction.Zero;
+            }
+            for (int i = 0; i < remaining.Size; i++)
+            {
+                var index = v.NegativeIndexes[0];
+                v[index] = remaining[i];
+            }
+            if (v.NegativeIndexes.Length != 0)
+            {
+                throw new DataMisalignedException("Not all variables were reconstructed");
+            }
+            return v;
+        }
+
         private string SolutionGain(Vector? x)
         {
             if (x is null || x.Size == 0)
@@ -132,22 +221,10 @@ namespace OperationalResearch.Models
             }
             return Values * x;
         }
-        private Fraction? Gain(int[]? x)
-        {
-            if (x is null || x.Length != N)
-            {
-                return null;
-            }
-            return Values * x.Select(q => new Fraction(q)).ToArray();
-        }
-        private Fraction? Gain(bool[]? x)
-        {
-            if (x is null || x.Length != N)
-            {
-                return null;
-            }
-            return Values * x.Select(q => q ? Fraction.One : Fraction.Zero).ToArray();
-        }
+        private Fraction? Gain(int[]? x) => 
+            Gain(x is null ? null : new Vector(x.Select(i => new Fraction(i)).ToArray()));
+        private Fraction? Gain(bool[]? x) =>
+            Gain(x?.Select(i => i ? 1 : 0).ToArray());
         public async Task<Vector?> UpperBound(
             IndentWriter? Writer = null, bool Boolean = false)
         {
@@ -271,17 +348,18 @@ namespace OperationalResearch.Models
                 if (vec is not null)
                 {
                     Fraction? gain = Gain(vec);
-                    if (gain.HasValue)
+                    if (!gain.HasValue)
                     {
-                        if (min.Size == 0 || gain.Value > minGain)
-                        {
-                            min = vec;
-                            minGain = gain.Value;
-                        }
+                        continue;
+                    }
+                    if (min.Size == 0 || gain.Value > minGain)
+                    {
+                        min = vec;
+                        minGain = gain.Value;
                     }
                 }
             }
-            return min.Get.Select(i => (int)i).ToArray();
+            return min.ToInt().ToArray();
         }
         public async Task<int[]?> Solve(IndentWriter? Writer, bool Boolean = false)
         {
@@ -306,17 +384,54 @@ namespace OperationalResearch.Models
             await Writer.WriteLineAsync("Upper bound (simplex): ");
             Vector UB = await UpperBound(Writer, Boolean) ?? Vector.Empty;
             await Writer.WriteLineAsync($"{UB} -> {SolutionGain(UB)}");
+            
+            await Writer.WriteLineAsync();
+            await Writer.WriteLineAsync();
+
 
             if (Boolean)
             {
                 await Writer.WriteLineAsync("Solving with branch and bound from left to right:");
-                var boolSol = await BooleanBranchAndBound([], Writer.Indent);
-                if (boolSol is null)
+                var ltrSol = await BooleanBranchAndBoundLeftToRight([], Writer.Indent);
+                
+                await Writer.WriteLineAsync();
+
+                await Writer.WriteLineAsync("Solving with branch and bound by setting fractionary variables:");
+                var fracSol = await BooleanBranchAndBoundFractionary([], Fraction.Zero, Writer.Indent);
+
+                if (ltrSol is null && fracSol is null)
                 {
                     await Writer.WriteLineAsync("Branch and bound could not solve the problem");
                     return null;
                 }
-                return boolSol.Select(q => q ? 1 : 0).ToArray();
+
+                if (ltrSol != fracSol)
+                {
+                    // Probably one method failed
+                    await Writer.WriteLineAsync();
+                    await Writer.WriteLineAsync("Solutions of BnB are different:");
+                    Fraction? ltrGain = Gain(ltrSol), fracGain = Gain(fracSol);
+                    Vector? ltrV = ltrSol is null ? null : new Vector(ltrSol.Select(i => i ? Fraction.One : Fraction.Zero).ToArray());
+                    Vector? fracV = ltrSol is null ? null : new Vector(ltrSol.Select(i => i ? Fraction.One : Fraction.Zero).ToArray());
+
+                    await Writer.Indent.WriteLineAsync(
+                        $"- Left to Right: {(ltrSol is null ? "null" : ltrV)} -> {Function.Print(ltrGain)}");
+                    await Writer.Indent.WriteLineAsync(
+                        $"- Fractionary: {(fracSol is null ? "null" : fracV)} -> {Function.Print(fracGain)}");
+                
+                    if (ltrSol is null || !ltrGain.HasValue)
+                    {
+                        return fracSol?.Select(i => i ? 1 : 0).ToArray();
+                    }
+                    if (fracSol is null || !fracGain.HasValue)
+                    {
+                        return ltrSol?.Select(i => i ? 1 : 0).ToArray();
+                    }
+                    return (ltrGain.Value > fracGain.Value ? ltrSol : fracSol)
+                        .Select(i => i ? 1 : 0).ToArray();
+                }
+                ltrSol ??= fracSol;
+                return ltrSol?.Select(q => q ? 1 : 0).ToArray();
             }
 
             int[] count = Enumerable.Repeat(0, N).ToArray(), best = Enumerable.Repeat(0, N).ToArray();
@@ -377,7 +492,10 @@ namespace OperationalResearch.Models
             Vector X = x.Select(xi => new Fraction(xi)).ToArray();
             return Weights * X <= TotalWeight && Volumes * X <= TotalVolume;
         }
-        public async Task<bool[]?> BooleanBranchAndBound(
+
+
+
+        public async Task<bool[]?> BooleanBranchAndBoundLeftToRight(
             bool[] ChosenX,
             IndentWriter? Writer = null)
         {
@@ -419,8 +537,8 @@ namespace OperationalResearch.Models
                     return null;
                 }
 
-                var Next0Res = await BooleanBranchAndBound([.. ChosenX, false], Writer.Indent);
-                var Next1Res = await BooleanBranchAndBound([.. ChosenX, true], Writer.Indent);
+                var Next0Res = await BooleanBranchAndBoundLeftToRight([.. ChosenX, false], Writer.Indent);
+                var Next1Res = await BooleanBranchAndBoundLeftToRight([.. ChosenX, true], Writer.Indent);
 
                 if (Next0Res is null)
                 {
@@ -450,6 +568,102 @@ namespace OperationalResearch.Models
                 return null;
             }
         }
+
+        public async Task<bool[]?> BooleanBranchAndBoundFractionary(
+            Dictionary<int, bool> ChosenX,
+            Fraction AlreadyGained,
+            IndentWriter? Writer = null)
+        {
+            Writer ??= IndentWriter.Null;
+            if (ChosenX.Count == N)
+            {
+                var xs = BuildSolution(ChosenX, []);
+                if (IsAcceptable(xs))
+                {
+                    var g = Gain(xs);
+                    var v = new Vector(xs.Select(x => x ? Fraction.One : Fraction.Zero));
+                    await Writer.WriteLineAsync(
+                        $"X = {v} -> {Function.Print(g)} is acceptable");
+                    return xs;
+                }
+                return null;
+            }
+
+            string[] xStr = Enumerable.Repeat("?", N).ToArray();
+            foreach (KeyValuePair<int, bool> kvp in ChosenX)
+            {
+                xStr[kvp.Key] = kvp.Value ? "1" : "0";
+            }
+            var X = "[ " + string.Join(", ", xStr) + " ]";
+
+            try
+            {
+                Knapsnack SubProblem = GetSubProblem(ChosenX);
+
+                var lb = await SubProblem.LowerBound(true);
+                if (lb is null)
+                {
+                    await Writer.WriteLineAsync($"Cutting X = {X} for missing lower bound");
+                    return null;
+                }
+
+                var ub = await SubProblem.UpperBound(null, true);
+                if (ub is null)
+                {
+                    await Writer.WriteLineAsync($"Cutting X = {X} for missing upper bound");
+                    return null;
+                }
+
+                Fraction 
+                    iv = SubProblem.Gain(lb) ?? Fraction.Zero + AlreadyGained, 
+                    sv = SubProblem.Gain(ub) ?? Fraction.Zero + AlreadyGained;
+
+                await Writer.WriteLineAsync($"lb = {Function.Print(iv)}, ub = {Function.Print(sv)}");
+                
+                // now we have bounds
+                if (sv >= iv)
+                {
+                    await Writer.WriteLineAsync(
+                        $"Cutting X = {X} for lower bound >= upper bound.");
+                    return null;
+                }
+
+                int[] fracIndex = BuildSolution(ChosenX, ub).FractionaryIndeces;
+                if (fracIndex.Length == 0)
+                {
+                    // Upper bound is optimal
+                    await Writer.WriteLineAsync($"Upper bound is optimal solution! (has no fractionary part)");
+                    return BuildSolution(ChosenX, ub.ToInt().Select(i => i > 0));
+                }
+
+                if (fracIndex.Length != 1)
+                {
+                    throw new Exception("There are multiple fractionary elements in upper bound");
+                }
+
+                int newIndex = fracIndex[0];
+                var instantiatedVars = new Dictionary<int, bool>(ChosenX);
+                
+                instantiatedVars[newIndex] = false;
+                var ubZero = await BooleanBranchAndBoundFractionary(
+                    instantiatedVars, AlreadyGained, Writer.Indent);
+                var ubZeroGain = Gain(ubZero);
+
+
+                instantiatedVars[newIndex] = true;
+                var ubOne = await BooleanBranchAndBoundFractionary(
+                    instantiatedVars, AlreadyGained + Items[newIndex].Value, Writer.Indent);
+                var ubOneGain = Gain(ubOne);
+
+                return ubZeroGain < ubOneGain ? ubZero : ubOne;
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+        }
+
+
 
         public async Task<bool> SolveFlow(IndentWriter? Writer, bool isBoolean = false)
         {
