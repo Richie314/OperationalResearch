@@ -105,42 +105,14 @@ namespace OperationalResearch.Extensions
             where EdgeType : Edge =>
             edges.Where(e => e.From != node && e.To != node);
 
-        public static IEnumerable<IEnumerable<T>> AllPermutations<T>(this IEnumerable<T> vector)
+        public static IEnumerable<IEnumerable<T>> AllPermutations<T>(this IEnumerable<T> list, int length)
         {
-            ArgumentNullException.ThrowIfNull(vector, nameof(vector));
-            if (!vector.Any())
-            {
-                return Enumerable.Empty<IEnumerable<T>>();
-            }
-            if (vector.Count() == 1)
-            {
-                return new List<IEnumerable<T>>() { vector };
-            }
-            if (vector.Count() == 2)
-            {
-                return new List<IEnumerable<T>>() { vector, vector.Reverse() };
-            }
-
-            List<IEnumerable<T>> startList = new ();
-            return PermuteEnumerable(vector.ToArray(), 0, vector.Count() - 1, startList);
+            if (length == 1)
+                return list.Select(t => new T[] { t });
+            return list.AllPermutations(length - 1)
+                .SelectMany(t => list.Where(o => !t.Contains(o)), (t1, t2) => t1.Concat([t2]));
         }
-        private static IList<IEnumerable<T>> PermuteEnumerable<T> (
-            T[] vector, 
-            int start, int end, 
-            IList<IEnumerable<T>> list)
-        {
-            if (start == end)
-            {
-                list.Add(vector.Copy());
-                return list;
-            }
-            for (var i = start; i <= end; i++)
-            {
-                vector.Swap(start, i);
-                PermuteEnumerable(vector, start + 1, end, list);
-                vector.Swap(start, i);
-            }
-            return list;
-        }
+        public static IEnumerable<IEnumerable<T>> OrderedPermutations<T>(this IEnumerable<T> list, int length) =>
+            list.AllPermutations<T>(length).Select(row => row.Order()).Distinct();
     }
 }

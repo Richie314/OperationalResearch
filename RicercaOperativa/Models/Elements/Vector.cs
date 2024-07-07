@@ -44,6 +44,11 @@ namespace OperationalResearch.Models.Elements
             return v.Select(Fraction.FromString).ToArray();
         }
 
+        public static Vector FromDouble(IEnumerable<double> v) =>
+            v.Select(Fraction.FromDouble).ToArray();
+        public static Vector FromDecimal(IEnumerable<decimal> v) =>
+            v.Select(Fraction.FromDecimal).ToArray();
+
         #endregion
 
         #region Converters

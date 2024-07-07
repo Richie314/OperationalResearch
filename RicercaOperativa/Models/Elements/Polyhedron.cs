@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Navigation;
 using Accord.Math;
 using Fractions;
+using OperationalResearch.Extensions;
 
 namespace OperationalResearch.Models.Elements
 {
@@ -56,6 +52,7 @@ namespace OperationalResearch.Models.Elements
 
         public int Cols { get => A.Cols; }
         public int Rows { get => A.Rows + (ForcePositive ? A.Cols : 0); }
+        public int[] AllRows { get => Enumerable.Range(0, Rows).ToArray(); }
 
         public Matrix GetMatrix()
         {
@@ -80,28 +77,76 @@ namespace OperationalResearch.Models.Elements
             Random rnd = Random.Shared;
             for (int guesses = 0; guesses < maxGuesses; guesses++) {
 
-                int[] B = [.. rnd.GetItems(A.RowsIndeces.ToArray(), A.Cols)];
-                int[] N = A.RowsIndeces.Where(i => !B.Contains(i)).ToArray();
-
-                Matrix A_B = A[B];
-                if (A_B.Det.IsZero)
+                int[] B = [.. rnd.GetItems(AllRows, A.Cols)];
+                if (OkBasis(GetMatrix(), GetVector(), B))
                 {
-                    continue;
-                }
-                Matrix A_B_inv = A_B.Inv;
-
-                Vector b_B = b[B];
-                Vector b_N = b[N];
-
-                Vector x = A_B_inv * b_B;
-                if ((A[N] * x) <= b_N)
-                {
-                    // Solution is acceptable => Basis is acceptable
                     return B.Sorted();
                 }
             }
             return null;
         }
+
+        private static Vector? BasisVertex(Matrix A, Vector b, IEnumerable<int> B)
+        {
+            try
+            {
+                Matrix A_B = A[B];
+                if (A_B.Det.IsZero)
+                {
+                    return null;
+                }
+                Matrix A_B_inv = A_B.Inv;
+
+                Vector b_B = b[B];
+
+                return A_B_inv * b_B;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static bool OkBasis(Matrix A, Vector b, IEnumerable<int> B)
+        {
+            int[] N = A.RowsIndeces.Where(i => !B.Contains(i)).ToArray();
+            try
+            {
+                Vector? x = BasisVertex(A, b, B);
+                if (x is null)
+                {
+                    return false;
+                }
+
+                // Solution is acceptable => Basis is acceptable
+                return (A[N] * x) <= b[N];
+            } catch
+            {
+                return false;
+            }
+        }
+
+        private IEnumerable<int[]> getAllBasis()
+        {
+            var allCombinations = AllRows.OrderedPermutations(this.A.Cols);
+            var A = GetMatrix();
+            var b = GetVector();
+            return allCombinations
+                .Where(B => OkBasis(A, b, B))
+                .Select(B => B.ToArray());
+        }
+
+        private IEnumerable<Vector> getVertices()
+        {
+            var A = GetMatrix();
+            var b = GetVector();
+            return getAllBasis().Select(B => BasisVertex(A, b, B) ?? Vector.Empty);
+        }
+        public IEnumerable<Vector> Vertices
+        { 
+            get => getVertices();
+        }
+
 
         public int[]? RandomDualBasis(Vector c, int maxGuesses = 1000)
         {

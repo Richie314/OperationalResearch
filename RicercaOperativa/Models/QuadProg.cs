@@ -34,7 +34,7 @@ namespace OperationalResearch.Models
 
             f = new QuadraticObjectiveFunction(
                 H.M.Apply(h => h.ToDouble()),
-                linearPart.Get.Select(x => x.ToDouble()).ToArray());
+                linearPart.ToDouble().ToArray());
             P = p;
             if (P.Cols != linearPart.Size)
             {
@@ -42,22 +42,38 @@ namespace OperationalResearch.Models
                     $"Matrix A has {P.Cols} columns but {linearPart.Size} were expected.");
             }
         }
+        private IEnumerable<LinearConstraint> GetConstraints()
+        {
+            List<LinearConstraint> constraints = [];
+            var A = P.GetMatrix();
+            var b = P.GetVector();
+            foreach (var i in P.AllRows)
+            {
+                constraints.Add(new LinearConstraint(numberOfVariables: A.Cols) { 
+                    CombinedAs = A[i].ToDouble().ToArray(),
+                    ShouldBe = ConstraintType.LesserThanOrEqualTo,
+                    Value = b[i].ToDouble()
+                });
+            }
+            return constraints;
+        }
+
         private GoldfarbIdnani Solver
         {
-            get => new(
-            function: f,
-            constraintMatrix: P.A.M.Apply(a => a.ToDouble()),
-            constraintValues: P.b.ToDouble().ToArray());
+            get => new(function: f, constraints: GetConstraints());
         }
-        private static Vector? GetSolution(GoldfarbIdnani solver)
+        private static Tuple<Vector, Fraction, Vector>? GetSolution(GoldfarbIdnani solver)
         {
             if (solver.Status == GoldfarbIdnaniStatus.NoPossibleSolution)
             {
                 return null;
             }
-            return solver.Solution.Select(Fraction.FromDouble).ToArray();
+            return new(
+                Vector.FromDouble(solver.Solution),
+                Fraction.FromDouble(solver.Value),
+                Vector.FromDouble(solver.Lagrangian));
         }
-        public Vector? Minimize()
+        public Tuple<Vector, Fraction, Vector>? Minimize()
         {
             var solver = Solver;
             if (!solver.Minimize())
@@ -66,7 +82,7 @@ namespace OperationalResearch.Models
             }
             return GetSolution(solver);
         }
-        public Vector? Maximize()
+        public Tuple<Vector, Fraction, Vector>? Maximize()
         {
             var solver = Solver;
             if (!solver.Maximize())
@@ -82,14 +98,15 @@ namespace OperationalResearch.Models
             try
             {
                 await Writer.WriteLineAsync("Finding min through Accord.Math.QuadProg");
-                Vector? x = Minimize();
-                if (x is null)
+                Tuple<Vector, Fraction, Vector>? sol = Minimize();
+                if (sol is null)
                 {
                     await Writer.WriteLineAsync("Problem was not solved");
                     return false;
                 }
 
-                await Writer.WriteLineAsync($"X = {x}");
+                await Writer.WriteLineAsync($"X = {sol.Item1} -> {Function.Print(sol.Item2)}");
+                await Writer.WriteLineAsync($"λ = {sol.Item3}");
                 return true;
             }
             catch (Exception ex)
@@ -111,14 +128,15 @@ namespace OperationalResearch.Models
             try
             {
                 await Writer.WriteLineAsync("Finding max through Accord.Math.QuadProg");
-                Vector? x = Maximize();
-                if (x is null)
+                Tuple<Vector, Fraction, Vector>? sol = Maximize();
+                if (sol is null)
                 {
                     await Writer.WriteLineAsync("Problem was not solved");
                     return false;
                 }
 
-                await Writer.WriteLineAsync($"X = {x}");
+                await Writer.WriteLineAsync($"X = {sol.Item1} -> {Function.Print(sol.Item2)}");
+                await Writer.WriteLineAsync($"λ = {sol.Item3}");
                 return true;
             }
             catch (Exception ex)
