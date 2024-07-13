@@ -13,7 +13,18 @@ namespace OperationalResearch
             ApplicationConfiguration.Initialize();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            Application.ThreadException += Application_ThreadException;
             Application.Run(new StartForm());
+        }
+        static void Application_ThreadException(object sender, ThreadExceptionEventArgs e)
+        {
+            MessageBox.Show(
+                e.Exception.Message + Environment.NewLine + 
+                e.Exception.StackTrace ?? string.Empty,
+                "An exception caused the app to fail",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+            Application.Exit();
         }
     }
 }

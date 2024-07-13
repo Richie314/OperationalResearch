@@ -16,6 +16,8 @@ namespace OperationalResearch.Models
     internal class QuadProg
     {
         private readonly QuadraticObjectiveFunction f;
+        private readonly Matrix H;
+        private readonly Vector lin;
         private readonly Polyhedron P;
         public QuadProg(Matrix H, Vector linearPart, Polyhedron p)
         {
@@ -31,7 +33,8 @@ namespace OperationalResearch.Models
             {
                 throw new ArgumentException($"Linear coefficients vector was of invalid size! (got {linearPart.Size} but {H.Cols} was expected)");
             }
-
+            this.H = H;
+            lin = linearPart;
             f = new QuadraticObjectiveFunction(
                 H.M.Apply(h => h.ToDouble()),
                 linearPart.ToDouble().ToArray());
@@ -97,6 +100,7 @@ namespace OperationalResearch.Models
             Writer ??= IndentWriter.Null;
             try
             {
+                await GradientFlow(Writer);
                 await Writer.WriteLineAsync("Finding min through Accord.Math.QuadProg");
                 Tuple<Vector, Fraction, Vector>? sol = Minimize();
                 if (sol is null)
@@ -127,6 +131,7 @@ namespace OperationalResearch.Models
             Writer ??= IndentWriter.Null;
             try
             {
+                await GradientFlow(Writer);
                 await Writer.WriteLineAsync("Finding max through Accord.Math.QuadProg");
                 Tuple<Vector, Fraction, Vector>? sol = Maximize();
                 if (sol is null)
@@ -150,6 +155,46 @@ namespace OperationalResearch.Models
 #endif
                 return false;
             }
+        }
+
+        public Vector? WhereGradientIsZero()
+        {
+            if (H.Det.IsZero)
+            {
+                // There are no solutions
+                return null;
+            }
+            return H.Inv * (Fraction.MinusOne * lin);
+        }
+
+        public async Task<bool> GradientFlow(IndentWriter Writer)
+        {
+            try
+            {
+                var x = WhereGradientIsZero();
+                if (x is null)
+                {
+                    await Writer.WriteLineAsync("Could not find points where ∇f(x, y) = (0, 0)");
+                    return false;
+                }
+                await Writer.WriteLineAsync($"∇f({Function.Print(x[0])}, {Function.Print(x[1])}) = (0, 0)");
+                await Writer.WriteLineAsync($"f({Function.Print(x[0])}, {Function.Print(x[1])}) = {Function.Print(Evaluate(x))}");
+                await Writer.WriteLineAsync($"det(Hf) = {Function.Print(H.Det)}");
+                return true;
+            } catch
+            {
+                return false;
+            }
+        }
+
+        public Fraction Evaluate(Vector x)
+        {
+            var x1 = x[0];
+            var x2 = x[1];
+            var a = 2 * H[0, 0];
+            var b = H[0, 1];
+            var c = 2 * H[1, 1];
+            return a * x1 * x1 + c * x2 * x2 + b * x1 * x2 + x1 * lin[0] + x2 * lin[1];
         }
     }
 }
