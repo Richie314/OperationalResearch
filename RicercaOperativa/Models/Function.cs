@@ -116,5 +116,30 @@ namespace OperationalResearch.Models
 
         public static int Factorial(int n) =>
             n <= 1 ? 1 : n * Factorial(n - 1);
+
+        public static Fraction Min(Fraction a, params Fraction[] b)
+        { 
+            if (b.Length == 0)
+            {
+                return a;
+            }
+            if (b.Length == 1)
+            {
+                return a < b[0] ? a : b[0];
+            }
+            return Min(a < b[0] ? a : b[0], b.Skip(1).ToArray());
+        }
+        public static Fraction Max(Fraction a, params Fraction[] b)
+        {
+            if (b.Length == 0)
+            {
+                return a;
+            }
+            if (b.Length == 1)
+            {
+                return a > b[0] ? a : b[0];
+            }
+            return Max(a > b[0] ? a : b[0], b.Skip(1).ToArray());
+        }
     }
 }

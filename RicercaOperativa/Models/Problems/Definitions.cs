@@ -90,7 +90,8 @@ namespace OperationalResearch.Models.Problems
             Fraction? totalWeight, 
             bool isBoolean = false) : this(
                 Polyhedron.FromRow(volumes, totalVolume) & 
-                    (weights is not null && totalWeight.HasValue ? Polyhedron.FromRow(weights, totalWeight.Value) : null), 
+                    (weights is not null && totalWeight.HasValue ? 
+                Polyhedron.FromRow(weights, totalWeight.Value) : null), 
                 revenues, 
                 isBoolean) { }
 

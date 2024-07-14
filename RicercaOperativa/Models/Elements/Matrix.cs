@@ -324,7 +324,8 @@ namespace OperationalResearch.Models.Elements
             }
             return AddRow(arr.First()).AddRows(arr.Skip(1));
         }
-        public Matrix AddRows(Matrix m) => AddRows(m[m.RowsIndeces]);
+        private IEnumerable<Vector> getRows() => RowsIndeces.Select(i => new Vector(m.GetRow(i)));
+        public Matrix AddRows(Matrix m) => AddRows(m.getRows());
         public Matrix Copy() => new Matrix(M.Copy());
     }
 }

@@ -138,9 +138,16 @@ namespace OperationalResearch.Models.Elements
 
         private IEnumerable<Vector> getVertices()
         {
-            var A = GetMatrix();
-            var b = GetVector();
-            return getAllBasis().Select(B => BasisVertex(A, b, B) ?? Vector.Empty);
+            try
+            {
+                var A = GetMatrix();
+                var b = GetVector();
+                return getAllBasis().Select(B => BasisVertex(A, b, B) ?? Vector.Empty);
+            }
+            catch
+            {
+                return Enumerable.Empty<Vector>();
+            }
         }
         public IEnumerable<Vector> Vertices
         { 
@@ -208,8 +215,8 @@ namespace OperationalResearch.Models.Elements
                 vector: mat.Select(row => row.Last()).ToArray(),
                 ForcePositive: ForcePositive);
 
-        public static Polyhedron FromRow(Vector matrixRow, Fraction limit) =>
-            new Polyhedron(matrixRow.Row, new Vector(limit), false);
+        public static Polyhedron FromRow(Vector matrixRow, Fraction limit, bool xPos = false) =>
+            new Polyhedron(matrixRow.Row, new Vector(limit), xPos);
 
         public Polyhedron Copy() => new Polyhedron(A.Copy(), b.Copy(), ForcePositive);
         public Polyhedron RemoveEquation(int index) =>

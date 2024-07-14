@@ -1,8 +1,5 @@
 ﻿using Accord.Math;
 using Fractions;
-using Microsoft.Scripting.Runtime;
-using System;
-using System.Collections.Generic;
 using Microsoft.Scripting.Utils;
 using OperationalResearch.Extensions;
 using OperationalResearch.Models.Elements;
@@ -231,22 +228,24 @@ namespace OperationalResearch.Models
             Writer ??= IndentWriter.Null;
             await Writer.WriteLineAsync("Finding upper bound of the problem through simplex");
 
-            Matrix A = Weights.Row.AddRow(Volumes);
+            Matrix A = Volumes.Row;
+            Vector b = new Fraction[] { TotalVolume };
+            if (!Weights.IsZero && TotalWeight.IsPositive)
+            {
+                A = A.AddRow(Weights);
+                b = b.Concat([TotalWeight]);
+            }
             if (Boolean)
             {
-                A = A.AddRows(Matrix.Identity(N));
-            }
-            Vector b = new Fraction[] { TotalWeight, TotalVolume };
-            if (Boolean)
-            { 
                 // Add x <= 1
-                b = b.Concat(Enumerable.Repeat(Fraction.One, N));
+                A = A.AddRows(Matrix.Identity(N));
+                b = b.Concat(Vector.Ones(N));
             }
             await Writer.WriteLineAsync($"A|b = {A | b}");
             await Writer.WriteLineAsync($"c = {Values}");
-            return await 
-                new Simplex(new Polyhedron(A, b, forcePositive: true), Values)
-                .SolvePrimalMax(IndentWriter.Null, null, 50);
+            var p = new Polyhedron(A, b, forcePositive: true);
+            var s = new Simplex(p, Values);
+            return await s.SolvePrimalMax(IndentWriter.Null, null, 50);
         }
 
 
@@ -277,7 +276,7 @@ namespace OperationalResearch.Models
                     return Enumerable.Range(0, N).OrderBy(i => {
                         if (Items[i].Weight.IsZero)
                         {
-                            return new Fraction(int.MaxValue);
+                            return Fraction.PositiveInfinity;
                         }
                         return Items[i].Value / Items[i].Weight;
                     }).Reverse();
@@ -286,7 +285,7 @@ namespace OperationalResearch.Models
                     return Enumerable.Range(0, N).OrderBy(i => {
                         if (Items[i].Volume.IsZero)
                         {
-                            return new Fraction(int.MaxValue);
+                            return Fraction.PositiveInfinity;
                         }
                         return Items[i].Value / Items[i].Volume;
                     }).Reverse();
@@ -298,6 +297,9 @@ namespace OperationalResearch.Models
         {
             Writer ??= IndentWriter.Null;
             var OrderedIndices = await OrderByCriteria(Writer, order);
+
+            var labels = string.Join(", ", OrderedIndices.Select(i => Labels.ElementAt(i)));
+            await Writer.WriteLineAsync($"Elements = {labels}");
 
             var vals = Values[OrderedIndices];
             await Writer.WriteLineAsync($"Values = {vals}");
@@ -318,20 +320,22 @@ namespace OperationalResearch.Models
             Vector x = Enumerable.Repeat(Fraction.Zero, N).ToArray();
             for (int i = 0; i < N; i++)
             {
-                Fraction DeltaW = TotalWeight - currW, DeltaV = TotalVolume - currV;
+                Fraction 
+                    DeltaW = TotalWeight - currW, 
+                    DeltaV = TotalVolume - currV;
                 if (!DeltaW.IsPositive || !DeltaV.IsPositive)
                 {
                     break;
                 }
-                int maxOfThis = Boolean ? 1 : int.MaxValue;
-                int maxW = !w[i].IsZero ? (int)(DeltaW / w[i]) : int.MaxValue;
-                int maxV = !v[i].IsZero ? (int)(DeltaV / v[i]) : int.MaxValue;
-                int numOfThis = Math.Min(maxOfThis, Math.Min(maxW, maxV));
+                Fraction maxOfThis = Boolean ? Fraction.One : Fraction.PositiveInfinity;
+                Fraction maxW = !w[i].IsZero ? (DeltaW / w[i]).Floor() : Fraction.PositiveInfinity;
+                Fraction maxV = !v[i].IsZero ? (DeltaV / v[i]).Floor() : Fraction.PositiveInfinity;
+                Fraction numOfThis = Function.Min(maxOfThis, maxW, maxV);
                 currW += w[i] * numOfThis;
                 currV += v[i] * numOfThis;
                 x[i] = numOfThis;
             }
-            if (x.IsZero || x.Get.Contains(int.MaxValue))
+            if (x.IsZero || x.Get.Contains(Fraction.PositiveInfinity))
             {
                 return null;
             }
@@ -345,19 +349,24 @@ namespace OperationalResearch.Models
             foreach (OrderCriteria criteria in Enum.GetValues<OrderCriteria>())
             {
                 var vec = await LowerBoundBy(criteria, null, Boolean);
-                if (vec is not null)
+                if (vec is null)
                 {
-                    Fraction? gain = Gain(vec);
-                    if (!gain.HasValue)
-                    {
-                        continue;
-                    }
-                    if (min.Size == 0 || gain.Value > minGain)
-                    {
-                        min = vec;
-                        minGain = gain.Value;
-                    }
+                    continue;
                 }
+                Fraction? gain = Gain(vec);
+                if (!gain.HasValue)
+                {
+                    continue;
+                }
+                if (min.Size == 0 || gain.Value > minGain)
+                {
+                    min = vec;
+                    minGain = gain.Value;
+                }
+            }
+            if (min.IsEmpty)
+            {
+                return null;
             }
             return min.ToInt().ToArray();
         }
@@ -582,6 +591,7 @@ namespace OperationalResearch.Models
                 {
                     var g = Gain(xs);
                     var v = new Vector(xs.Select(x => x ? Fraction.One : Fraction.Zero));
+                    await Writer.WriteLineAsync();
                     await Writer.WriteLineAsync(
                         $"X = {v} -> {Function.Print(g)} is acceptable");
                     return xs;
@@ -598,33 +608,36 @@ namespace OperationalResearch.Models
 
             try
             {
+                await Writer.WriteLineAsync($"X = {X}");
                 Knapsnack SubProblem = GetSubProblem(ChosenX);
 
                 var lb = await SubProblem.LowerBound(true);
                 if (lb is null)
                 {
-                    await Writer.WriteLineAsync($"Cutting X = {X} for missing lower bound");
+                    await Writer.WriteLineAsync($"Cutting X for missing lower bound");
                     return null;
                 }
 
                 var ub = await SubProblem.UpperBound(null, true);
                 if (ub is null)
                 {
-                    await Writer.WriteLineAsync($"Cutting X = {X} for missing upper bound");
+                    await Writer.WriteLineAsync($"Cutting X for missing upper bound");
                     return null;
                 }
 
                 Fraction 
                     iv = SubProblem.Gain(lb) ?? Fraction.Zero + AlreadyGained, 
                     sv = SubProblem.Gain(ub) ?? Fraction.Zero + AlreadyGained;
+                iv = iv.Floor();
+                sv = sv.Floor();
 
                 await Writer.WriteLineAsync($"lb = {Function.Print(iv)}, ub = {Function.Print(sv)}");
                 
                 // now we have bounds
-                if (sv >= iv)
+                if (iv >= sv)
                 {
                     await Writer.WriteLineAsync(
-                        $"Cutting X = {X} for lower bound >= upper bound.");
+                        $"Cutting X for lower bound >= upper bound.");
                     return null;
                 }
 

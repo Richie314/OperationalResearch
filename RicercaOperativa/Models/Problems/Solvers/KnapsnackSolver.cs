@@ -1,10 +1,6 @@
-﻿using OperationalResearch.Extensions;
+﻿using Fractions;
+using OperationalResearch.Extensions;
 using OperationalResearch.Models.Elements;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OperationalResearch.Models.Problems.Solvers
 {
@@ -29,11 +25,11 @@ namespace OperationalResearch.Models.Problems.Solvers
             Domain = domain;
             CoDomain = codomain;
             Knapsnack = new(
-                volume: domain.b[0],
-                weight: domain.b[1],
                 values: codomain,
                 volumes: domain.A[0],
-                weights: domain.A[0]);
+                volume: domain.b[0],
+                weight: domain.b.Size > 1 ? domain.b[1] : Fraction.One,
+                weights: domain.A.Rows > 1 ? domain.A[1] : Vector.Zeros(domain.A.Cols));
         }
     }
 }

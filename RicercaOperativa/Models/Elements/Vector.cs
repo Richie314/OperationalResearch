@@ -405,7 +405,7 @@ namespace OperationalResearch.Models.Elements
             return Get.Concat(x2.Get).ToArray();
         }
         public Vector Concat(IEnumerable<Fraction>? x2) =>
-            x2 is null ? this : Concat((Vector)x2.ToArray());
+            x2 is null ? this : Concat((Vector?)x2.ToArray());
 
         public static Vector Sum(IEnumerable<Vector> vectors)
         {
