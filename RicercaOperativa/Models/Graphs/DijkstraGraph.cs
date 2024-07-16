@@ -28,9 +28,10 @@ namespace OperationalResearch.Models.Graphs
             public Graph<Edge> Graph()
             {
                 List<Edge> edges = [];
-                for (int dest = 0; dest < p.Length; dest++)
+                for (int dest = p.Length - 1; dest >= 0; dest--)
                 {
-                    if (p[dest] < 0) continue;
+                    if (p[dest] < 0) 
+                        continue;
                     edges.Add(new Edge(from: p[dest], dest));
                 }
                 return new Graph<Edge>(edges);
@@ -54,7 +55,7 @@ namespace OperationalResearch.Models.Graphs
             int[] Q = [startNode];
 
             p[startNode] = startNode;
-            π[startNode] = -1;
+            π[startNode] = Fraction.MinusOne;
 
             await Writer.WriteLineAsync("Dijkstra starting...");
             await Writer.WriteLineAsync("Initial condition:");
@@ -71,10 +72,10 @@ namespace OperationalResearch.Models.Graphs
                 await Writer.WriteLineAsync($"Iteration {k}:");
 
                 int u = Q[Q.Select(i => π[i]).ToArray().ArgMin()];//ArgMin == 0 -> min is with first element of Q
-                await Writer.WriteLineAsync($"u = {u + 1}, removed from Q");
+                await Writer.Indent.WriteLineAsync($"u = {u + 1}, removed from Q");
 
-                await Writer.WriteLineAsync($"prev[{u + 1}] = {p[u] + 1}");
-                await Writer.WriteLineAsync($"pi[{u + 1}] = {Function.Print(π[u])}");
+                await Writer.Indent.WriteLineAsync($"p[{u + 1}] = {p[u] + 1}");
+                await Writer.Indent.WriteLineAsync($"π[{u + 1}] = {Function.Print(π[u])}");
 
                 // Remove u from Q
                 Q = Q.Where(i => i != u).ToArray();
@@ -89,23 +90,23 @@ namespace OperationalResearch.Models.Graphs
                         if (π[v] > π[u] + edge.Cost)
                         {
                             // Violates Bellman's condition
-                            await Writer.WriteLineAsync($"Edge {edge} violates Bellman's condition:");
-                            await Writer.WriteLineAsync(
+                            await Writer.Indent.WriteLineAsync($"Edge {edge} violates Bellman's condition:");
+                            await Writer.Indent.Indent.WriteLineAsync(
                                 $"{Function.Print(π[v])} > {Function.Print(π[u])} + {Function.Print(edge.Cost)} = {Function.Print(π[u] + edge.Cost)}");
 
                             π[v] = π[u] + edge.Cost;
                             p[v] = u;
                             updated[v] = true;
                             Q = Q.Concatenate(v); Q.Sort();
-                            await Writer.WriteLineAsync($"Q = Q U {{ {v + 1} }} = {Function.Print(Q)}");
+                            await Writer.Indent.WriteLineAsync($"Q = Q U {{ {v + 1} }} = {Function.Print(Q)}");
                         }
                     }
                 }
 
-                await Writer.WriteLineAsync("Distances: [updated]");
+                await Writer.Indent.WriteLineAsync("Distances: [updated]");
                 for (int i = 0; i < N; i++)
                 {
-                    await Writer.WriteAsync((updated[i] ? $"[{Function.Print(π[i])}]" : $"{Function.Print(π[i])}") + "  ");
+                    await Writer.Indent.WriteAsync((updated[i] ? $"[{Function.Print(π[i])}]" : $"{Function.Print(π[i])}") + "  ");
                 }
                 await Writer.WriteLineAsync();
                 await Writer.WriteLineAsync();
@@ -118,6 +119,15 @@ namespace OperationalResearch.Models.Graphs
                     await Writer.WriteLineAsync(
                         $"Maxinum number of iterations ({maxIterations.Value}) exceeded. Could not solve the problem");
                     return null;
+                }
+            }
+
+            for (int i = 0; i < p.Length; i++)
+            {
+                if (p[i] == i)
+                {
+                    await Writer.Indent.WriteLineAsync(
+                        $"It appears that predecessor  that the predecessor of node {i + 1} is the node {i + 1} itself!");
                 }
             }
 

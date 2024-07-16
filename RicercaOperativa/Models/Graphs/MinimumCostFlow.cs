@@ -505,6 +505,8 @@ namespace OperationalResearch.Models.Graphs
             // Min-cut and max-flow
             try
             {
+                await Writer.WriteLineAsync();
+                await Writer.WriteLineAsync();
                 if (!await MinFlowMaxCut(startNode.Value, endNode.Value, Writer.Indent))
                 {
                     await Writer.WriteLineAsync(
@@ -520,6 +522,8 @@ namespace OperationalResearch.Models.Graphs
             // Minimum paths tree
             try
             {
+                await Writer.WriteLineAsync();
+                await Writer.WriteLineAsync();
                 var dijkstra = await Dijkstra(Writer.Indent, startNode: startNode.Value);
                 if (dijkstra is null)
                 {
@@ -527,9 +531,17 @@ namespace OperationalResearch.Models.Graphs
                         $"Could not calculate Minimum paths tree from {startNode.Value}");
                 } else
                 {
-                    await Writer.WriteLineAsync($"Final p = {dijkstra.p}");
+                    await Writer.WriteLineAsync($"Final p = {Function.Print(dijkstra.p)}");
                     await Writer.WriteLineAsync($"Final π = {dijkstra.π}");
-                    await Writer.WriteLineAsync($"Minimum paths {startNode.Value}-tree = {dijkstra.Graph()}");
+                    try
+                    {
+                        var g = dijkstra.Graph();
+                        await Writer.WriteLineAsync($"Minimum paths {startNode.Value}-tree = {dijkstra.Graph()}");
+                    }
+                    catch (Exception ex) {
+                        await Writer.WriteLineAsync($"Exception during reconstruction of graph from vector of predecessors:");
+                        await Writer.Indent.WriteLineAsync(ex.Message);
+                    }
                 }
             }
             catch (Exception ex)

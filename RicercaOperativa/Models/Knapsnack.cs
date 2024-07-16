@@ -49,6 +49,7 @@ namespace OperationalResearch.Models
         public Vector Weights { get => Items.Select(x => x.Weight).ToArray(); }
         public Vector Volumes { get => Items.Select(x => x.Volume).ToArray(); }
         public IEnumerable<string> Labels { get => Items.Select(x => x.Label); }
+        public bool UsesWeights { get => !Weights.IsZero && TotalWeight.IsPositive; }
         public Knapsnack(
             Fraction volume, Fraction weight,
             Vector weights, Vector values, Vector volumes, string[]? labels = null)
@@ -230,7 +231,7 @@ namespace OperationalResearch.Models
 
             Matrix A = Volumes.Row;
             Vector b = new Fraction[] { TotalVolume };
-            if (!Weights.IsZero && TotalWeight.IsPositive)
+            if (UsesWeights)
             {
                 A = A.AddRow(Weights);
                 b = b.Concat([TotalWeight]);
@@ -348,6 +349,10 @@ namespace OperationalResearch.Models
             Fraction minGain = Fraction.Zero;
             foreach (OrderCriteria criteria in Enum.GetValues<OrderCriteria>())
             {
+                if (criteria == OrderCriteria.ByWeight || criteria == OrderCriteria.ByValueWeightRatio && !UsesWeights)
+                {
+                    continue;
+                }
                 var vec = await LowerBoundBy(criteria, null, Boolean);
                 if (vec is null)
                 {
@@ -378,14 +383,20 @@ namespace OperationalResearch.Models
             Vector ValueLB = await LowerBoundBy(OrderCriteria.ByValue, null, Boolean) ?? Vector.Empty;
             await Writer.WriteLineAsync($"- By value: {ValueLB} -> {SolutionGain(ValueLB)}");
 
-            Vector WeightLB = await LowerBoundBy(OrderCriteria.ByWeight, null, Boolean) ?? Vector.Empty;
-            await Writer.WriteLineAsync($"- By weight: {WeightLB} -> {SolutionGain(WeightLB)}");
+            if (UsesWeights)
+            {
+                Vector WeightLB = await LowerBoundBy(OrderCriteria.ByWeight, null, Boolean) ?? Vector.Empty;
+                await Writer.WriteLineAsync($"- By weight: {WeightLB} -> {SolutionGain(WeightLB)}");
+            }
 
             Vector VolumeLB = await LowerBoundBy(OrderCriteria.ByVolume, null, Boolean) ?? Vector.Empty;
             await Writer.WriteLineAsync($"- By volume: {VolumeLB} -> {SolutionGain(VolumeLB)}");
 
-            Vector Ratio1LB = await LowerBoundBy(OrderCriteria.ByValueWeightRatio, null, Boolean) ?? Vector.Empty;
-            await Writer.WriteLineAsync($"- By value / weight: {Ratio1LB} -> {SolutionGain(Ratio1LB)}");
+            if (UsesWeights)
+            {
+                Vector Ratio1LB = await LowerBoundBy(OrderCriteria.ByValueWeightRatio, null, Boolean) ?? Vector.Empty;
+                await Writer.WriteLineAsync($"- By value / weight: {Ratio1LB} -> {SolutionGain(Ratio1LB)}");
+            }
 
             Vector Ratio2LB = await LowerBoundBy(OrderCriteria.ByValueVolumeRatio, null, Boolean) ?? Vector.Empty;
             await Writer.WriteLineAsync($"- By value / volume: {Ratio2LB} -> {SolutionGain(Ratio2LB)}");
@@ -443,25 +454,25 @@ namespace OperationalResearch.Models
                 return ltrSol?.Select(q => q ? 1 : 0).ToArray();
             }
 
-            int[] count = Enumerable.Repeat(0, N).ToArray(), best = Enumerable.Repeat(0, N).ToArray();
+            Fraction[] count = Vector.Zeros(N).Get, best = Vector.Zeros(N).Get;
             Fraction bestVal = Fraction.Zero;
             await Writer.WriteLineAsync("Recursive solver starting now...");
             int calls = RecursiveSolver(
                 ref count, ref best, ref bestVal,
                 0, Fraction.Zero, TotalWeight, TotalVolume);
             await Writer.WriteLineAsync($"{calls} recursions done.");
-            await Writer.WriteLineAsync($"Best solution = {Function.Print(best, false)}");
+            Vector v = new(best);
+            await Writer.WriteLineAsync($"Best solution = {v}");
             await Writer.WriteLineAsync($"Best solution gain = {Function.Print(bestVal)}");
-            return best;
+            return v.ToInt().ToArray();
         }
         private int RecursiveSolver(
-            ref int[] count,
-            ref int[] best,
+            ref Fraction[] count,
+            ref Fraction[] best,
             ref Fraction best_val,
             int i,
             Fraction Value, Fraction Weight, Fraction Volume)
         {
-
             if (i == N)
             {
                 if (Value > best_val)
@@ -471,12 +482,12 @@ namespace OperationalResearch.Models
                 }
                 return 1;
             }
-            int countW = Items[i].Weight.IsZero ?
-                int.MaxValue : (int)(Weight / Items[i].Weight).Floor();
-            int countV = Items[i].Volume.IsZero ?
-                int.MaxValue : (int)(Volume / Items[i].Volume).Floor();
+            Fraction countW = Items[i].Weight.IsZero ?
+                Fraction.PositiveInfinity : (int)(Weight / Items[i].Weight).Floor();
+            Fraction countV = Items[i].Volume.IsZero ?
+                Fraction.PositiveInfinity : (int)(Volume / Items[i].Volume).Floor();
             int callsDone = 0;
-            for (count[i] = Math.Min(countW, countV); count[i] >= 0; count[i]--)
+            for (count[i] = Function.Min(countW, countV); count[i] >= 0; count[i] = count[i] - Fraction.One)
             {
                 callsDone += RecursiveSolver(
                 ref count, ref best, ref best_val,

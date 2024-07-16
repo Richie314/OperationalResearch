@@ -32,7 +32,7 @@ namespace OperationalResearch.Models.Elements
         {
             get => new Polyhedron(A, Fraction.MinusOne * b, ForcePositive);
         }
-        public bool IsInside(Vector x) => A * x <= b && (ForcePositive || x.IsPositiveOrZero);
+        public bool IsInside(Vector x) => A * x <= b && (!ForcePositive || x.IsPositiveOrZero);
 
         public bool IsOutside(Vector x) => !IsInside(x);
 

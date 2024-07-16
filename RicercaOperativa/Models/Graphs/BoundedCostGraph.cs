@@ -33,7 +33,7 @@ namespace OperationalResearch.Models.Graphs
             int it = 1;
             bool qEmpty = false;
             // E-K algorithm
-            while (it < 10)
+            while (it < 15)
             {
                 await Writer.WriteLineAsync($"Iteration #{it} of E-K starts now...");
                 it++;
@@ -76,6 +76,7 @@ namespace OperationalResearch.Models.Graphs
 
                 while (Q.Any())
                 {
+                    await Writer.WriteLineAsync();
                     await Writer.WriteLineAsync($"Q = {Function.Print(Q)}");
                     await Writer.WriteLineAsync($"X = {x}");
                     await Writer.WriteLineAsync($"p = {Function.Print(p)}");
@@ -89,9 +90,9 @@ namespace OperationalResearch.Models.Graphs
                     if (r.Any(rij => rij.From == i && rij.To == t))
                     {
                         p[t] = i;
-                        await Writer.WriteLineAsync($"{new Edge(i, t)} found inside A(x)");
-                        await Writer.WriteLineAsync($"p_t = p_{t + 1} = {i + 1}");
-                        await Writer.WriteLineAsync($"Exiting loop");
+                        await Writer.Indent.WriteLineAsync($"{new Edge(i, t)} found inside A(x)");
+                        await Writer.Indent.WriteLineAsync($"p_t = p_{t + 1} = {i + 1}");
+                        await Writer.Indent.WriteLineAsync($"Exiting loop");
                         break;
                     }
 
@@ -104,10 +105,10 @@ namespace OperationalResearch.Models.Graphs
                         await Writer.WriteLineAsync($"Analizing edge {edge}");
 
                         p[edge.To] = i;
-                        await Writer.WriteLineAsync($"\tp_{edge.To + 1} = {i + 1}");
+                        await Writer.Indent.WriteLineAsync($"\tp_{edge.To + 1} = {i + 1}");
 
                         Q = Q.Append(edge.To);
-                        await Writer.WriteLineAsync($"\tAdding {edge.To + 1} to Q");
+                        await Writer.Indent.WriteLineAsync($"\tAdding {edge.To + 1} to Q");
                     }
                 }
 
@@ -117,12 +118,20 @@ namespace OperationalResearch.Models.Graphs
 
 
                 await Writer.WriteLineAsync($"\tp = {Function.Print(p)}");
+
+                var Ns = Enumerable.Range(0, p.Length).Where(i => p[i] != -2);
+                var Nt = Enumerable.Range(0, p.Length).Where(i => p[i] == -2);
+
+                await Writer.WriteLineAsync("Current cut:");
+                await Writer.Indent.WriteLineAsync($"N_s = N_{s + 1} = {Function.Print(Ns)}");
+                await Writer.Indent.WriteLineAsync($"N_t = N_{t + 1} = {Function.Print(Nt)}");
+
                 await Writer.WriteLineAsync();
 
 
                 // Find min
                 int curr = t; // start from end
-                Fraction min = int.MaxValue;
+                Fraction min = Fraction.PositiveInfinity;
                 IEnumerable<int> Path = [t];
                 while (p[curr] >= 0)
                 {
@@ -167,19 +176,9 @@ namespace OperationalResearch.Models.Graphs
                     {
                         await Writer.WriteLineAsync("Could not find a new flow, so the previous is optimal");
 
-
-                        await Writer.WriteLineAsync("Cut:");
-                        var Ns = Enumerable.Range(0, p.Length).Where(i => p[i] != -2);
-                        await Writer.WriteLineAsync($"N_s = N_{s + 1} = {Function.Print(Ns)}");
-
-                        var Nt = Enumerable.Range(0, p.Length).Where(i => p[i] == -2);
-                        await Writer.WriteLineAsync($"N_t = N_{t + 1} = {Function.Print(Nt)}");
-
                         break;
                     }
                     qEmpty = true;
-
-
                 }
 
                 await Writer.WriteLineAsync();

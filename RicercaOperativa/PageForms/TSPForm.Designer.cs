@@ -118,7 +118,7 @@
             // 
             k.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             k.Location = new Point(499, 19);
-            k.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
+            k.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             k.Name = "k";
             k.Size = new Size(43, 27);
             k.TabIndex = 9;
@@ -148,7 +148,7 @@
             // 
             startNode.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             startNode.Location = new Point(497, 55);
-            startNode.Minimum = new decimal(new int[] { 2, 0, 0, 0 });
+            startNode.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             startNode.Name = "startNode";
             startNode.Size = new Size(45, 27);
             startNode.TabIndex = 12;

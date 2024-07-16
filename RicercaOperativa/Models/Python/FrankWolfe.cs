@@ -27,10 +27,14 @@ namespace OperationalResearch.Models.Python
             int k = 0;
             await Writer.WriteLineAsync($"A = {P.A}");
             await Writer.WriteLineAsync($"b = {P.b}");
+            if (P.ForcePositive)
+            {
 
+                await Writer.WriteLineAsync("Implicitly added x >= 0 disequation");
+            }
             if (startX is not null && !P.IsInside(startX))
             {
-                await Writer.WriteLineAsync($"Starting x = {startX} is not in the polyhedron!.");
+                await Writer.WriteLineAsync($"Starting x = {startX} is not in the polyhedron!");
                 await Writer.WriteLineAsync($"A new starting point will be generated randomly");
                 startX = null;
             }
