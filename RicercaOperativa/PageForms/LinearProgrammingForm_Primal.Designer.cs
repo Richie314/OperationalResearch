@@ -29,110 +29,21 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(LinearProgrammingForm_Primal));
-            matrix = new DataGridView();
-            label1 = new Label();
-            label2 = new Label();
-            variablesCountInput = new NumericUpDown();
-            equationsCountInput = new NumericUpDown();
-            resetTableBtn = new Button();
-            functionGrid = new DataGridView();
             maximizeBtn = new Button();
             startBaseInput = new TextBox();
             label4 = new Label();
-            xNonNegativeCheckbox = new CheckBox();
             minimizeBtn = new Button();
-            ((System.ComponentModel.ISupportInitialize)matrix).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)variablesCountInput).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)equationsCountInput).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)functionGrid).BeginInit();
+            polyhedronControl1 = new PolyhedronControl();
+            linearFunctionControl1 = new LinearFunctionControl();
             SuspendLayout();
-            // 
-            // matrix
-            // 
-            matrix.AllowUserToAddRows = false;
-            matrix.AllowUserToDeleteRows = false;
-            matrix.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            matrix.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            matrix.Location = new Point(29, 222);
-            matrix.Margin = new Padding(0);
-            matrix.Name = "matrix";
-            matrix.RowHeadersWidth = 50;
-            matrix.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
-            matrix.Size = new Size(1029, 505);
-            matrix.TabIndex = 0;
-            // 
-            // label1
-            // 
-            label1.AutoSize = true;
-            label1.Location = new Point(52, 14);
-            label1.Name = "label1";
-            label1.Size = new Size(112, 20);
-            label1.TabIndex = 4;
-            label1.Text = "Variables Count";
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Location = new Point(49, 52);
-            label2.Name = "label2";
-            label2.Size = new Size(117, 20);
-            label2.TabIndex = 5;
-            label2.Text = "Equations Count";
-            // 
-            // variablesCountInput
-            // 
-            variablesCountInput.Location = new Point(176, 12);
-            variablesCountInput.Margin = new Padding(3, 4, 3, 4);
-            variablesCountInput.Name = "variablesCountInput";
-            variablesCountInput.Size = new Size(137, 27);
-            variablesCountInput.TabIndex = 6;
-            variablesCountInput.Value = new decimal(new int[] { 2, 0, 0, 0 });
-            // 
-            // equationsCountInput
-            // 
-            equationsCountInput.Location = new Point(176, 49);
-            equationsCountInput.Margin = new Padding(3, 4, 3, 4);
-            equationsCountInput.Name = "equationsCountInput";
-            equationsCountInput.Size = new Size(137, 27);
-            equationsCountInput.TabIndex = 7;
-            equationsCountInput.Value = new decimal(new int[] { 2, 0, 0, 0 });
-            // 
-            // resetTableBtn
-            // 
-            resetTableBtn.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            resetTableBtn.Cursor = Cursors.Hand;
-            resetTableBtn.Location = new Point(334, 12);
-            resetTableBtn.Margin = new Padding(3, 4, 3, 4);
-            resetTableBtn.Name = "resetTableBtn";
-            resetTableBtn.Size = new Size(113, 60);
-            resetTableBtn.TabIndex = 8;
-            resetTableBtn.Text = "Apply";
-            resetTableBtn.UseVisualStyleBackColor = true;
-            resetTableBtn.Click += resetTableBtn_Click;
-            // 
-            // functionGrid
-            // 
-            functionGrid.AllowUserToAddRows = false;
-            functionGrid.AllowUserToDeleteRows = false;
-            functionGrid.AllowUserToResizeColumns = false;
-            functionGrid.AllowUserToResizeRows = false;
-            functionGrid.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            functionGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            functionGrid.Location = new Point(29, 141);
-            functionGrid.Margin = new Padding(0);
-            functionGrid.Name = "functionGrid";
-            functionGrid.RowHeadersWidth = 50;
-            functionGrid.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
-            functionGrid.Size = new Size(1029, 60);
-            functionGrid.TabIndex = 9;
             // 
             // maximizeBtn
             // 
             maximizeBtn.Cursor = Cursors.Hand;
-            maximizeBtn.Location = new Point(29, 84);
+            maximizeBtn.Location = new Point(29, 39);
             maximizeBtn.Margin = new Padding(3, 4, 3, 4);
             maximizeBtn.Name = "maximizeBtn";
-            maximizeBtn.Size = new Size(538, 42);
+            maximizeBtn.Size = new Size(289, 43);
             maximizeBtn.TabIndex = 11;
             maximizeBtn.Text = "Maximize";
             maximizeBtn.UseVisualStyleBackColor = true;
@@ -140,94 +51,84 @@
             // 
             // startBaseInput
             // 
-            startBaseInput.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            startBaseInput.Location = new Point(626, 45);
+            startBaseInput.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            startBaseInput.Location = new Point(187, 91);
             startBaseInput.Margin = new Padding(3, 4, 3, 4);
             startBaseInput.Name = "startBaseInput";
-            startBaseInput.Size = new Size(432, 27);
+            startBaseInput.Size = new Size(420, 27);
             startBaseInput.TabIndex = 12;
             // 
             // label4
             // 
-            label4.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label4.AutoSize = true;
-            label4.Location = new Point(465, 45);
+            label4.Location = new Point(29, 95);
             label4.Name = "label4";
             label4.Size = new Size(155, 20);
             label4.TabIndex = 13;
             label4.Text = "Starting Basis indexes:";
             // 
-            // xNonNegativeCheckbox
-            // 
-            xNonNegativeCheckbox.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            xNonNegativeCheckbox.AutoSize = true;
-            xNonNegativeCheckbox.Checked = true;
-            xNonNegativeCheckbox.CheckState = CheckState.Checked;
-            xNonNegativeCheckbox.Location = new Point(465, 17);
-            xNonNegativeCheckbox.Margin = new Padding(3, 4, 3, 4);
-            xNonNegativeCheckbox.Name = "xNonNegativeCheckbox";
-            xNonNegativeCheckbox.Size = new Size(269, 24);
-            xNonNegativeCheckbox.TabIndex = 14;
-            xNonNegativeCheckbox.Text = "Automatically add x >= 0 constraint";
-            xNonNegativeCheckbox.UseVisualStyleBackColor = true;
-            // 
             // minimizeBtn
             // 
             minimizeBtn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             minimizeBtn.Cursor = Cursors.Hand;
-            minimizeBtn.Location = new Point(573, 84);
+            minimizeBtn.Location = new Point(347, 37);
             minimizeBtn.Margin = new Padding(3, 4, 3, 4);
             minimizeBtn.Name = "minimizeBtn";
-            minimizeBtn.Size = new Size(485, 42);
+            minimizeBtn.Size = new Size(261, 43);
             minimizeBtn.TabIndex = 15;
             minimizeBtn.Text = "Minimize";
             minimizeBtn.UseVisualStyleBackColor = true;
             minimizeBtn.Click += minimizeBtn_Click;
             // 
+            // polyhedronControl1
+            // 
+            polyhedronControl1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            polyhedronControl1.Location = new Point(14, 240);
+            polyhedronControl1.Margin = new Padding(3, 5, 3, 5);
+            polyhedronControl1.MinimumSize = new Size(589, 416);
+            polyhedronControl1.Name = "polyhedronControl1";
+            polyhedronControl1.Polyhedron = null;
+            polyhedronControl1.Size = new Size(606, 492);
+            polyhedronControl1.TabIndex = 16;
+            // 
+            // linearFunctionControl1
+            // 
+            linearFunctionControl1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            linearFunctionControl1.Location = new Point(23, 157);
+            linearFunctionControl1.Margin = new Padding(3, 5, 3, 5);
+            linearFunctionControl1.MinimumSize = new Size(585, 75);
+            linearFunctionControl1.Name = "linearFunctionControl1";
+            linearFunctionControl1.Size = new Size(585, 75);
+            linearFunctionControl1.TabIndex = 17;
+            linearFunctionControl1.Vector = null;
+            // 
             // LinearProgrammingForm_Primal
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1075, 736);
+            ClientSize = new Size(633, 748);
+            Controls.Add(linearFunctionControl1);
+            Controls.Add(polyhedronControl1);
             Controls.Add(minimizeBtn);
-            Controls.Add(xNonNegativeCheckbox);
             Controls.Add(label4);
             Controls.Add(startBaseInput);
             Controls.Add(maximizeBtn);
-            Controls.Add(functionGrid);
-            Controls.Add(resetTableBtn);
-            Controls.Add(equationsCountInput);
-            Controls.Add(variablesCountInput);
-            Controls.Add(label2);
-            Controls.Add(label1);
-            Controls.Add(matrix);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Margin = new Padding(3, 4, 3, 4);
-            MinimumSize = new Size(1093, 783);
+            MinimumSize = new Size(649, 784);
             Name = "LinearProgrammingForm_Primal";
             Text = "Primal Form Simplex";
             Load += LinearProgrammingForm_Load;
-            ((System.ComponentModel.ISupportInitialize)matrix).EndInit();
-            ((System.ComponentModel.ISupportInitialize)variablesCountInput).EndInit();
-            ((System.ComponentModel.ISupportInitialize)equationsCountInput).EndInit();
-            ((System.ComponentModel.ISupportInitialize)functionGrid).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
-
-        private DataGridView matrix;
-        private Label label1;
-        private Label label2;
-        private NumericUpDown variablesCountInput;
-        private NumericUpDown equationsCountInput;
-        private Button resetTableBtn;
-        private DataGridView functionGrid;
         private Button maximizeBtn;
         private TextBox startBaseInput;
         private Label label4;
-        private CheckBox xNonNegativeCheckbox;
         private Button minimizeBtn;
+        private PolyhedronControl polyhedronControl1;
+        private LinearFunctionControl linearFunctionControl1;
     }
 }

@@ -418,7 +418,7 @@ namespace OperationalResearch.Models.Graphs
                 var rs =
                     oppositeDirection.Where(e => x[GetEdgeIndex(e)] == θ).Concat(
                     currentDirection.Where(e =>
-                        u[GetEdgeIndex(e)] - xt[GetEdgeIndex(e)] == θ))
+                        u[GetEdgeIndex(e)] - x[GetEdgeIndex(e)] == θ))
                     .First();
                 await Writer.WriteLineAsync($"Exiting edge (r, s) = {rs}");
 
@@ -499,7 +499,7 @@ namespace OperationalResearch.Models.Graphs
             catch (Exception ex)
             {
                 await Writer.WriteLineAsync($"Exception happened '{ex.Message}'");
-                return solved;
+                // return solved;
             }
 
             // Min-cut and max-flow
@@ -507,7 +507,7 @@ namespace OperationalResearch.Models.Graphs
             {
                 await Writer.WriteLineAsync();
                 await Writer.WriteLineAsync();
-                if (!await MinFlowMaxCut(startNode.Value, endNode.Value, Writer.Indent))
+                if (!await MinFlowMaxCut(startNode.Value, endNode.Value, Writer.Indent, false))
                 {
                     await Writer.WriteLineAsync(
                         $"Could not calculate min-cut from {startNode.Value} to {endNode.Value}");

@@ -1,0 +1,147 @@
+﻿using OperationalResearch.Models.Elements;
+using System.Data;
+namespace OperationalResearch
+{
+    public partial class PolyhedronControl : UserControl
+    {
+
+        #region Events
+
+        public delegate void PolyhedronChangeHandler(object? source, PolyhedronChangeEventArgs e);
+        public class PolyhedronChangeEventArgs : EventArgs
+        {
+            public Polyhedron? CurrentPolyhedron { get; set; }
+            public int SpaceDimension { get; set; } 
+            public PolyhedronChangeEventArgs(Polyhedron? data, int spaceDimension)
+            {
+                CurrentPolyhedron = data;
+                SpaceDimension = spaceDimension;
+            }
+        }
+
+        public event PolyhedronChangeHandler? OnPolyhedronChange;
+
+        private void regeneratePolyhedron(object? sender, EventArgs e)
+        {
+            Polyhedron = getNewPolyhedron();
+            if (OnPolyhedronChange != null)
+            {
+                OnPolyhedronChange(sender, new PolyhedronChangeEventArgs(Polyhedron, SpaceDimension));
+            }
+        }
+
+        #endregion
+
+        public Polyhedron? Polyhedron { get; set; }
+        public int SpaceDimension { get => (int)spaceDimension.Value; }
+        public PolyhedronControl()
+        {
+            InitializeComponent();
+
+            // Handle changes in values
+            xPositiveCheckbox.CheckedChanged += regeneratePolyhedron;
+            matrix.CellValueChanged += regeneratePolyhedron;
+            
+            // Handle changes in dimensions
+            spaceDimension.ValueChanged += addOrRemoveColumn;
+            equationsCount.ValueChanged += addOrRemoveRow;
+
+            setColumns((int)spaceDimension.Value);
+            setRows((int)equationsCount.Value);
+        }
+        private void setRows(int targetRowCount)
+        {
+            // Remove the last row until we reach the desired target
+            while (matrix.RowCount > targetRowCount)
+            {
+                matrix.Rows.RemoveAt(matrix.RowCount - 1);
+            }
+            // Add a new row until we reach the desired target
+            while (matrix.RowCount < targetRowCount)
+            {
+                matrix.Rows.Add(); // Add blank row
+            }
+        }
+        private void setColumns(int targetColumnCount)
+        {
+            while (matrix.ColumnCount - 2 > targetColumnCount)
+            {
+                matrix.Columns.RemoveAt(matrix.ColumnCount - 3);
+            }
+            while (matrix.ColumnCount - 2 < targetColumnCount)
+            {
+                matrix.Columns.Insert(matrix.ColumnCount - 2, new DataGridViewColumn(matrix.Columns[0].CellTemplate));
+
+                // Change the name of the last row added
+                matrix.Columns[matrix.ColumnCount - 3].Name = $"x{matrix.ColumnCount - 2}";
+            }
+        }
+        private void addOrRemoveRow(object? sender, EventArgs e)
+        {
+            if (sender is null)
+            {
+                return;
+            }
+            int currRowCount = matrix.RowCount;
+            int? targetRowCount = (int?)((sender as NumericUpDown)?.Value);
+            if (!targetRowCount.HasValue || currRowCount == targetRowCount.Value)
+            {
+                return;
+            }
+            setRows(targetRowCount.Value);
+            // We have rempoed all the equations that were needed to be removed.
+            // Now we can rebuild the polyhedron
+            regeneratePolyhedron(sender, e);
+        }
+        private void addOrRemoveColumn(object? sender, EventArgs e)
+        {
+            if (sender is null)
+            {
+                return;
+            }
+            int currColCount = matrix.ColumnCount;
+            int? targetColCount = (int?)((sender as NumericUpDown)?.Value);
+            if (!targetColCount.HasValue || currColCount - 2 == targetColCount.Value)
+            {
+                return;
+            }
+            setColumns(targetColCount.Value);
+            regeneratePolyhedron(sender, e);
+        }
+        private Polyhedron? getNewPolyhedron()
+        {
+            var grid = MainGridStr();
+            if (grid is null || grid.Length == 0)
+            {
+                return null;
+            }
+            return Polyhedron.FromStringMatrix(grid, xPositiveCheckbox.Checked);
+        }
+        private string[][]? MainGridStr()
+        {
+            var list = new List<string[]>();
+            bool containsBlank = false;
+            for (int row = 0; row < matrix.RowCount; row++)
+            {
+                List<string> currRow = [];
+                for (int col = 0; col < matrix.ColumnCount; col++)
+                {
+                    containsBlank = containsBlank || string.IsNullOrWhiteSpace((string)matrix[col, row].Value);
+                    currRow.Add((string)matrix[col, row].Value);
+                }
+                list.Add([.. currRow]);
+            }
+            if (containsBlank)
+            {
+                if (!blankCellsAsZeroCheckbox.Checked)
+                {
+                    return null;
+                }
+
+                list = list.Select(
+                    row => row.Select(x => string.IsNullOrWhiteSpace(x) ? "0" : x).ToArray()).ToList();
+            }
+            return [.. list];
+        }
+    }
+}

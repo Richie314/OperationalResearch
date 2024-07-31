@@ -3,11 +3,11 @@ using OperationalResearch.Models.Elements;
 
 namespace OperationalResearch.Models.Problems.Solvers
 {
-    public class QuadraticSolver : ISolving<Polyhedron, Tuple<Matrix, Vector>>
+    public class QuadraticSolver : ISolving<Elements.Polyhedron, Tuple<Matrix, Vector>>
     {
         private QuadProg? quadProg = null;
 
-        public Polyhedron? Domain { get; set; } = null;
+        public Elements.Polyhedron? Domain { get; set; } = null;
         public Tuple<Matrix, Vector>? CoDomain { get; set; } = null;
 
         public async Task<bool> SolveMaxAsync(IEnumerable<IndentWriter?> loggers)
@@ -36,7 +36,7 @@ namespace OperationalResearch.Models.Problems.Solvers
             throw new NotImplementedException("Can't solve for integers");
         }
 
-        public void SetData(Polyhedron p, Tuple<Matrix, Vector> codomain)
+        public void SetData(Elements.Polyhedron p, Tuple<Matrix, Vector> codomain)
         {
             Domain = p;
             CoDomain = codomain;

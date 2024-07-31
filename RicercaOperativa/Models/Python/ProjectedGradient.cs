@@ -4,7 +4,7 @@ using OperationalResearch.Models.Elements;
 
 namespace OperationalResearch.Models.Python
 {
-    internal sealed class ProjectedGradient(Polyhedron P, string python) : PythonFunctionAnalyzer(P, python)
+    internal sealed class ProjectedGradient(Elements.Polyhedron P, string python) : PythonFunctionAnalyzer(P, python)
     {
         public override async Task<Vector?> SolveMin(
             Vector? startX = null, IndentWriter? Writer = null, int? maxK = null) =>
@@ -31,7 +31,7 @@ namespace OperationalResearch.Models.Python
             }
             await Writer.WriteLineAsync();
 
-            Polyhedron p = P.Copy();
+            Elements.Polyhedron p = P.Copy();
 
             await Writer.WriteLineAsync($"A = {p.A}");
             await Writer.WriteLineAsync($"b = {p.b}");

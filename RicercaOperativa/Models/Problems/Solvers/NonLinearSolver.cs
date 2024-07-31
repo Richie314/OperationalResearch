@@ -4,12 +4,12 @@ using OperationalResearch.Models.Python;
 
 namespace OperationalResearch.Models.Problems.Solvers
 {
-    public class NonLinearSolver(Vector? startingPoint = null) : ISolving<Polyhedron, string>
+    public class NonLinearSolver(Vector? startingPoint = null) : ISolving<Elements.Polyhedron, string>
     {
         private ProjectedGradient? projectedGradient = null;
         private FrankWolfe? frankWolfe = null;
         private Vector? startingPoint = startingPoint;
-        public Polyhedron? Domain { get; set; } = null;
+        public Elements.Polyhedron? Domain { get; set; } = null;
         public string? CoDomain { get; set; } = null;
         public async Task<bool> SolveMinAsync(IEnumerable<IndentWriter?> writers)
         {
@@ -47,7 +47,7 @@ namespace OperationalResearch.Models.Problems.Solvers
             throw new NotImplementedException("Can't solve for integers");
         }
 
-        public void SetData(Polyhedron p, string pythonString)
+        public void SetData(Elements.Polyhedron p, string pythonString)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(pythonString);
             Domain = p;

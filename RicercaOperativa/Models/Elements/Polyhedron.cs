@@ -203,11 +203,64 @@ namespace OperationalResearch.Models.Elements
             return A[B].Inv * b[B];
         }
 
-        public static Polyhedron FromStringMatrixAndVector(string[][] mat, string[] vector, bool ForcePositive = false) =>
-            new Polyhedron(
-                A: new Matrix(mat.Apply(row => row.Apply(Fraction.FromString))), 
-                b: vector.Apply(Fraction.FromString),
+        public static Polyhedron FromStringMatrixAndVector(string[][] mat, string[] vector, bool ForcePositive = false)
+        {
+            string[] Operators = ["<=", ">=", "=", "=="];
+            if (!Operators.Contains(mat[0].Last().Trim()))
+            {
+                // The matrix is in the form Ax <= b already
+                return new Polyhedron(
+                        A: new Matrix(mat.Apply(row => row.Apply(Fraction.FromString))),
+                        b: Vector.FromString(vector) ?? Vector.Empty,
+                        forcePositive: ForcePositive);
+            }
+
+            if (mat.Length != vector.Length)
+            {
+                throw new ArgumentException($"Matrix row count must equal vector's size ({mat.Length} != {vector.Length})");
+            }
+
+            List<Vector> A = [];
+            List<Fraction> b = [];
+
+            Vector b_strings = Vector.FromString(vector) ?? Vector.Empty;
+
+            for (int i = 0; i < mat.Length; i++)
+            {
+                Vector? r = Vector.FromString(mat[i].SkipLast(1));
+                if (r is null) 
+                    continue;
+                switch (mat[i].Last().Trim())
+                {
+                    case "<=":
+                        // Std form
+                        A.Add(r);
+                        b.Add(b_strings[i]);
+                        break;
+                    case ">=":
+                        // Inverted form
+                        A.Add(r * Fraction.MinusOne);
+                        b.Add(b_strings[i] * Fraction.MinusOne);
+                        break;
+                    case "==":
+                    case "=":
+                        A.Add(r);
+                        b.Add(b_strings[i]);
+                        A.Add(r * Fraction.MinusOne);
+                        b.Add(b_strings[i] * Fraction.MinusOne);
+                        break;
+                    default:
+                        continue;
+                }
+            }
+
+
+            return new Polyhedron(
+                A: new Matrix(A.Select(r => r.Get).ToArray()), 
+                b: b, 
                 forcePositive: ForcePositive);
+        }
+
 
         public static Polyhedron FromStringMatrix(string[][] mat, bool ForcePositive = false) =>
             FromStringMatrixAndVector(

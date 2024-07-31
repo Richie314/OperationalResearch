@@ -6,7 +6,7 @@ namespace OperationalResearch.Models.Python
 {
     internal sealed class FrankWolfe : PythonFunctionAnalyzer
     {
-        public FrankWolfe(Polyhedron P, string python) : base(P, python) { }
+        public FrankWolfe(Elements.Polyhedron P, string python) : base(P, python) { }
         public override async Task<Vector?> SolveMin(
             Vector? startX = null,
             IndentWriter? Writer = null,

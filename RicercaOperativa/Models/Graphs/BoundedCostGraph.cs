@@ -23,7 +23,7 @@ namespace OperationalResearch.Models.Graphs
         public Vector l { get => Edges.Select(e => e.lb).ToArray(); }
         public Vector c { get => Edges.Select(e => e.Cost).ToArray(); }
 
-        public async Task<bool> MinFlowMaxCut(int s, int t, IndentWriter? Writer = null)
+        public async Task<bool> MinFlowMaxCut(int s, int t, IndentWriter? Writer = null, bool printEdges = true)
         {
             Writer ??= IndentWriter.Null;
 
@@ -59,9 +59,12 @@ namespace OperationalResearch.Models.Graphs
                     }
                 }
                 r = [.. r.ToArray().Order()];
-                foreach (var rij in r)
+                if (printEdges)
                 {
-                    await Writer.WriteLineAsync($"\t{rij} with capacity = {rij.ub}");
+                    foreach (var rij in r)
+                    {
+                        await Writer.WriteLineAsync($"\t{rij} with capacity = {rij.ub}");
+                    }
                 }
 
                 // Predecessors

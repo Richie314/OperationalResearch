@@ -8,12 +8,12 @@ using System.Threading.Tasks;
 
 namespace OperationalResearch.Models.Problems.Solvers
 {
-    public class LinearDualSolver(int[]? startBasis = null) : ISolving<Polyhedron, Vector>
+    public class LinearDualSolver(int[]? startBasis = null) : ISolving<Elements.Polyhedron, Vector>
     {
         private Simplex? simplex = null;
 
         public int[]? startBasis = startBasis;
-        public Polyhedron? Domain { get; set; } = null;
+        public Elements.Polyhedron? Domain { get; set; } = null;
         public Vector? CoDomain { get; set; } = null;
 
         public async Task<bool> SolveMaxAsync(IEnumerable<IndentWriter?> loggers)
@@ -44,7 +44,7 @@ namespace OperationalResearch.Models.Problems.Solvers
             throw new NotImplementedException("Only fractionary problems can be solved");
         }
 
-        public void SetData(Polyhedron domain, Vector codomain)
+        public void SetData(Elements.Polyhedron domain, Vector codomain)
         {
             simplex = new Simplex(domain, codomain);
         }

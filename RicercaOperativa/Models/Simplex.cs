@@ -11,7 +11,7 @@ using Matrix = OperationalResearch.Models.Elements.Matrix;
 
 namespace OperationalResearch.Models
 {
-    internal class Simplex
+    public class Simplex
     {
         private readonly Polyhedron P;
         private readonly Vector c;
@@ -102,7 +102,7 @@ namespace OperationalResearch.Models
                 {
                     // Non acceptable solution
                     throw new DataMisalignedException(
-                        $"Solution x = {x}  of basis B = {Function.Print(B)} is not acceptable");
+                        $"Solution x = {x}  of basis B = {Function.Print(B)} is not acceptable. A_N * x = {A_N_X}");
                 }
                 await Writer.WriteLineAsync();
 
@@ -410,7 +410,7 @@ namespace OperationalResearch.Models
 
         private static async Task Gomory(
             IndentWriter Writer,
-            Polyhedron P,
+            Elements.Polyhedron P,
             Vector Xrc, int[] BestBase)
         {
             await Writer.WriteLineAsync(

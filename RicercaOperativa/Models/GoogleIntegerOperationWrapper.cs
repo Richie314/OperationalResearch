@@ -14,11 +14,11 @@ namespace OperationalResearch.Models
 {
     internal class GoogleIntegerOperationWrapper
     {
-        private readonly Polyhedron P;
+        private readonly Elements.Polyhedron P;
         private readonly Vector c;
         private const string SOLVER_ID = "SCIP";
         public GoogleIntegerOperationWrapper(
-            Polyhedron p, Vector c)
+            Elements.Polyhedron p, Vector c)
         {
             ArgumentNullException.ThrowIfNull(p, nameof(p));
             ArgumentNullException.ThrowIfNull(c, nameof(c));

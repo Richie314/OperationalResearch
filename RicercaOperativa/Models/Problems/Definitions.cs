@@ -20,26 +20,42 @@ namespace OperationalResearch.Models.Problems
         public LinearProgrammingProblem(string[][] polyhedron, string[] revenues, bool xPos = false, string[]? startBasis = null) :
             this(
                 Polyhedron.FromStringMatrix(polyhedron, xPos),
-                Vector.FromString(revenues) ?? Vector.Empty,
-                startBasis is not null ? 
-                    startBasis.Select(x => Convert.ToInt32(x.Trim()) - 1).ToArray() : 
+                revenues,
+                startBasis) { }
+
+        public LinearProgrammingProblem(Polyhedron p, Vector revenues, string[]? startBasis = null) :
+            this(
+                p,
+                revenues,
+                startBasis is not null ?
+                    startBasis.Select(x => Convert.ToInt32(x.Trim()) - 1).ToArray() :
                     null
-                ) { }
+                )
+        { }
+        public LinearProgrammingProblem(Polyhedron p, string[] revenues, string[]? startBasis = null) :
+            this(
+                p,
+                Vector.FromString(revenues) ?? Vector.Empty,
+                startBasis is not null ?
+                    startBasis.Select(x => Convert.ToInt32(x.Trim()) - 1).ToArray() :
+                    null
+                )
+        { }
     }
 
 
     /// <summary>
     /// Generic linear programming problem
     /// </summary>
-    public class LinearProgrammingDualProblem(Polyhedron p, Vector c, int[]? startBasis = null) :
-        Problem<Polyhedron, Vector, LinearDualSolver>
+    public class LinearProgrammingDualProblem(Elements.Polyhedron p, Vector c, int[]? startBasis = null) :
+        Problem<Elements.Polyhedron, Vector, LinearDualSolver>
             (p,
              c,
              new LinearDualSolver(startBasis))
     {
         public LinearProgrammingDualProblem(string[][] polyhedron, string[] revenues, bool xPos = false, string[]? startBasis = null) :
             this(
-                Polyhedron.FromStringMatrix(polyhedron, xPos),
+                Elements.Polyhedron.FromStringMatrix(polyhedron, xPos),
                 Vector.FromString(revenues) ?? Vector.Empty,
                 startBasis is not null ?
                     startBasis.Select(x => Convert.ToInt32(x.Trim()) - 1).ToArray() :
@@ -76,8 +92,8 @@ namespace OperationalResearch.Models.Problems
     /// Knapsnack problem
     /// https://en.wikipedia.org/wiki/Knapsack_problem
     /// </summary>
-    public class KnapsnakProblem(Polyhedron p, Vector c, bool isBoolean = false) : 
-        Problem<Polyhedron, Vector, KnapsnackProblemSolver>
+    public class KnapsnakProblem(Elements.Polyhedron p, Vector c, bool isBoolean = false) : 
+        Problem<Elements.Polyhedron, Vector, KnapsnackProblemSolver>
             (p,
              c,
              new KnapsnackProblemSolver(isBoolean))
@@ -89,9 +105,9 @@ namespace OperationalResearch.Models.Problems
             Vector? weights, 
             Fraction? totalWeight, 
             bool isBoolean = false) : this(
-                Polyhedron.FromRow(volumes, totalVolume) & 
-                    (weights is not null && totalWeight.HasValue ? 
-                Polyhedron.FromRow(weights, totalWeight.Value) : null), 
+                Elements.Polyhedron.FromRow(volumes, totalVolume) & 
+                    (weights is not null && totalWeight.HasValue ?
+                Elements.Polyhedron.FromRow(weights, totalWeight.Value) : null), 
                 revenues, 
                 isBoolean) { }
 
@@ -198,24 +214,24 @@ namespace OperationalResearch.Models.Problems
     /// <summary>
     /// Analize a function inside a polyhedron. The function, as well as its gradient, must be written in python
     /// </summary>
-    public class NonLinearProblem(Polyhedron p, string s, Vector? startingPoint = null) : 
-        Problem<Polyhedron, string, NonLinearSolver>(p, s, new NonLinearSolver(startingPoint))
+    public class NonLinearProblem(Elements.Polyhedron p, string s, Vector? startingPoint = null) : 
+        Problem<Elements.Polyhedron, string, NonLinearSolver>(p, s, new NonLinearSolver(startingPoint))
     {
         public NonLinearProblem(string[][] polyhedron, string s, string[]? startingPoint = null) :
-            this(Polyhedron.FromStringMatrix(polyhedron), s, Vector.FromString(startingPoint)) { }
+            this(Elements.Polyhedron.FromStringMatrix(polyhedron), s, Vector.FromString(startingPoint)) { }
     }
 
     /// <summary>
     /// Analyze a poliynomial function of multiple variables inside a polyhedron
     /// </summary>
-    public class QuadraticProblem(Polyhedron p, Matrix Hessian, Vector Linear) : 
-        Problem<Polyhedron, Tuple<Matrix, Vector>, QuadraticSolver>
+    public class QuadraticProblem(Elements.Polyhedron p, Matrix Hessian, Vector Linear) : 
+        Problem<Elements.Polyhedron, Tuple<Matrix, Vector>, QuadraticSolver>
             (p,
              new Tuple<Matrix, Vector>(Hessian, Linear),
              new QuadraticSolver())
     {
         public QuadraticProblem(string[][] polyhedron, string[][] hessian, string[]? linear) :
-            this(Polyhedron.FromStringMatrix(polyhedron), new Matrix(hessian), Vector.FromString(linear) ?? Vector.Empty) { }
+            this(Elements.Polyhedron.FromStringMatrix(polyhedron), new Matrix(hessian), Vector.FromString(linear) ?? Vector.Empty) { }
     }
 
     #endregion

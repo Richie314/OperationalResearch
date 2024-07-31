@@ -8,7 +8,7 @@ using Matrix = OperationalResearch.Models.Elements.Matrix;
 
 namespace OperationalResearch.Models
 {
-    internal class Knapsnack
+    public class Knapsnack
     {
         public class Item
         {
@@ -211,7 +211,7 @@ namespace OperationalResearch.Models
             }
             return Function.Print(x * Values);
         }
-        private Fraction? Gain(Vector? x)
+        public Fraction? Gain(Vector? x)
         {
             if (x is null || x.Size != N)
             {
@@ -219,9 +219,9 @@ namespace OperationalResearch.Models
             }
             return Values * x;
         }
-        private Fraction? Gain(int[]? x) => 
+        public Fraction? Gain(int[]? x) => 
             Gain(x is null ? null : new Vector(x.Select(i => new Fraction(i)).ToArray()));
-        private Fraction? Gain(bool[]? x) =>
+        public Fraction? Gain(bool[]? x) =>
             Gain(x?.Select(i => i ? 1 : 0).ToArray());
         public async Task<Vector?> UpperBound(
             IndentWriter? Writer = null, bool Boolean = false)
@@ -244,7 +244,7 @@ namespace OperationalResearch.Models
             }
             await Writer.WriteLineAsync($"A|b = {A | b}");
             await Writer.WriteLineAsync($"c = {Values}");
-            var p = new Polyhedron(A, b, forcePositive: true);
+            var p = new Elements.Polyhedron(A, b, forcePositive: true);
             var s = new Simplex(p, Values);
             return await s.SolvePrimalMax(IndentWriter.Null, null, 50);
         }
@@ -293,9 +293,18 @@ namespace OperationalResearch.Models
                 default: throw new NotImplementedException();
             }
         }
-        private async Task<Vector?> LowerBoundBy(OrderCriteria order,
+        public async Task<Vector?> LowerBoundBy(OrderCriteria order,
             IndentWriter? Writer = null, bool Boolean = false)
         {
+            /*
+            if (order == OrderCriteria.ByWeight || order == OrderCriteria.ByValueWeightRatio)
+            {
+                if (!UsesWeights)
+                {
+                    return null;
+                }
+            }
+            */
             Writer ??= IndentWriter.Null;
             var OrderedIndices = await OrderByCriteria(Writer, order);
 
@@ -343,16 +352,12 @@ namespace OperationalResearch.Models
             return Enumerable.Range(0, N)
                 .Select(i => x[OrderedIndices.ToArray().IndexOf(i)]).ToArray();
         }
-        private async Task<int[]?> LowerBound(bool Boolean)
+        public async Task<int[]?> LowerBound(bool Boolean)
         {
             Vector min = Vector.Empty;
             Fraction minGain = Fraction.Zero;
             foreach (OrderCriteria criteria in Enum.GetValues<OrderCriteria>())
             {
-                if (criteria == OrderCriteria.ByWeight || criteria == OrderCriteria.ByValueWeightRatio && !UsesWeights)
-                {
-                    continue;
-                }
                 var vec = await LowerBoundBy(criteria, null, Boolean);
                 if (vec is null)
                 {
@@ -363,7 +368,7 @@ namespace OperationalResearch.Models
                 {
                     continue;
                 }
-                if (min.Size == 0 || gain.Value > minGain)
+                if (min.IsEmpty || gain.Value > minGain)
                 {
                     min = vec;
                     minGain = gain.Value;

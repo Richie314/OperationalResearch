@@ -20,7 +20,7 @@ namespace OperationalResearch.Models.Problems.Solvers
         {
             throw new NotImplementedException("Only max problems can be solved!");
         }
-        public override void SetData(Polyhedron domain, Vector codomain)
+        public override void SetData(Elements.Polyhedron domain, Vector codomain)
         {
             Domain = domain;
             CoDomain = codomain;

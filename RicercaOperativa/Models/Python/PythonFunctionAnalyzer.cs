@@ -6,7 +6,7 @@ namespace OperationalResearch.Models.Python
 {
     public abstract class PythonFunctionAnalyzer
     {
-        protected readonly Polyhedron P;
+        protected readonly Elements.Polyhedron P;
         private readonly dynamic function;
         private readonly dynamic gradFunction;
         protected Vector Grad(Vector x)
@@ -76,7 +76,7 @@ namespace OperationalResearch.Models.Python
             }
             return FindArgMaxOfFunction(t_start, t_end, steps, x, d);
         }
-        public PythonFunctionAnalyzer(Polyhedron P, string python)
+        public PythonFunctionAnalyzer(Elements.Polyhedron P, string python)
         {
             ArgumentNullException.ThrowIfNull(P);
             ArgumentException.ThrowIfNullOrWhiteSpace(python);

@@ -18,8 +18,8 @@ namespace OperationalResearch.Models
         private readonly QuadraticObjectiveFunction f;
         private readonly Matrix H;
         private readonly Vector lin;
-        private readonly Polyhedron P;
-        public QuadProg(Matrix H, Vector linearPart, Polyhedron p)
+        private readonly Elements.Polyhedron P;
+        public QuadProg(Matrix H, Vector linearPart, Elements.Polyhedron p)
         {
             ArgumentNullException.ThrowIfNull(H, nameof(H));
             ArgumentNullException.ThrowIfNull(linearPart, nameof(linearPart));

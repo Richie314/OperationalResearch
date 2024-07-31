@@ -69,7 +69,7 @@ namespace OperationalResearch.Models
         private Simplex ConvertToLinearProgramming(bool FillWorkers = false)
         {
             Vector costs = c.M.Flatten();
-            Polyhedron polyhedron = new(
+            Elements.Polyhedron polyhedron = new(
                 A: GetLinearProgrammingMatrix(FillWorkers),
                 b: GetLinearProgrammingVector(FillWorkers),
                 forcePositive: true);

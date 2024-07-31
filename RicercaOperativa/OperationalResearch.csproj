@@ -12,6 +12,9 @@
     <PackageProjectUrl>https://github.com/Richie314/OperationalResearch</PackageProjectUrl>
     <PackageIcon>icon_small.png</PackageIcon>
     <RepositoryUrl>https://github.com/Richie314/OperationalResearch</RepositoryUrl>
+    <StartupObject></StartupObject>
+    <Company>Richie314</Company>
+    <Authors>Richie314</Authors>
   </PropertyGroup>
 
   <ItemGroup>

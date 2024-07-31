@@ -26,10 +26,8 @@ namespace OperationalResearch.Models.Elements
             this.v = v;
         }
         
-        public static implicit operator Vector(Fraction[] v) =>
-            new Vector(v);
-        public static implicit operator Vector(List<Fraction> v) => 
-            new Vector(v);
+        public static implicit operator Vector(Fraction[] v) => new Vector(v);
+        public static implicit operator Vector(List<Fraction> v) => new Vector(v);
 
         public Vector(IEnumerable<Fraction> v)
         {

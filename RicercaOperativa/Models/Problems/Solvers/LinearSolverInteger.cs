@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace OperationalResearch.Models.Problems.Solvers
 {
-    public abstract class LinearSolverInteger : ISolving<Polyhedron, Vector>
+    public abstract class LinearSolverInteger : ISolving<Elements.Polyhedron, Vector>
     {
-        public Polyhedron? Domain { get; set; } = null;
+        public Elements.Polyhedron? Domain { get; set; } = null;
         public Vector? CoDomain { get; set; } = null;
         public async Task<bool> SolveMaxAsync(IEnumerable<IndentWriter?> loggers) =>
             await SolveIntegerMaxAsync(loggers);
@@ -20,6 +20,6 @@ namespace OperationalResearch.Models.Problems.Solvers
         public abstract Task<bool> SolveIntegerMaxAsync(IEnumerable<IndentWriter?> loggers);
         public abstract Task<bool> SolveIntegerMinAsync(IEnumerable<IndentWriter?> loggers);
 
-        public abstract void SetData(Polyhedron domain, Vector codomain);
+        public abstract void SetData(Elements.Polyhedron domain, Vector codomain);
     }
 }
