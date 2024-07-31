@@ -82,6 +82,34 @@ namespace OperationaResearchTest
             new int[] { 3, 4, 5 },
             "20/21 3250/21 470/21"
             )]
+        [DataRow(
+            "1200 1500",
+            "3/2 3/2 |" +
+            "4/5 1 |" +
+            "1 11/5 |",
+            "1500 2000 1800",
+            true,
+            new int[] { 0, 4 },
+            "1000/3 2000/3"
+            )]
+        [DataRow(
+            "-1 -1",
+            "-100 -200 |" +
+            "-500 -300 |",
+            "-5000 -12000",
+            true,
+            new int[] { 0, 3 },
+            "90/7 130/7"
+            )]
+        [DataRow(
+            "-1 -3",
+            "-1 -3 |" +
+            "-2 -1 |",
+            "-11 -9",
+            true,
+            new int[] { 1, 2 },
+            "16/5 13/5"
+            )]
         public async Task TestPrimal(
             string cStr,
             string AStr,
