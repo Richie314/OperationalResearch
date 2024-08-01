@@ -104,10 +104,10 @@ namespace OperationalResearch.Models.Graphs
             await Writer.WriteLineAsync($"P({pSubRow},{pRow}) -> ({Function.Print(lb)}, {Function.Print(ub)})");
             await Writer.WriteLineAsync($"{k + 1}-tree: {Function.Print(kTree)}");
 
-            if (lb >= ub)
+            if (lb > ub)
             {
-                await Writer.WriteLineAsync($"Node closed for Lower Bound >= Upper Bound");
-                return new Tuple<Fraction, IEnumerable<EdgeType>?>(ub, null);
+                await Writer.WriteLineAsync($"Node closed for Lower Bound > Upper Bound");
+                return new Tuple<Fraction, IEnumerable<EdgeType>?>(lb, null);
             }
 
             // Check if k-tree is solution
@@ -124,6 +124,12 @@ namespace OperationalResearch.Models.Graphs
                 return new Tuple<Fraction, IEnumerable<EdgeType>?>(lb, kTree);
             }
 
+            if (lb == ub)
+            {
+                await Writer.WriteLineAsync($"Node closed for Lower Bound == Upper Bound");
+                return new Tuple<Fraction, IEnumerable<EdgeType>?>(lb, kTree);
+            }
+
             if (!bnb.Any())
             {
                 return new Tuple<Fraction, IEnumerable<EdgeType>?>(ub, null);
@@ -132,7 +138,7 @@ namespace OperationalResearch.Models.Graphs
             EdgeType currEdge = bnb.First();
             var w = Writer.Indent;
 
-            Tuple<Fraction, IEnumerable<EdgeType>?> sol = new(ub, kTree);
+            Tuple<Fraction, IEnumerable<EdgeType>?> sol = new(ub, null);
 
             await w.WriteLineAsync();
             await w.WriteLineAsync($"x_{currEdge.From + 1},{currEdge.To + 1} = 0");
