@@ -11,56 +11,45 @@ namespace OperationalResearch.Extensions
 {
     public static class EnumerablesExtensions
     {
-        public static IEnumerable<int> VisitedNodes<EdgeType>(this IEnumerable<EdgeType> edges) where EdgeType : Edge
+        public static IEnumerable<int> VisitedNodes<EdgeType>(
+            this IEnumerable<EdgeType> edges, 
+            int? startNode = null, bool bidirectionalEdges = false) where EdgeType : Edge
         {
-            ArgumentNullException.ThrowIfNull(edges);
             if (!edges.Any())
             {
-                return Enumerable.Empty<int>();
-            }
-
-            int currNode = edges.First().From;
-            int nextNode = edges.First().To;
-
-            if (edges.Count() == 1)
-            {
-                return new List<int>() { currNode, nextNode };
-            }
-
-            EdgeType? nextEdge = null;
-
-            foreach (var edge in edges)
-            {
-                if (edge.From == nextNode)
+                if (startNode.HasValue)
                 {
-                    nextEdge = edge;
-                    break;
+                    return [startNode.Value];
                 }
+                return [];
+            }
+            if (!startNode.HasValue)
+            {
+                return edges.VisitedNodes(edges.First().From, bidirectionalEdges);
             }
 
-            if (nextEdge is null)
+            // Find the first edge we can move from
+            EdgeType? fromEdge = edges.FirstOrDefault(e => e?.From == startNode.Value, null);
+            if (fromEdge is not null)
             {
-                // There is no next edge, it ends with nextNode
-                return new List<int>() { currNode, nextNode };
+                return new int[] { fromEdge.From }.Concat(
+                    edges.Where(e => e != fromEdge).VisitedNodes(fromEdge.To, bidirectionalEdges));
+            }
+            if (!bidirectionalEdges)
+            {
+                // Exit -> we have ended the path
+                return [startNode.Value];
             }
 
-            var nextArr = new List<EdgeType>() { nextEdge };
-            bool ExcludedEdge = false; // exclude nextEdge only once
-            foreach (var edge in edges)
+            // We couldn't move forward from an edge, perhaps we can move towards this one
+            EdgeType? toEdge = edges.FirstOrDefault(e => e?.To == startNode.Value, null);
+            if (toEdge is null)
             {
-                if (edge != nextEdge)
-                {
-                    nextArr.Add(edge);
-                    continue;
-                }
-                if (ExcludedEdge)
-                {
-                    nextArr.Add(edge);
-                }
-                ExcludedEdge = true;
+                return [startNode.Value];
             }
-            // nextNode will be the first element of the sub problem
-            return new int[] { currNode }.Concat(nextArr.VisitedNodes());
+
+            return new int[] { toEdge.To }.Concat(
+                edges.Where(e => e != toEdge).VisitedNodes(toEdge.From, bidirectionalEdges));
         }
         public static Dictionary<int, int> MentionedNodes<EdgeType>(this IEnumerable<EdgeType> edges)
             where EdgeType : Edge
@@ -114,5 +103,24 @@ namespace OperationalResearch.Extensions
         }
         public static IEnumerable<IEnumerable<T>> OrderedPermutations<T>(this IEnumerable<T> list, int length) =>
             list.AllPermutations<T>(length).Select(row => row.Order()).Distinct();
+
+        public static IEnumerable<int> ReorderPath(this IEnumerable<int> path, 
+            int start, int recursionStart = 0)
+        {
+            if (path.First() == start) 
+                return path;
+            if (recursionStart >= path.Count())
+            {
+                throw new DataMisalignedException($"Node {start + 1} not present in {string.Join('-', path.Select(i => i + 1))}");
+            }
+            return path.Skip(1).Append(path.First()).ReorderPath(start, recursionStart + 1);
+        }
+
+        public static string Reverse(this string s)
+        {
+            char[] charArray = s.ToCharArray();
+            Array.Reverse(charArray);
+            return new string(charArray);
+        }
     }
 }

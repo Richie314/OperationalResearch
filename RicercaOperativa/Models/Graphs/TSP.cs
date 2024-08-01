@@ -120,17 +120,19 @@ namespace OperationalResearch.Models.Graphs
             if (e == Vector.Repeat(2, n))
             {
                 // k-tree is solution
-                await Writer.WriteLineAsync($"{k + 1}-tree is admissible! => P({pSubRow},{pRow}): ({Function.Print(lb)}, {Function.Print(ub)})");
-                return new Tuple<Fraction, IEnumerable<EdgeType>?>(ub, kTree);
+                await Writer.WriteLineAsync($"{k + 1}-tree is admissible! => P({pSubRow},{pRow}): ({Function.Print(lb)}, {Function.Print(lb)})");
+                return new Tuple<Fraction, IEnumerable<EdgeType>?>(lb, kTree);
             }
 
             if (!bnb.Any())
             {
-                return new Tuple<Fraction, IEnumerable<EdgeType>?>(ub, kTree);
+                return new Tuple<Fraction, IEnumerable<EdgeType>?>(ub, null);
             }
 
             EdgeType currEdge = bnb.First();
             var w = Writer.Indent;
+
+            Tuple<Fraction, IEnumerable<EdgeType>?> sol = new(ub, kTree);
 
             await w.WriteLineAsync();
             await w.WriteLineAsync($"x_{currEdge.From + 1},{currEdge.To + 1} = 0");
@@ -138,7 +140,7 @@ namespace OperationalResearch.Models.Graphs
             var removedUB = await BranchAndBound(
                 w, 
                 n, 
-                edges.Where(e => e !=currEdge), 
+                edges.Where(e => e != currEdge), 
                 k, 
                 ub, 
                 bnb.Skip(1),
@@ -146,8 +148,7 @@ namespace OperationalResearch.Models.Graphs
                 Bidirectional,
                 2 * pRow - 1, 
                 pSubRow + 1);
-            Tuple<Fraction, IEnumerable<EdgeType>?> sol = new(ub, kTree);
-            if (removedUB.Item1 < ub)
+            if (removedUB.Item1 < ub && removedUB.Item2 is not null)
             {
                 sol = removedUB;
             }
@@ -166,7 +167,7 @@ namespace OperationalResearch.Models.Graphs
                 Bidirectional,
                 2 * pRow, 
                 pSubRow + 1);
-            if (forcedUB.Item1 < ub)
+            if (forcedUB.Item1 < ub && forcedUB.Item2 is not null)
             {
                 sol = forcedUB;
             }
@@ -174,6 +175,17 @@ namespace OperationalResearch.Models.Graphs
             return sol;
         }
 
+        public IEnumerable<EdgeType> BnBToEdges(string? BnB)
+        {
+            if (string.IsNullOrWhiteSpace(BnB))
+            {
+                return [];
+            }
+            return BnB.Split(',')
+                    .Select(e => new Edge(e.Trim()))
+                    .Select(e => FindEdge(e.From, e.To) ??
+                        throw new DataMisalignedException($"Edge {e} was not found"));
+        }
 
         public async Task<bool> SolveWithEuristichsFlow(
             IndentWriter Writer, 
@@ -183,12 +195,8 @@ namespace OperationalResearch.Models.Graphs
         {
             try
             {
-                var bnb = 
-                    string.IsNullOrWhiteSpace(BnB) ? [] : 
-                  BnB.Split(',')
-                    .Select(e => new Edge(e.Trim()))
-                    .Select(e => FindEdge(e.From, e.To) ?? 
-                        throw new DataMisalignedException($"Edge {e} was not found"));
+                var bnb = BnBToEdges(BnB);
+                  
 
                 var result = await BestHamiltonCycle(Writer, startNode, k, bnb);
                 if (result is null)
@@ -341,7 +349,7 @@ namespace OperationalResearch.Models.Graphs
                 // Define the problem
                 var Matrix = BuildMatrix(Bidirectional);
                 RoutingIndexManager manager = new(N, 1, startNode ?? 0);
-                RoutingModel routing = new RoutingModel(manager);
+                RoutingModel routing = new(manager);
 
                 // Tell how to search distances (costs) in the graph
                 int transitCallbackIndex = routing.RegisterTransitCallback((long fromIndex, long toIndex) =>
@@ -365,6 +373,7 @@ namespace OperationalResearch.Models.Graphs
                 {
                     path.Add(manager.IndexToNode((int)index));
                 }
+                path.Add(startNode ?? 0);
                 return path;
             }
             catch {

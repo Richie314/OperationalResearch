@@ -53,32 +53,30 @@ namespace OperationaResearchTest
             new int[] { 52, 27, 50, 60, 31, 11 },
             new int[] { 10, 6, 15, 22, 17, 14 },
             39,
-            new int[] {1, 1, 1, 8, 0, 0},
-            new int[] {1, 1, 1, 22, 1, 1},
+            "1 1 1 8/22 0 0",
             150,
             true)]
         [DataRow(
             new int[] { 52, 27, 50, 60, 31, 11 },
             new int[] { 10, 6, 15, 22, 17, 14 },
             39,
-            new int[] { 39, 0, 0, 0, 0, 0 },
-            new int[] { 10, 1, 1, 1, 1, 1 },
+            "39/10 0 0 0 0 0",
             202,
             false)]
         public async Task UpperBoundTest(
             int[] revenues,
             int[] volumes,
             int maxVolume,
-            int[] numerators,
-            int[] denominators,
+            string x,
             int value,
             bool boolean
         ) {
             Assert.AreEqual(revenues.Length, volumes.Length);
-            Assert.AreEqual(numerators.Length, denominators.Length);
 
-            Vector solution = Enumerable.Range(0, numerators.Length)
-                .Select(i => new Fraction(numerators[i], denominators[i])).ToArray();
+            Vector solution = x
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Select(Fraction.FromString)
+                .ToArray();
 
             Knapsnack k = new(
                 volume: maxVolume,
