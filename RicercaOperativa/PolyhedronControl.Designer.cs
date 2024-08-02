@@ -53,7 +53,7 @@
             label1.Name = "label1";
             label1.Size = new Size(187, 15);
             label1.TabIndex = 0;
-            label1.Text = "Variables count (space dimension)";
+            label1.Text = "Variables count";
             // 
             // label2
             // 
@@ -74,6 +74,7 @@
             xPositiveCheckbox.TabIndex = 2;
             xPositiveCheckbox.Text = "Add x >= 0 constraint";
             xPositiveCheckbox.UseVisualStyleBackColor = true;
+            xPositiveCheckbox.Checked = true;
             // 
             // blankCellsAsZeroCheckbox
             // 
@@ -85,6 +86,7 @@
             blankCellsAsZeroCheckbox.TabIndex = 3;
             blankCellsAsZeroCheckbox.Text = "Consider blank cells as 0";
             blankCellsAsZeroCheckbox.UseVisualStyleBackColor = true;
+            blankCellsAsZeroCheckbox.Checked = true;
             // 
             // matrix
             // 

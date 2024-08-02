@@ -185,7 +185,10 @@ namespace OperationalResearch.Models
             {
                 return "Infinity: problem unbounded";
             }
-            return $"c * x = {Function.Print(c * primalSolution)}";
+            var cx = c * primalSolution;
+            var floor = cx.Floor();
+            var upper = cx != floor ? floor + Fraction.One : floor; 
+            return $"c * x = {Function.Print(cx)}; ⌊c * x⌋ = {Function.Print(floor)}; ⌈c * x⌉ = {Function.Print(upper)}";
         }
         public string CalculatePrimalConstraints(Vector? primalSolution)
         {
@@ -418,12 +421,16 @@ namespace OperationalResearch.Models
 
             if (!P.ForcePositive)
             {
-                throw new NotImplementedException("Functionality not yet implemented");
+                await Writer.WriteLineAsync("Equation x >= 0 not implicitly added. Gomory cuts may fail.");
+                await Writer.WriteLineAsync("Consider running again with the x >= 0 constraint added");
+                //throw new NotImplementedException("Functionality not yet implemented");
             }
 
 
 
-            var a = P.GetMatrix()[Enumerable.Range(0, P.Rows - P.Cols)];
+            var a = P.ForcePositive ? 
+                P.GetMatrix()[Enumerable.Range(0, P.Rows - P.Cols)] :
+                P.GetMatrix();
             var b = P.GetVector()[Enumerable.Range(0, a.Rows)];
             await Writer.WriteLineAsync($"Adding {a.Rows} variables");
 
@@ -456,34 +463,41 @@ namespace OperationalResearch.Models
             for (int r = 0; r < XrcFrac.Size; r++)
             {
                 await Writer.WriteAsync($"Plane from row {r + 1} of {{ A~ }}:");
-                var arr = aB_Inv_Frac[r].Get.Apply((arj, j) =>
+
+                var fullRow = aB_Inv_Frac[r].Concat([XrcFrac[r]]).Simplify();
+
+
+                var arr = fullRow.Get
+                    .SkipLast(1).ToArray()
+                    .Apply((arj, j) =>
                 {
                     if (arj.IsZero)
                     {
                         return string.Empty;
                     }
+                    string xj = $"x{dualN.ElementAt(j) + 1}";
                     if (arj == Fraction.One)
                     {
-                        return $"+ x{dualN.ElementAt(j) + 1}";
+                        return $"+ {xj}";
                     }
                     if (arj == Fraction.MinusOne)
                     {
-                        return $"- x{dualN.ElementAt(j) + 1}";
+                        return $"- {xj}";
                     }
                     if (arj.IsPositive)
                     {
-                        return $"+{Function.Print(arj)} * x{dualN.ElementAt(j) + 1}";
+                        return $"+{Function.Print(arj)} * {xj}";
                     }
-                    return $"{Function.Print(arj)} * x{dualN.ElementAt(j) + 1}";
+                    return $"{Function.Print(arj)} * {xj}";
                 }).Where(s => !string.IsNullOrEmpty(s));
 
                 if (!arr.Any())
                 {
-                    await Writer.WriteLineAsync($"0 >= {Function.Print(XrcFrac[r])}");
+                    await Writer.WriteLineAsync($"0 >= {Function.Print(fullRow.Get.Last())}");
                     continue;
                 }
                 await Writer.WriteLineAsync(
-                    string.Join(" ", arr) + $" >= {Function.Print(XrcFrac[r])}");
+                    string.Join(" ", arr) + $" >= {Function.Print(fullRow.Get.Last())}");
 
                 Vector components = Enumerable.Repeat(Fraction.Zero, a.Cols).ToArray();
                 Fraction bComp = XrcFrac[r];

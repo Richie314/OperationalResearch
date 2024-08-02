@@ -70,7 +70,8 @@ namespace OperationalResearch
             }
             while (matrix.ColumnCount - 2 < targetColumnCount)
             {
-                matrix.Columns.Insert(matrix.ColumnCount - 2, new DataGridViewColumn(matrix.Columns[0].CellTemplate));
+                matrix.Columns.Insert(matrix.ColumnCount - 2, 
+                    new DataGridViewColumn(matrix.Columns[0].CellTemplate));
 
                 // Change the name of the last row added
                 matrix.Columns[matrix.ColumnCount - 3].Name = $"x{matrix.ColumnCount - 2}";
@@ -126,8 +127,18 @@ namespace OperationalResearch
                 List<string> currRow = [];
                 for (int col = 0; col < matrix.ColumnCount; col++)
                 {
-                    containsBlank = containsBlank || string.IsNullOrWhiteSpace((string)matrix[col, row].Value);
-                    currRow.Add((string)matrix[col, row].Value);
+                    if (col == matrix.ColumnCount - 2)
+                    {
+                        // Is the operation column
+                        var cell = matrix[col, row] as DataGridViewComboBoxCell;
+                        string? operation = cell?.FormattedValue.ToString();
+                        ArgumentException.ThrowIfNullOrWhiteSpace(operation);
+                        currRow.Add(operation);
+                    } else
+                    {
+                        containsBlank = containsBlank || string.IsNullOrWhiteSpace((string)matrix[col, row].Value);
+                        currRow.Add((string)matrix[col, row].Value);
+                    }
                 }
                 list.Add([.. currRow]);
             }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using Accord.Math;
@@ -431,6 +432,15 @@ namespace OperationalResearch.Models.Elements
             }
             return fraction;
         }
-        
+        private static BigInteger GCD(BigInteger a, BigInteger b)
+        {
+            return b == 0 ? a : GCD(b, a % b);
+        }
+        public Vector Simplify()
+        {
+            BigInteger numGcd = v.Select(i => i.Numerator).Aggregate(GCD);
+            BigInteger denGcd = v.Select(i => i.Denominator).Aggregate(GCD);
+            return this * new Fraction(denGcd, numGcd);
+        }
     }
 }

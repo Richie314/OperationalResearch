@@ -25,6 +25,11 @@ namespace OperationalResearch.PageForms
         {
             if (polyhedronControl1.Polyhedron is null)
             {
+                MessageBox.Show(
+                    "Could not load the polyhedron!", 
+                    "Error", 
+                    MessageBoxButtons.OK, 
+                    MessageBoxIcon.Warning);
                 return;
             }
             maximizeBtn.Enabled = minimizeBtn.Enabled = false;
