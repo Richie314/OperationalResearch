@@ -10,7 +10,7 @@ namespace OperationalResearch.Extensions
 {
     public class ConCurrentStreamWriter : IndentWriter
     {
-        private readonly ConcurrentQueue<string> _stringQueue = new();
+        private readonly ConcurrentQueue<Tuple<FontStyle, Color, string>> _stringQueue = new();
         private bool _disposing;
         private readonly RichTextBox _textBox;
 
@@ -24,24 +24,24 @@ namespace OperationalResearch.Extensions
         public override async Task WriteLineAsync()
         {
             await base.WriteLineAsync();
-            _stringQueue.Enqueue(Environment.NewLine);
+            _stringQueue.Enqueue(Format(Environment.NewLine));
         }
         public override void WriteLine()
         {
             base.WriteLine();
-            _stringQueue.Enqueue(Environment.NewLine);
+            _stringQueue.Enqueue(Format(Environment.NewLine));
         }
 
         public override void WriteLine(string? value)
         {
             base.WriteLine(value);
-            _stringQueue.Enqueue(string.Format("{0}" + Environment.NewLine, value));
+            _stringQueue.Enqueue(Format(string.Format("{0}" + Environment.NewLine, value)));
         }
 
         public override void Write(string? value)
         {
             base.Write(value);
-            _stringQueue.Enqueue(value ?? string.Empty);
+            _stringQueue.Enqueue(Format(value));
         }
 
         protected override void Dispose(bool disposing)
@@ -63,8 +63,12 @@ namespace OperationalResearch.Extensions
                     {
                         continue;
                     }
-                    string? value = string.Empty;
+                    Tuple<FontStyle, Color, string>? value = null;
                     if (!_stringQueue.TryDequeue(out value))
+                    {
+                        continue;
+                    }
+                    if (value is null)
                     {
                         continue;
                     }
@@ -76,13 +80,45 @@ namespace OperationalResearch.Extensions
                     {
                         _textBox.Invoke(new Action(() =>
                         {
-                            _textBox.AppendText(value);
+                            if (_textBox.ForeColor != value.Item2 ||
+                                _textBox.Font.Style != value.Item1)
+                            {
+                                _textBox.SelectionStart = _textBox.TextLength;
+                                _textBox.SelectionLength = 0;
+
+
+                                _textBox.SelectionColor = value.Item2;
+                                _textBox.SelectionFont = new Font(_textBox.Font, value.Item1);
+                                _textBox.AppendText(value.Item3);
+                                _textBox.SelectionColor = _textBox.ForeColor;
+                                _textBox.SelectionFont = _textBox.Font;
+                            }
+                            else
+                            {
+                                _textBox.AppendText(value.Item3);
+                            }
                             _textBox.ScrollToCaret();
                         }));
                     }
                     else
                     {
-                        _textBox.AppendText(value);
+                        if (_textBox.ForeColor != value.Item2 ||
+                            _textBox.Font.Style != value.Item1)
+                        {
+                            _textBox.SelectionStart = _textBox.TextLength;
+                            _textBox.SelectionLength = 0;
+
+
+                            _textBox.SelectionColor = value.Item2;
+                            _textBox.SelectionFont = new Font(_textBox.Font, value.Item1);
+                            _textBox.AppendText(value.Item3);
+                            _textBox.SelectionColor = _textBox.ForeColor;
+                            _textBox.SelectionFont = _textBox.Font;
+                        }
+                        else
+                        {
+                            _textBox.AppendText(value.Item3);
+                        }
                         _textBox.ScrollToCaret();
                     }
                 }

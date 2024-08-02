@@ -67,7 +67,7 @@ namespace OperationalResearch.Models
             {
                 await Writer.WriteLineAsync();
                 await Writer.WriteLineAsync();
-                await Writer.WriteLineAsync($"Step #{step}:");
+                await Writer.Bold.WriteLineAsync($"Step #{step}:");
 
                 Matrix A_B = A[B];
                 await Writer.WriteLineAsync($"A_B = {A_B}");
@@ -96,7 +96,7 @@ namespace OperationalResearch.Models
                 var A_N_X = A_N * x;
                 if (A_N_X <= b_N)
                 {
-                    await Writer.WriteLineAsync($"x is acceptable (A_N * x <= b_N)");
+                    await Writer.Green.WriteLineAsync($"x is acceptable (A_N * x <= b_N)");
 
                 } else
                 {
@@ -109,15 +109,18 @@ namespace OperationalResearch.Models
                 var zeroIndeces = A_N_X.ZeroIndexes;
                 if (zeroIndeces.Length != 0)
                 {
-                    await Writer.WriteLineAsync($"x is degenearate: solution also of other basis");
+                    await Writer.Italic.WriteLineAsync($"x is degenearate: solution also of other basis");
+
+                    var ind = Writer.Italic.Indent; // shorthand
                     foreach (var i in zeroIndeces)
                     {
                         if (!N.Contains(i))
                         {
-                            await Writer.WriteLineAsync($"\tThe {i + 1}-th element of N also verifies the current vertex. It was impossible, however, to find that element in N");
+                            await ind.WriteLineAsync(
+                                $"\tThe {i + 1}-th element of N also verifies the current vertex. It was impossible, however, to find that element in N");
                             continue;
                         }
-                        await Writer.WriteLineAsync($"\tIndex {N[i] + 1} in N is also verified");
+                        await ind.WriteLineAsync($"\tIndex {N[i] + 1} in N is also verified");
                     }
                 }
 
@@ -128,20 +131,20 @@ namespace OperationalResearch.Models
                 if (Y_B.IsPositiveOrZero) // y_b >= 0
                 {
                     // Optimal value
-                    await Writer.WriteLineAsync($"x is optimal.");
+                    await Writer.Bold.Blue.WriteLineAsync($"x is optimal (Y_B >= 0).");
 
                     try
                     {
-                        await Gomory(Writer.Indent, P, x, B);
+                        await Gomory(Writer.Indent.Brown, P, x, B);
                     } catch (Exception ex)
                     {
-                        await Writer.WriteLineAsync(
+                        await Writer.Red.WriteLineAsync(
                             "Error in calculating Gomory plane: " + ex.Message);
                     }
 
                     return x;
                 } else {
-                    await Writer.WriteLineAsync($"x is not yet optimal.");
+                    await Writer.Italic.WriteLineAsync($"x is not yet optimal.");
                 }
 
                 int h = FindExitIndex(Y_B, B, out Fraction ExitingElement);
@@ -155,12 +158,13 @@ namespace OperationalResearch.Models
                 {
                     // optimal value is +inf
                     await Writer.WriteLineAsync($"A[i] * W_{h + 1} <= 0 for each i inside N");
+                    await Writer.Orange.WriteLineAsync("Cannot solve problem with finite values");
                     return null;
                 }
 
 
-                int k = FindEnteringIndex(A, Wh, b, x, N, out Fraction Theta);
-                await Writer.WriteLineAsync($"Theta = {Theta}");
+                int k = FindEnteringIndex(A, Wh, b, x, N, out Fraction θ);
+                await Writer.WriteLineAsync($"θ = {θ}");
                 await Writer.WriteLineAsync($"k = {k + 1}");
                 await Writer.WriteLineAsync();
 
@@ -236,16 +240,16 @@ namespace OperationalResearch.Models
                     startBasis: startBasis, 
                     Writer: Writer, 
                     maxIterations: 100);
-                await Writer.WriteLineAsync(CalculatePrimal(x));
+                await Writer.Bold.WriteLineAsync(CalculatePrimal(x));
                 await Writer.WriteLineAsync(CalculatePrimalConstraints(x));
                 return true;
             } catch (Exception ex)
             {
-                await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
+                await Writer.Red.WriteLineAsync($"Exception happened: '{ex.Message}'");
 #if DEBUG
                 if (ex.StackTrace is not null)
                 {
-                    await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
+                    await Writer.Orange.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
                 }
 #endif
                 return false;
@@ -283,7 +287,7 @@ namespace OperationalResearch.Models
             {
                 await Writer.WriteLineAsync();
                 await Writer.WriteLineAsync();
-                Writer.WriteLine($"Step #{step}:");
+                await Writer.Bold.WriteLineAsync($"Step #{step}:");
 
                 Matrix A_B = A[B];
                 await Writer.WriteLineAsync($"A_B = {A_B}");
@@ -328,16 +332,16 @@ namespace OperationalResearch.Models
                 await Writer.WriteLineAsync($"x = {x}");
                 if (A * x <= b)
                 {
-                    await Writer.WriteLineAsync("x is acceptable");
+                    await Writer.Green.WriteLineAsync("x is acceptable");
                 } else
                 {
-                    await Writer.WriteLineAsync("x is NOT acceptable");
+                    await Writer.Crimson.WriteLineAsync("x is NOT acceptable");
                 }
 
                 if (b_N >= A_N * x)
                 {
                     // Optimal value
-                    await Writer.WriteLineAsync($"b_N >= A_N x => Y is optimal.");
+                    await Writer.Blue.WriteLineAsync($"b_N >= A_N x => Y is optimal.");
                     await Writer.WriteLineAsync();
 
                     return Y;
@@ -353,15 +357,15 @@ namespace OperationalResearch.Models
                 if (AkW.IsPositiveOrZero)
                 {
                     // optimal value is -inf
-                    await Writer.WriteLineAsync($"A_{k + 1} * W >= 0");
-                    await Writer.WriteLineAsync($"Problem cannot be solved");
+                    await Writer.Orange.WriteLineAsync($"A_{k + 1} * W >= 0");
+                    await Writer.Red.WriteLineAsync($"Problem cannot be solved");
                     return null;
                 }
 
-                Fraction Theta = AkW.NegativeIndexes.Select(i => B[i]).Select(i => Y[i] / AkW[B.IndexOf(i)] * (-1)).Min();
-                await Writer.WriteLineAsync($"Theta = {Function.Print(Theta)}");
+                Fraction θ = AkW.NegativeIndexes.Select(i => B[i]).Select(i => Y[i] / AkW[B.IndexOf(i)] * (-1)).Min();
+                await Writer.WriteLineAsync($"θ = {Function.Print(θ)}");
 
-                int h = AkW.NegativeIndexes.Select(i => B[i]).Where(i => Y[i] / AkW[B.IndexOf(i)] * (-1) == Theta).Min();
+                int h = AkW.NegativeIndexes.Select(i => B[i]).Where(i => Y[i] / AkW[B.IndexOf(i)] * (-1) == θ).Min();
                 await Writer.WriteLineAsync($"h = {h + 1}");
 
                 B = B.Where(i => i != h).Append(k).ToArray().Sorted();
@@ -390,11 +394,11 @@ namespace OperationalResearch.Models
             }
             catch (Exception ex)
             {
-                await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
+                await Writer.Red.WriteLineAsync($"Exception happened: '{ex.Message}'");
 #if DEBUG
                 if (ex.StackTrace is not null)
                 {
-                    await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
+                    await Writer.Orange.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
                 }
 #endif
                 return false;
