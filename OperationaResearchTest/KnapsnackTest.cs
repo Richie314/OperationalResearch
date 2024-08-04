@@ -1,4 +1,5 @@
 using Fractions;
+using IronPython.Runtime;
 using OperationalResearch.Extensions;
 using OperationalResearch.Models;
 using OperationalResearch.Models.Elements;
@@ -13,6 +14,7 @@ namespace OperationaResearchTest
             new int[] { 52, 27, 50, 60, 31, 11 },
             new int[] { 10, 6, 15, 22, 17, 14 },
             39,
+            null,
             new int[] { 3, 1, 0, 0, 0, 0 }, 
             183,
             false)]
@@ -20,13 +22,23 @@ namespace OperationaResearchTest
             new int[] { 52, 27, 50, 60, 31, 11 },
             new int[] { 10, 6, 15, 22, 17, 14 },
             39,
+            Knapsnack.OrderCriteria.ByValueVolumeRatio,
             new int[] { 1, 1, 1, 0, 0, 0 },
             129,
+            true)]
+        [DataRow(
+            new int[] { 52, 27, 50, 60, 31, 11 },
+            new int[] { 10, 6, 15, 22, 17, 14 },
+            39,
+            null,
+            new int[] { 1, 1, 0, 1, 0, 0 },
+            139,
             true)]
         public async Task LowerBoundTest(
             int[] revenues, 
             int[] volumes, 
             int maxVolume, 
+            Knapsnack.OrderCriteria? orderCriteria,
             int[] solution, 
             int value, 
             bool boolean
@@ -36,13 +48,16 @@ namespace OperationaResearchTest
             Knapsnack k = new(
                 volume: maxVolume,
                 volumes: volumes.Select(i => new Fraction(i)).ToArray(),
-                values: revenues.Select(i => new Fraction(i)).ToArray(),
-                weight: 0,
-                weights: Vector.Zeros(revenues.Length));
+                values: revenues.Select(i => new Fraction(i)).ToArray());
 
-            var result = await k.LowerBound(Boolean: boolean);
+            var result = 
+                orderCriteria is null ? 
+                await k.LowerBound(Boolean: boolean) :
+                (await k.LowerBoundBy(orderCriteria.Value, Boolean: boolean))?.ToInt().ToArray();
             Assert.IsNotNull(result);
-            CollectionAssert.AreEqual(solution, result);
+            CollectionAssert.AreEqual(
+                solution, result, 
+                $"{Function.Print(solution, false)} != {Function.Print(result, false)}");
 
             var gain = k.Gain(result);
             Assert.AreEqual(value, gain);
@@ -114,17 +129,14 @@ namespace OperationaResearchTest
             Knapsnack k = new(
                 volume: maxVolume,
                 volumes: volumes.Select(i => new Fraction(i)).ToArray(),
-                values: revenues.Select(i => new Fraction(i)).ToArray(),
-                weight: 0,
-                weights: Vector.Zeros(revenues.Length));
+                values: revenues.Select(i => new Fraction(i)).ToArray());
 
             var result = await k.Solve(null, Boolean: boolean);
             Assert.IsNotNull(result);
-            Assert.AreEqual(solution, result);
+            CollectionAssert.AreEqual(solution, result);
 
             var gain = k.Gain(result);
             Assert.AreEqual(value, gain);
         }
-
     }
 }

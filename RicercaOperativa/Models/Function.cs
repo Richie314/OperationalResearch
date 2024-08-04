@@ -9,7 +9,7 @@ using OperationalResearch.Models.Graphs;
 
 namespace OperationalResearch.Models
 {
-    internal static class Function
+    public static class Function
     {
         public static Fraction FindArgMin(
             Func<Fraction, Fraction> func, 

@@ -106,7 +106,7 @@ namespace OperationalResearch.Models.Graphs
 
             if (lb > ub)
             {
-                await Writer.WriteLineAsync($"Node closed for Lower Bound > Upper Bound");
+                await Writer.WriteLineAsync($"Closed for Lower Bound > Upper Bound");
                 return new Tuple<Fraction, IEnumerable<EdgeType>?>(lb, null);
             }
 
@@ -126,7 +126,7 @@ namespace OperationalResearch.Models.Graphs
 
             if (lb == ub)
             {
-                await Writer.WriteLineAsync($"Node closed for Lower Bound == Upper Bound");
+                await Writer.WriteLineAsync($"Closed for Lower Bound == Upper Bound");
                 return new Tuple<Fraction, IEnumerable<EdgeType>?>(lb, kTree);
             }
 
