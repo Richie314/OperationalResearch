@@ -34,6 +34,30 @@ namespace OperationaResearchTest
             new int[] { 1, 1, 0, 1, 0, 0 },
             139,
             true)]
+        [DataRow(
+            new int[] { 19, 9, 18, 22, 15, 21, 8 },
+            new int[] { 71, 40, 116, 68, 76, 244, 264 },
+            331,
+            Knapsnack.OrderCriteria.ByValueVolumeRatio,
+            new int[] { 1, 1, 0, 1, 1, 0, 0 },
+            65,
+            true)]
+        [DataRow(
+            new int[] { 19, 9, 18, 22, 15, 21, 8 },
+            new int[] { 71, 40, 116, 68, 76, 244, 264 },
+            331,
+            null,
+            new int[] { 0, 1, 0, 4, 0, 0, 0 },
+            97,
+            false)]
+        [DataRow(
+            new int[] { 36, 38, 40, 42, 44 },
+            new int[] { 7, 9, 11, 13, 15 },
+            31,
+            Knapsnack.OrderCriteria.ByValueVolumeRatio,
+            new int[] { 1, 1, 1, 0, 0 },
+            114,
+            true)]
         public async Task LowerBoundTest(
             int[] revenues, 
             int[] volumes, 
@@ -78,6 +102,34 @@ namespace OperationaResearchTest
             "39/10 0 0 0 0 0",
             202,
             false)]
+        [DataRow(
+            new int[] { 19, 9, 18, 22, 15, 21, 8 },
+            new int[] { 71, 40, 116, 68, 76, 244, 264 },
+            331,
+            "1 1 19/29 1 1 0 0",
+            76,
+            true)]
+        [DataRow(
+            new int[] { 19, 9, 18, 22, 15, 21, 8 },
+            new int[] { 71, 40, 116, 68, 76, 244, 264 },
+            331,
+            "0 0 0 331/68 0 0 0",
+            107,
+            false)]
+        [DataRow(
+            new int[] { 36, 38, 40, 42, 44 },
+            new int[] { 7, 9, 11, 13, 15 },
+            31,
+            "1 1 1 4/13 0",
+            126,
+            true)]
+        [DataRow(
+            new int[] { 36, 38, 40, 42, 44 },
+            new int[] { 7, 9, 11, 13, 15 },
+            31,
+            "31/7 0 0 0 0",
+            159,
+            false)]
         public async Task UpperBoundTest(
             int[] revenues,
             int[] volumes,
@@ -115,6 +167,13 @@ namespace OperationaResearchTest
             39,
             new int[] { 1, 1, 0, 1, 0, 0 },
             139,
+            true)]
+        [DataRow(
+            new int[] { 19, 9, 18, 22, 15, 21, 8 },
+            new int[] { 71, 40, 116, 68, 76, 244, 264 },
+            331,
+            new int[] { 1, 0, 1, 1, 1, 0, 0 },
+            74,
             true)]
         public async Task SolveTest(
             int[] revenues,
