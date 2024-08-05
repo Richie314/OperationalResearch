@@ -25,21 +25,35 @@ namespace OperationalResearch.Models.Graphs
                 this.p = p.ToArray();
                 this.π = π;
             }
-            public Graph<Edge> Graph()
+            public Tuple<Graph<Edge>, Vector> Graph(
+                int r, 
+                Graph<EdgeType> mainEdges)
             {
                 List<Edge> edges = [];
                 for (int dest = p.Length - 1; dest >= 0; dest--)
                 {
-                    if (p[dest] < 0) 
+                    if (p[dest] < 0 || p[dest] == dest) 
                         continue;
                     edges.Add(new Edge(from: p[dest], dest));
                 }
-                return new Graph<Edge>(edges);
+
+                Vector x = Vector.Zeros(mainEdges.Edges.Count());
+                for (int node  = 0; node < p.Length; node++)
+                {
+                    for (int curr = node; curr != r && p[curr] >= 0; curr = p[curr])
+                    {
+                        int xIndex = mainEdges.GetEdgeIndex(from: p[curr], to: curr);
+                        x[xIndex] = x[xIndex] + Fraction.One;
+                    }
+                }
+
+                return new Tuple<Graph<Edge>, Vector>(new Graph<Edge>(edges), x);
             }
         }
         public async Task<DijkstraResult?> Dijkstra(
             IndentWriter? Writer = null, int startNode = 0, int? maxIterations = 20)
         {
+            const int NO_PREDECESSOR = -2;
             if (startNode < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(startNode));
@@ -50,37 +64,29 @@ namespace OperationalResearch.Models.Graphs
             }
             Writer ??= IndentWriter.Null;
 
-            int[] p = Enumerable.Repeat(-2, N).ToArray();
+            int[] p = Enumerable.Repeat(NO_PREDECESSOR, N).ToArray();
             Vector π = Enumerable.Repeat(Fraction.PositiveInfinity, N).ToArray();
             int[] Q = [startNode];
 
             p[startNode] = startNode;
-            π[startNode] = Fraction.MinusOne;
+            π[startNode] = Fraction.Zero;
 
-            await Writer.WriteLineAsync("Dijkstra starting...");
-            await Writer.WriteLineAsync("Initial condition:");
-            await Writer.WriteLineAsync($"starting node = {startNode + 1}");
-
-            await Writer.WriteLineAsync($"p = {Function.Print(p)}");
-            await Writer.WriteLineAsync($"π = {π}");
-            await Writer.WriteLineAsync($"Q = {Function.Print(Q)}");
+            await Writer.WriteLineAsync($"Dijkstra from node = {startNode + 1}");
+            await Writer.Indent.WriteLineAsync($"p = {Function.Print(p)}");
+            await Writer.Indent.WriteLineAsync($"π = {π}");
+            await Writer.Indent.WriteLineAsync($"Q = {Function.Print(Q)}");
             await Writer.WriteLineAsync();
 
             int k = 1;
             while (Q.Any())
             {
-                await Writer.WriteLineAsync($"Iteration {k}:");
-
+                await Writer.Bold.WriteLineAsync($"Iteration #{k} of Dijkstra:");
+                
                 int u = Q[Q.Select(i => π[i]).ToArray().ArgMin()];//ArgMin == 0 -> min is with first element of Q
                 await Writer.Indent.WriteLineAsync($"u = {u + 1}, removed from Q");
 
-                await Writer.Indent.WriteLineAsync($"p[{u + 1}] = {p[u] + 1}");
-                await Writer.Indent.WriteLineAsync($"π[{u + 1}] = {Function.Print(π[u])}");
-
                 // Remove u from Q
                 Q = Q.Where(i => i != u).ToArray();
-
-                bool[] updated = Enumerable.Repeat(false, N).ToArray();
 
                 foreach (var edge in Edges)
                 {
@@ -90,43 +96,40 @@ namespace OperationalResearch.Models.Graphs
                         if (π[v] > π[u] + edge.Cost)
                         {
                             // Violates Bellman's condition
-                            await Writer.Indent.WriteLineAsync($"Edge {edge} violates Bellman's condition:");
+                            await Writer.Indent.WriteLineAsync(
+                                $"Edge {edge} violates Bellman's condition:");
                             await Writer.Indent.Indent.WriteLineAsync(
                                 $"{Function.Print(π[v])} > {Function.Print(π[u])} + {Function.Print(edge.Cost)} = {Function.Print(π[u] + edge.Cost)}");
 
                             π[v] = π[u] + edge.Cost;
                             p[v] = u;
-                            updated[v] = true;
+
+                            await Writer.Indent.Indent.WriteLineAsync($"Set π[{v + 1}] = {Function.Print(π[v])}");
+                            await Writer.Indent.Indent.WriteLineAsync($"Set p[{v + 1}] = {p[v] + 1}");
                             Q = Q.Concatenate(v); Q.Sort();
                             await Writer.Indent.WriteLineAsync($"Q = Q U {{ {v + 1} }} = {Function.Print(Q)}");
                         }
                     }
                 }
 
-                await Writer.Indent.WriteLineAsync("Distances: [updated]");
-                for (int i = 0; i < N; i++)
-                {
-                    await Writer.Indent.WriteAsync((updated[i] ? $"[{Function.Print(π[i])}]" : $"{Function.Print(π[i])}") + "  ");
-                }
-                await Writer.WriteLineAsync();
-                await Writer.WriteLineAsync();
-                await Writer.WriteLineAsync();
-
 
                 k++;
                 if (maxIterations.HasValue && k >= maxIterations.Value)
                 {
-                    await Writer.WriteLineAsync(
+                    await Writer.Red.WriteLineAsync(
                         $"Maxinum number of iterations ({maxIterations.Value}) exceeded. Could not solve the problem");
                     return null;
                 }
+
+                await Writer.WriteLineAsync();
+                await Writer.WriteLineAsync();
             }
 
             for (int i = 0; i < p.Length; i++)
             {
                 if (p[i] == i)
                 {
-                    await Writer.Indent.WriteLineAsync(
+                    await Writer.Indent.Orange.WriteLineAsync(
                         $"It appears that predecessor  that the predecessor of node {i + 1} is the node {i + 1} itself!");
                 }
             }

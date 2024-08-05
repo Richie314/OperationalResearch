@@ -235,11 +235,11 @@ namespace OperationalResearch.Models.Graphs
             return x.ToArray();
         }
         
-        public async Task<IEnumerable<int>?> SolveBounded(
-            IEnumerable<EdgeType>? startBase,
+        public async Task<Vector?> SolveBounded(
+            IEnumerable<EdgeType>? startBasis,
             IEnumerable<EdgeType>? startU, IndentWriter? Writer = null)
         {
-            if (startBase is null)
+            if (startBasis is null)
             {
                 return null;
             }
@@ -253,7 +253,7 @@ namespace OperationalResearch.Models.Graphs
             await Writer.WriteLineAsync();
             await Writer.WriteLineAsync();
 
-            var T = GetEdgeIndices(startBase).ToArray();
+            var T = GetEdgeIndices(startBasis).ToArray();
             var U = GetEdgeIndices(startU).ToArray();
             while (true)
             {
@@ -289,12 +289,21 @@ namespace OperationalResearch.Models.Graphs
                 await Writer.WriteLineAsync($"Reduced cL = {cReduced[L]}");
                 await Writer.WriteLineAsync($"Reduced cU = {cReduced[U]}");
 
-                if (
-                    L.All(i => !cReduced[i].IsNegative) &&
-                    U.All(i => !cReduced[i].IsPositive))
+                if (Enumerable.Range(0, Edges.Count()).All(i =>
+                    {
+                        if (x[i] == Fraction.Zero)
+                        {
+                            return cReduced[i] >= Fraction.Zero;
+                        }
+                        if (x[i] == u[i])
+                        {
+                            return cReduced[i] <= Fraction.Zero;
+                        }
+                        return cReduced[i].IsZero;
+                    }))
                 {
-                    await Writer.WriteLineAsync($"Flow is optimal");
-                    return T;
+                    await Writer.Green.WriteLineAsync($"Flow is optimal");
+                    return x;
                 }
                 //var pql = L.Where(i => cReduced[i].IsNegative);
                 //var pqu = U.Where(i => cReduced[i].IsPositive);
@@ -463,7 +472,7 @@ namespace OperationalResearch.Models.Graphs
         }
         
         public async Task<bool> FlowBounded(
-            IEnumerable<EdgeType>? startBase,
+            IEnumerable<EdgeType>? startBasis,
             IEnumerable<EdgeType>? startU, 
             int? startNode = null,
             int? endNode = null,
@@ -472,34 +481,37 @@ namespace OperationalResearch.Models.Graphs
             Writer ??= IndentWriter.Null;
             startNode = startNode ?? 0;
             endNode = endNode ?? N - 1;
-            if (startBase is null)
+            if (startBasis is null)
             {
                 await Writer.WriteLineAsync($"Using {startNode.Value + 1}-tree as start base");
                 var sTree = await FindKTree(startNode.Value, true, null);
                 if (sTree is not null)
                 {
-                    startBase = sTree;
+                    startBasis = sTree;
                 }
             }
             bool solved = false;
             // Flow of min cost
             try
             {
-                var sol = await SolveBounded(startBase, startU, Writer);
+                var sol = await SolveBounded(startBasis, startU, Writer);
                 if (sol is null)
                 {
-                    await Writer.WriteLineAsync("Solution is null");
+                    await Writer.Red.WriteLineAsync("Solution is null");
                     solved = false;
                 } else
                 {
-                    await Writer.WriteLineAsync("Solution is " + Function.Print(sol));
+                    await Writer.Green.Bold.WriteLineAsync($"Solution is {sol}");
                     solved = true;
                 }
             }
             catch (Exception ex)
             {
-                await Writer.WriteLineAsync($"Exception happened '{ex.Message}'");
-                // return solved;
+                await Writer.Red.WriteLineAsync($"Exception happened '{ex.Message}'");
+                if (!string.IsNullOrWhiteSpace(ex.StackTrace))
+                {
+                    await Writer.Indent.Orange.WriteLineAsync(ex.StackTrace);
+                }
             }
 
             // Min-cut and max-flow
@@ -507,15 +519,37 @@ namespace OperationalResearch.Models.Graphs
             {
                 await Writer.WriteLineAsync();
                 await Writer.WriteLineAsync();
-                if (!await MinFlowMaxCut(startNode.Value, endNode.Value, Writer.Indent, false))
+
+                var minflowmaxcut = await FordFulkerson(
+                    startNode.Value, endNode.Value, Writer.Indent);
+
+                if (minflowmaxcut is null)
                 {
                     await Writer.WriteLineAsync(
                         $"Could not calculate min-cut from {startNode.Value} to {endNode.Value}");
+                } else
+                {
+                    IEnumerable<int> Ns = minflowmaxcut.Item1, Nt = minflowmaxcut.Item2;
+                    Fraction capacity = minflowmaxcut.Item3;
+                    Vector x = minflowmaxcut.Item4;
+
+                    await Writer.Bold.WriteLineAsync(
+                        $"N_s = N_{startNode.Value + 1} = {Function.Print(Ns)}");
+                    await Writer.Indent.WriteLineAsync(
+                        $"N_t = N_{endNode.Value + 1} = {Function.Print(Nt)}");
+                    await Writer.Indent.WriteLineAsync(
+                        $"u(N_{startNode.Value + 1}, N_{endNode.Value + 1}) = {Function.Print(capacity)}");
+
+                    await Writer.Bold.Green.WriteLineAsync($"Max flow x = {x}");
                 }
             }
             catch (Exception ex)
             {
-                await Writer.WriteLineAsync($"Exception happened '{ex.Message}'");
+                await Writer.Red.WriteLineAsync($"Exception happened '{ex.Message}'");
+                if (!string.IsNullOrWhiteSpace(ex.StackTrace))
+                {
+                    await Writer.Indent.Orange.WriteLineAsync(ex.StackTrace);
+                }
             }
 
 
@@ -527,20 +561,24 @@ namespace OperationalResearch.Models.Graphs
                 var dijkstra = await Dijkstra(Writer.Indent, startNode: startNode.Value);
                 if (dijkstra is null)
                 {
-                    await Writer.WriteLineAsync(
-                        $"Could not calculate Minimum paths tree from {startNode.Value}");
+                    await Writer.Red.WriteLineAsync(
+                        $"Could not calculate Minimum paths tree from {startNode.Value + 1}");
                 } else
                 {
                     await Writer.WriteLineAsync($"Final p = {Function.Print(dijkstra.p)}");
                     await Writer.WriteLineAsync($"Final π = {dijkstra.π}");
                     try
                     {
-                        var g = dijkstra.Graph();
-                        await Writer.WriteLineAsync($"Minimum paths {startNode.Value}-tree = {dijkstra.Graph()}");
+                        var g = dijkstra.Graph(startNode.Value, this);
+                        await Writer.Green.WriteLineAsync(
+                            $"Minimum paths {startNode.Value + 1}-tree = {g.Item1}");
+                        await Writer.Green.WriteLineAsync(
+                            $"Flow in {startNode.Value + 1}-tree = {g.Item2}");
                     }
                     catch (Exception ex) {
-                        await Writer.WriteLineAsync($"Exception during reconstruction of graph from vector of predecessors:");
-                        await Writer.Indent.WriteLineAsync(ex.Message);
+                        await Writer.Orange.WriteLineAsync(
+                            $"Exception during reconstruction of graph from vector of predecessors:");
+                        await Writer.Indent.Orange.WriteLineAsync(ex.Message);
                     }
                 }
             }

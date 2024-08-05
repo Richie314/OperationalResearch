@@ -1,4 +1,6 @@
-﻿using Accord.Math;
+﻿using Accord.Collections;
+using Accord.Math;
+using OperationalResearch.Extensions;
 using System.ComponentModel.DataAnnotations;
 using Matrix = OperationalResearch.Models.Elements.Matrix;
 
@@ -207,6 +209,51 @@ namespace OperationalResearch.Models.Graphs
             }
         }
 
+        public IEnumerable<int[]> AllOreintedPaths(int s, int t)
+        {
+            if (s < 0 || t < 0 || s >= N || t >= N)
+            {
+                throw new ArgumentException($"Invalid path points: {s + 1} -> {t + 1}");
+            }
+
+            bool[] visited = new bool[N];
+            List<int[]> paths = new();
+
+            allOrientedPathsUtil(
+                s, t,
+                visited,
+                new List<int>(), paths);
+
+            return paths;
+        }
+
+        private void allOrientedPathsUtil(
+            int s, int t, 
+            bool[] visited,
+            List<int> local,
+            List<int[]> finalPaths)
+        {
+            if (s == t)
+            {
+                finalPaths.Add(local.ToArray());
+                return;
+            }
+
+            visited[s] = true;
+            foreach (int neighbor in Edges.Where(e => e.From == s).Select(e => e.To).Distinct())
+            {
+                if (visited[neighbor])
+                {
+                    continue;
+                }
+
+                local.Add(neighbor);
+                allOrientedPathsUtil(neighbor, t, visited, local, finalPaths);
+                local.Remove(neighbor);
+            }
+
+            visited[s] = false;
+        }
 
         public override string ToString() => string.Join(", ", Edges.Order().Select(e => e.ToString()));
     }

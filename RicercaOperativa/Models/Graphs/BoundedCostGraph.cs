@@ -23,172 +23,181 @@ namespace OperationalResearch.Models.Graphs
         public Vector l { get => Edges.Select(e => e.lb).ToArray(); }
         public Vector c { get => Edges.Select(e => e.Cost).ToArray(); }
 
-        public async Task<bool> MinFlowMaxCut(int s, int t, IndentWriter? Writer = null, bool printEdges = true)
+        
+
+        public IEnumerable<EdgeType> BuildResidueGraph(Vector x)
         {
-            Writer ??= IndentWriter.Null;
-
-            // Set xij = 0
-            Vector x = Vector.Zeros(Edges.Count());
-
-            int it = 1;
-            bool qEmpty = false;
-            // E-K algorithm
-            while (it < 15)
+            List<EdgeType> r = [];
+            for (int i = 0; i < Edges.Count(); i++)
             {
-                await Writer.WriteLineAsync($"Iteration #{it} of E-K starts now...");
-                it++;
-
-                // Build G(x)
-                List<EdgeType> r = [];
-                for (int i = 0; i < Edges.Count(); i++)
+                EdgeType edge = Edges.ElementAt(i);
+                if (x[i] < edge.ub)
                 {
-                    EdgeType edge = Edges.ElementAt(i);
-                    if (x[i] < edge.ub)
-                    {
-                        EdgeType clone = (EdgeType)edge.Clone();
-                        clone.ub = edge.ub - x[i];
-                        r.Add(clone);
-                    }
-                    if (x[i].IsPositive)
-                    {
-                        EdgeType rev = (EdgeType)edge.Clone();
-                        rev.From = edge.To;
-                        rev.To = edge.From;
-                        rev.ub = x[i];
-                        r.Add(rev);
-                    }
+                    EdgeType clone = (EdgeType)edge.Clone();
+                    clone.ub = edge.ub - x[i];
+                    r.Add(clone);
                 }
-                r = [.. r.ToArray().Order()];
-                if (printEdges)
+                if (x[i].IsPositive)
                 {
-                    foreach (var rij in r)
-                    {
-                        await Writer.WriteLineAsync($"\t{rij} with capacity = {rij.ub}");
-                    }
+                    EdgeType rev = (EdgeType)edge.Clone();
+                    rev.From = edge.To;
+                    rev.To = edge.From;
+                    rev.ub = x[i];
+                    r.Add(rev);
                 }
-
-                // Predecessors
-                var p = Enumerable.Repeat(-2, N).ToArray();
-                if (t >= p.Length || s >= p.Length || s < 0 || t < 0)
-                {
-                    throw new ArgumentException("Destination or starting node not found!");
-                }
-                p[s] = -1;
-
-                IEnumerable<int> Q = [s];
-
-                while (Q.Any())
-                {
-                    await Writer.WriteLineAsync();
-                    await Writer.WriteLineAsync($"Q = {Function.Print(Q)}");
-                    await Writer.WriteLineAsync($"X = {x}");
-                    await Writer.WriteLineAsync($"p = {Function.Print(p)}");
-
-                    // extract first element
-                    int i = Q.First();
-                    Q = Q.Skip(1);
-
-                    await Writer.WriteLineAsync($"Extracting {i + 1} from Q");
-
-                    if (r.Any(rij => rij.From == i && rij.To == t))
-                    {
-                        p[t] = i;
-                        await Writer.Indent.WriteLineAsync($"{new Edge(i, t)} found inside A(x)");
-                        await Writer.Indent.WriteLineAsync($"p_t = p_{t + 1} = {i + 1}");
-                        await Writer.Indent.WriteLineAsync($"Exiting loop");
-                        break;
-                    }
-
-                    foreach (var edge in r.Where(e =>
-                        e.From == i &&
-                        p[e.To] < 0/* &&
-                        e.Cost < e.ub*/)) // Not filled edges
-                    {
-                        if (p[edge.To] == -1) continue;
-                        await Writer.WriteLineAsync($"Analizing edge {edge}");
-
-                        p[edge.To] = i;
-                        await Writer.Indent.WriteLineAsync($"\tp_{edge.To + 1} = {i + 1}");
-
-                        Q = Q.Append(edge.To);
-                        await Writer.Indent.WriteLineAsync($"\tAdding {edge.To + 1} to Q");
-                    }
-                }
-
-                await Writer.WriteLineAsync();
-                await Writer.WriteLineAsync("EK-iteration ended");
-                await Writer.WriteLineAsync();
-
-
-                await Writer.WriteLineAsync($"\tp = {Function.Print(p)}");
-
-                var Ns = Enumerable.Range(0, p.Length).Where(i => p[i] != -2);
-                var Nt = Enumerable.Range(0, p.Length).Where(i => p[i] == -2);
-
-                await Writer.WriteLineAsync("Current cut:");
-                await Writer.Indent.WriteLineAsync($"N_s = N_{s + 1} = {Function.Print(Ns)}");
-                await Writer.Indent.WriteLineAsync($"N_t = N_{t + 1} = {Function.Print(Nt)}");
-
-                await Writer.WriteLineAsync();
-
-
-                // Find min
-                int curr = t; // start from end
-                Fraction min = Fraction.PositiveInfinity;
-                IEnumerable<int> Path = [t];
-                while (p[curr] >= 0)
-                {
-                    var rij = r.First(rij => rij.From == p[curr] && rij.To == curr) ?? 
-                        throw new Exception("This should not happen :/");
-                    if (rij.ub < min)
-                    {
-                        min = rij.ub;
-                    }
-                    curr = p[curr]; // Get predecessor
-                    Path = Path.Prepend(curr);
-                }
-
-                await Writer.WriteLineAsync($"\tPath: {string.Join('-', Path.Select(i => i + 1))}");
-                await Writer.WriteLineAsync($"\tMax flow that can be sent: {Function.Print(min)}");
-
-                // Update X
-                for (int i = Path.Count() - 1; i > 0; i--)
-                {
-                    // current edge
-                    curr = Path.ElementAt(i);
-                    int prev = Path.ElementAt(i - 1);
-
-                    // find edge index to find which x modify
-                    int edgeIndex = GetEdgeIndex(prev, curr);
-
-                    x[edgeIndex] = min;
-                }
-                await Writer.WriteLineAsync($"\tX = {x}");
-
-                if (Q.Any())
-                {
-                    // We were "interruped"
-                    await Writer.WriteLineAsync($"\tQ = {Function.Print(Q)}");
-                }
-
-                // End of E-K algorithm
-
-                if (!Q.Any())
-                {
-                    if (qEmpty)
-                    {
-                        await Writer.WriteLineAsync("Could not find a new flow, so the previous is optimal");
-
-                        break;
-                    }
-                    qEmpty = true;
-                }
-
-                await Writer.WriteLineAsync();
-                await Writer.WriteLineAsync();
             }
-            return true;
+            return r.ToArray().Order();
         }
 
+        public async Task<Tuple<
+            IEnumerable<int>, 
+            IEnumerable<int>,
+            Fraction,
+            Vector>?> 
+            FordFulkerson(
+            int s, 
+            int t,
+            IndentWriter? Writer = null,
+            int? maxIterations = null
+        ) {
+            Writer ??= IndentWriter.Null;
+            Vector x = Vector.Zeros(Edges.Count());
+            int iteration = 1;
+            while (!maxIterations.HasValue || iteration <= maxIterations.Value)
+            {
+                await Writer.Bold.WriteLineAsync($"FordFurkelson #{iteration}");
+                await Writer.WriteLineAsync($"x = {x}");
+                
+                var G = new Graph<EdgeType>(N, BuildResidueGraph(x));
+                await Writer.WriteLineAsync($"G(x) = {G}");
+
+                var C = await EdmondsKarp(s, t, G, Writer.Indent, 20);
+                if (C is null || !C.Any())
+                {
+                    await Writer.WriteLineAsync("No increasing path was found in G(x)");
+                    await Writer.Green.WriteLineAsync("x is a maxinum flow");
+
+                    // Build the cut
+                    List<int> Ns = [s], Nt = [t];
+                    foreach (int i in Enumerable.Range(0, N))
+                    {
+                        if (i == s || i == t)
+                            continue;
+                        var paths = G.AllOreintedPaths(s, i);
+                        if (paths.Any())
+                        {
+                            await Writer.Indent.Blue.WriteLineAsync(
+                                $"Path from {s + 1} to {i + 1}: {string.Join('-', paths.First().Select(j => j + 1))}");
+                            Ns.Add(i);
+                        } else
+                        {
+                            Nt.Add(i);
+                        }
+                    }
+                    var APlusEdges = Edges.Where(e => Ns.Contains(e.From) && Nt.Contains(e.To)).ToArray();
+                    
+                    if (APlusEdges.Length == 0)
+                    {
+                        throw new DataMisalignedException($"No edges were found from N_{s + 1} to N_{t + 1}");
+                    }
+                    await Writer.WriteLineAsync(
+                        $"A^+ = {{ {string.Join(", ", APlusEdges.Select(e => e.ToString()))} }}");
+
+                    
+                    Fraction cutCapacity = new Vector(
+                        APlusEdges.Select(e => e.ub).ToArray()).SumOfComponents();
+
+                    await Writer.WriteLineAsync($"u(N_{s + 1}, N_{t + 1}) = {Function.Print(cutCapacity)}");
+
+                    return new Tuple<IEnumerable<int>, IEnumerable<int>, Fraction, Vector>(
+                        Ns, Nt, cutCapacity, x);
+                }
+
+                var δ = C.Select(rij => rij.ub).Min();
+                await Writer.WriteLineAsync($"δ = {Function.Print(δ)}");
+
+                // Update x with new flow δ
+                for (int i = 0; i < x.Size; i++)
+                {
+                    if (C.Any(e => e == Edges.ElementAt(i)))
+                    {
+                        x[i] = x[i] + δ;
+                    }
+                    if (C.Any(e => e == Edges.ElementAt(i).Reversed))
+                    {
+                        x[i] = x[i] - δ;
+                    }
+                }
+            }
+
+            await Writer.Orange.WriteLineAsync($"Limit of {iteration} reached");
+            return null;
+
+        }
+
+        public async Task<IEnumerable<EdgeType>?> EdmondsKarp(
+            int s, int t,
+            Graph<EdgeType> G,
+            IndentWriter? Writer = null,
+            int? maxIterations = null
+        ) {
+            const int NO_PREDECESSOR = -2;
+            Writer ??= IndentWriter.Null;
+
+            var p = Enumerable.Repeat(NO_PREDECESSOR, N).ToArray();
+            p[s] = 0;
+
+            Queue<int> Q = new Queue<int>([s]);
+
+            while (Q.TryDequeue(out int i))
+            {
+                await Writer.Bold.WriteLineAsync($"Analizing node {i + 1}");
+
+                await Writer.Indent.WriteLineAsync($"p = {Function.Print(p)}");
+
+                if (G.Edges.Any(e => e.From == i && e.To == t))
+                {
+                    await Writer.Indent.Green.WriteLineAsync(
+                        $"Found {new Edge(i, t)} inside A(x)");
+                    p[t] = i;
+
+
+                    List<int> path = new();
+                    for (int j = t; j != s; j = p[j])
+                    {
+                        if (p[j] == NO_PREDECESSOR) 
+                            continue;
+                        path.Add(j);
+                    }
+                    path.Add(s);
+                    path.Reverse();
+
+                    await Writer.Indent.WriteLineAsync($"path: {string.Join('-', path.Select(k => k + 1))}");
+
+                    return G.GetEdges(path, false);
+                }
+
+                foreach (var e in G.Edges)
+                {
+                    if (e.From != i) continue;
+                    if (p[e.To] == NO_PREDECESSOR)
+                    {
+                        p[e.To] = e.From;
+                        Q.Enqueue(e.To);
+                    }
+                }
+            }
+
+            await Writer.Orange.WriteLineAsync("Q is empty and an increasing path was not found");
+            await Writer.WriteLineAsync("A cut may possibly be found:");
+
+            var Ns = NodeList.Where(i => p[i] != NO_PREDECESSOR);
+            var Nt = NodeList.Where(i => p[i] == NO_PREDECESSOR);
+
+            await Writer.Indent.WriteLineAsync($"N_{s + 1} = {Function.Print(Ns)}");
+            await Writer.Indent.WriteLineAsync($"N_{t + 1} = {Function.Print(Nt)}");
+
+            return null;
+        }
     }
 }
