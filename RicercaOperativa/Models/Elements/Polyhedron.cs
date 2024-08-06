@@ -27,7 +27,7 @@ namespace OperationalResearch.Models.Elements
             }
         }
         public Polyhedron(Fraction[,] A, Vector b, bool forcePositive) : this(new Matrix(A), b, forcePositive) { }
-        
+
         public Polyhedron NegateKnownVector
         {
             get => new Polyhedron(A, Fraction.MinusOne * b, ForcePositive);
@@ -136,6 +136,8 @@ namespace OperationalResearch.Models.Elements
                 .Select(B => B.ToArray());
         }
 
+        public IEnumerable<int[]> AllBasis { get => getAllBasis(); }
+
         private IEnumerable<Vector> getVertices()
         {
             try
@@ -150,7 +152,7 @@ namespace OperationalResearch.Models.Elements
             }
         }
         public IEnumerable<Vector> Vertices
-        { 
+        {
             get => getVertices();
         }
 
@@ -228,7 +230,7 @@ namespace OperationalResearch.Models.Elements
             for (int i = 0; i < mat.Length; i++)
             {
                 Vector? r = Vector.FromString(mat[i].SkipLast(1));
-                if (r is null) 
+                if (r is null)
                     continue;
                 switch (mat[i].Last().Trim())
                 {
@@ -256,15 +258,15 @@ namespace OperationalResearch.Models.Elements
 
 
             return new Polyhedron(
-                A: new Matrix(A.Select(r => r.Get).ToArray()), 
-                b: b, 
+                A: new Matrix(A.Select(r => r.Get).ToArray()),
+                b: b,
                 forcePositive: ForcePositive);
         }
 
 
         public static Polyhedron FromStringMatrix(string[][] mat, bool ForcePositive = false) =>
             FromStringMatrixAndVector(
-                mat: mat.Select(row => row.SkipLast(1).ToArray()).ToArray(), 
+                mat: mat.Select(row => row.SkipLast(1).ToArray()).ToArray(),
                 vector: mat.Select(row => row.Last()).ToArray(),
                 ForcePositive: ForcePositive);
 
@@ -275,7 +277,7 @@ namespace OperationalResearch.Models.Elements
         public Polyhedron RemoveEquation(int index) =>
             new Polyhedron(A[A.RowsIndeces.Where(j => j != index)], b.RemoveAt(index));
 
-        public static Polyhedron operator & (Polyhedron? l, Polyhedron? r)
+        public static Polyhedron operator &(Polyhedron? l, Polyhedron? r)
         {
             if (l is null)
             {
@@ -307,6 +309,11 @@ namespace OperationalResearch.Models.Elements
             var matrix = fullMatrix.GetCols(l.A.ColsIndeces);
             var vector = fullMatrix.Col(fullMatrix.Cols - 1);
             return new Polyhedron(matrix, vector, l.ForcePositive || r.ForcePositive);
+        }
+
+        public Vector? this[IEnumerable<int> B]
+        {
+            get => BasisVertex(GetMatrix(), GetVector(), B);
         }
     }
 }

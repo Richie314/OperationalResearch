@@ -224,14 +224,14 @@ namespace OperationalResearch.Models.Problems
     /// <summary>
     /// Analyze a poliynomial function of multiple variables inside a polyhedron
     /// </summary>
-    public class QuadraticProblem(Elements.Polyhedron p, Matrix Hessian, Vector Linear) : 
-        Problem<Elements.Polyhedron, Tuple<Matrix, Vector>, QuadraticSolver>
+    public class QuadraticProblem(Polyhedron p, Matrix Hessian, Vector Linear) : 
+        Problem<Polyhedron, Tuple<Matrix, Vector>, QuadraticSolver>
             (p,
              new Tuple<Matrix, Vector>(Hessian, Linear),
              new QuadraticSolver())
     {
         public QuadraticProblem(string[][] polyhedron, string[][] hessian, string[]? linear) :
-            this(Elements.Polyhedron.FromStringMatrix(polyhedron), new Matrix(hessian), Vector.FromString(linear) ?? Vector.Empty) { }
+            this(Polyhedron.FromStringMatrix(polyhedron), new Matrix(hessian), Vector.FromString(linear) ?? Vector.Empty) { }
     }
 
     #endregion

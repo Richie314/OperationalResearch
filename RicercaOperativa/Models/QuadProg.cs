@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.UI.Core;
 using Matrix = OperationalResearch.Models.Elements.Matrix;
 using Vector = OperationalResearch.Models.Elements.Vector;
 
@@ -18,8 +19,8 @@ namespace OperationalResearch.Models
         private readonly QuadraticObjectiveFunction f;
         private readonly Matrix H;
         private readonly Vector lin;
-        private readonly Elements.Polyhedron P;
-        public QuadProg(Matrix H, Vector linearPart, Elements.Polyhedron p)
+        private readonly Polyhedron P;
+        public QuadProg(Matrix H, Vector linearPart, Polyhedron p)
         {
             ArgumentNullException.ThrowIfNull(H, nameof(H));
             ArgumentNullException.ThrowIfNull(linearPart, nameof(linearPart));
@@ -76,7 +77,7 @@ namespace OperationalResearch.Models
                 Fraction.FromDouble(solver.Value),
                 Vector.FromDouble(solver.Lagrangian));
         }
-        public Tuple<Vector, Fraction, Vector>? Minimize()
+        public Tuple<Vector, Fraction, Vector>? AccordMinimize()
         {
             var solver = Solver;
             if (!solver.Minimize())
@@ -85,7 +86,7 @@ namespace OperationalResearch.Models
             }
             return GetSolution(solver);
         }
-        public Tuple<Vector, Fraction, Vector>? Maximize()
+        public Tuple<Vector, Fraction, Vector>? AccordMaximize()
         {
             var solver = Solver;
             if (!solver.Maximize())
@@ -93,68 +94,6 @@ namespace OperationalResearch.Models
                 return null;
             }
             return GetSolution(solver);
-        }
-
-        public async Task<bool> MinimizeFlow(IndentWriter? Writer)
-        {
-            Writer ??= IndentWriter.Null;
-            try
-            {
-                await GradientFlow(Writer);
-                await Writer.WriteLineAsync("Finding min through Accord.Math.QuadProg");
-                Tuple<Vector, Fraction, Vector>? sol = Minimize();
-                if (sol is null)
-                {
-                    await Writer.WriteLineAsync("Problem was not solved");
-                    return false;
-                }
-
-                await Writer.WriteLineAsync($"X = {sol.Item1} -> {Function.Print(sol.Item2)}");
-                await Writer.WriteLineAsync($"λ = {sol.Item3}");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
-#if DEBUG
-                if (ex.StackTrace is not null)
-                {
-                    await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
-                }
-#endif
-                return false;
-            }
-
-        }
-        public async Task<bool> MaximizeFlow(IndentWriter? Writer)
-        {
-            Writer ??= IndentWriter.Null;
-            try
-            {
-                await GradientFlow(Writer);
-                await Writer.WriteLineAsync("Finding max through Accord.Math.QuadProg");
-                Tuple<Vector, Fraction, Vector>? sol = Maximize();
-                if (sol is null)
-                {
-                    await Writer.WriteLineAsync("Problem was not solved");
-                    return false;
-                }
-
-                await Writer.WriteLineAsync($"X = {sol.Item1} -> {Function.Print(sol.Item2)}");
-                await Writer.WriteLineAsync($"λ = {sol.Item3}");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
-#if DEBUG
-                if (ex.StackTrace is not null)
-                {
-                    await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
-                }
-#endif
-                return false;
-            }
         }
 
         public Vector? WhereGradientIsZero()
@@ -167,34 +106,278 @@ namespace OperationalResearch.Models
             return H.Inv * (Fraction.MinusOne * lin);
         }
 
-        public async Task<bool> GradientFlow(IndentWriter Writer)
-        {
-            try
-            {
-                var x = WhereGradientIsZero();
-                if (x is null)
-                {
-                    await Writer.WriteLineAsync("Could not find points where ∇f(x, y) = (0, 0)");
-                    return false;
-                }
-                await Writer.WriteLineAsync($"∇f({Function.Print(x[0])}, {Function.Print(x[1])}) = (0, 0)");
-                await Writer.WriteLineAsync($"f({Function.Print(x[0])}, {Function.Print(x[1])}) = {Function.Print(Evaluate(x))}");
-                await Writer.WriteLineAsync($"det(Hf) = {Function.Print(H.Det)}");
-                return true;
-            } catch
-            {
-                return false;
-            }
-        }
-
         public Fraction Evaluate(Vector x)
         {
             var x1 = x[0];
             var x2 = x[1];
-            var a = 2 * H[0, 0];
+            var a = H[0, 0] / 2;
             var b = H[0, 1];
-            var c = 2 * H[1, 1];
-            return a * x1 * x1 + c * x2 * x2 + b * x1 * x2 + x1 * lin[0] + x2 * lin[1];
+            var c = H[1, 1] / 2;
+            return a * x1 * x1 + c * x2 * x2 + b * x1 * x2 + x * lin;
+        }
+        public enum LKKTPointType
+        {
+            Max,
+            Min,
+            Saddle,
+            Unknown
+        }
+        public static LKKTPointType ClassifyLKKTPoint(Vector λ)
+        {
+            if (λ.IsNegativeOrZero)
+            {
+                return LKKTPointType.Max;
+            }
+            if (λ.IsPositiveOrZero)
+            {
+                return LKKTPointType.Min;
+            }
+            if (!λ.IsZero)
+            {
+                return LKKTPointType.Saddle;
+            }
+            return LKKTPointType.Unknown;
+        }
+        public IEnumerable<Tuple<Vector, Vector, LKKTPointType>> SolveLKKT()
+        {
+            var A = P.GetMatrix();
+            var b = P.GetVector();
+            List<Tuple<Vector, Vector, LKKTPointType>> solutions = [];
+
+            // If solution is vertex
+            foreach (var B in P.AllBasis)
+            {
+                var x = P[B];
+                if (x is null) continue; // Should not happen
+                if (solutions.Any(s => s.Item1 == x))
+                {
+                    continue; // Point already found
+                }
+
+                // A[B] * λ[B] = -c - Hx
+                Matrix s = A[B].T;
+                if (s.Det.IsZero)
+                {
+                    continue;
+                }
+                Vector v = Fraction.MinusOne * (lin + (H * x));
+                var partialλ = s.Inv * v;
+
+                Vector λ = Vector.Zeros(A.Rows);
+                for (int i = 0; i < B.Length; i++)
+                {
+                    λ[B[i]] = partialλ[i];
+                }
+
+                solutions.Add(new Tuple<Vector, Vector, LKKTPointType>(x, λ, ClassifyLKKTPoint(λ)));
+            }
+
+
+            // Solution is on a line
+            foreach (var rowIndex in A.RowsIndeces)
+            {
+                var row = A[rowIndex];
+
+                var s = (H | row).AddRow(row.Concat([Fraction.Zero]));
+                var v = (Fraction.MinusOne * lin).Concat([b[rowIndex]]);
+
+                if (s.Det.IsZero)
+                {
+                    continue;
+                }
+                var x_λ = s.Inv * v;
+
+                var x = x_λ[x_λ.Indices.SkipLast(1)];
+                if (P.IsOutside(x))
+                {
+                    continue;
+                }
+
+                Vector λ = Vector.Zeros(A.Rows);
+                λ[rowIndex] = x_λ[x_λ.Size - 1];
+
+                solutions.Add(new Tuple<Vector, Vector, LKKTPointType>(x, λ, ClassifyLKKTPoint(λ)));
+            }
+
+            return solutions;
+        }
+
+        public async Task PrintLKKT(IndentWriter? Writer)
+        {
+            if (Writer is null) return;
+            var A = P.GetMatrix();
+            var b = P.GetVector();
+            await Writer.WriteLineAsync("Equations:");
+            for (int i = 0; i < H.Rows; i++)
+            {
+                await Writer.Indent.WriteLineAsync(
+                    string.Join(" + ", lin.Indices.Select(j => $"{Function.Print(H[i, j])} * x{j + 1}")) +
+                    " + " +
+                    string.Join(" + ", A.RowsIndeces.Select(j => $"{Function.Print(A[j, i])} * λ{j + 1}")) +
+                    " = " +
+                    Function.Print(lin[i] * Fraction.MinusOne)
+                );
+            }
+            foreach (int i in A.RowsIndeces)
+            {
+                await Writer.Indent.WriteLineAsync(
+                    $"λ{i + 1} * (" +
+                    string.Join(" + ", 
+                        A.ColsIndeces.Select(j => $"{Function.Print(A[i, j])} * x{j + 1}")) + 
+                    $" - {Function.Print(b[i])}) = 0"
+                );
+            }
+
+            await Writer.WriteLineAsync("Disequations:");
+            foreach (int i in A.RowsIndeces)
+            {
+                await Writer.Indent.WriteLineAsync(
+                    string.Join(" + ",
+                        A.ColsIndeces.Select(j => $"{Function.Print(A[i, j])} * x{j + 1}")) +
+                    $" - {Function.Print(b[i])}) <= 0"
+                );
+            }
+        }
+
+        public async Task<bool> SolveFlow(
+            IndentWriter? Writer = null, 
+            bool max = true)
+        {
+            Writer ??= IndentWriter.Null;
+            bool solved = false;
+            await Writer.WriteLineAsync($"det(Hf) = {Function.Print(H.Det)}");
+
+            //
+            // Solve in R^2
+            //
+            try
+            {
+                await Writer.WriteLineAsync();
+                await Writer.WriteLineAsync();
+                await Writer.Bold.WriteLineAsync("Searching points in ℝ^2");
+                var x = WhereGradientIsZero();
+                if (x is null)
+                {
+                    await Writer.Red.WriteLineAsync("Could not find points where ∇f(x, y) = (0, 0)");
+                    return false;
+                }
+                await Writer.Green.WriteLineAsync($"∇f({Function.Print(x[0])}, {Function.Print(x[1])}) = (0, 0)");
+                await Writer.WriteLineAsync($"f({Function.Print(x[0])}, {Function.Print(x[1])}) = {Function.Print(Evaluate(x))}");
+            }
+            catch (Exception ex)
+            {
+                await Writer.Red.WriteLineAsync($"An exception happened: '{ex.Message}'");
+                if (!string.IsNullOrWhiteSpace(ex.StackTrace))
+                {
+                    await Writer.Indent.Orange.WriteLineAsync(ex.StackTrace);
+                }
+            }
+
+            //
+            // LKKT
+            //
+            try
+            {
+                await Writer.WriteLineAsync();
+                await Writer.WriteLineAsync();
+                await Writer.Bold.WriteLineAsync("Solving LKKT system:");
+                await PrintLKKT(Writer);
+                await Writer.WriteLineAsync();
+                var lkkt = SolveLKKT();
+                if (lkkt is null || !lkkt.Any())
+                {
+                    await Writer.Red.WriteLineAsync("LKKT problem was not solved :/");
+                }
+                else
+                {
+                    solved = true;
+                    foreach (Tuple<Vector, Vector, LKKTPointType> tuple in lkkt)
+                    {
+                        await Writer.WriteLineAsync(
+                            $"x = {tuple.Item1}; f(x) = {Function.Print(Evaluate(tuple.Item1))}");
+                        await Writer.Indent.WriteLineAsync($"λ = {tuple.Item2}");
+                        switch (tuple.Item3)
+                        {
+                            case LKKTPointType.Max:
+                                await Writer.Indent.Italic.WriteLineAsync("x is a local maximum point");
+                                break;
+                            case LKKTPointType.Min:
+                                await Writer.Indent.Italic.WriteLineAsync("x is a local minimum point");
+                                break;
+                            case LKKTPointType.Saddle:
+                                await Writer.Indent.Purple.WriteLineAsync("x is a saddle point");
+                                break;
+                            case LKKTPointType.Unknown:
+                            default:
+                                await Writer.Indent.Orange.WriteLineAsync("x cannot be classified");
+                                break;
+                        }
+                    }
+
+                    if (max)
+                    {
+                        var maxValue = lkkt
+                            .Where(t => t.Item3 == LKKTPointType.Max)
+                            .Select(t => Evaluate(t.Item1)).Max();
+                        foreach (var x in lkkt
+                            .Where(t => t.Item3 == LKKTPointType.Max && 
+                                Evaluate(t.Item1) == maxValue)
+                            .Select(t => t.Item1))
+                        {
+                            await Writer.Green.WriteLineAsync($"Global maximum: x = {x}");
+                        }
+                    } else
+                    {
+                        var minValue = lkkt
+                            .Where(t => t.Item3 == LKKTPointType.Min)
+                            .Select(t => Evaluate(t.Item1)).Min();
+                        foreach (var x in lkkt
+                            .Where(t => t.Item3 == LKKTPointType.Min &&
+                                Evaluate(t.Item1) == minValue)
+                            .Select(t => t.Item1))
+                        {
+                            await Writer.Green.WriteLineAsync($"Global minimum: x = {x}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) {
+                await Writer.Red.WriteLineAsync($"An exception happened: '{ex.Message}'");
+                if (!string.IsNullOrWhiteSpace(ex.StackTrace))
+                {
+                    await Writer.Indent.Orange.WriteLineAsync(ex.StackTrace);
+                }
+            }
+
+            //
+            // LKKT via Accord.Math.QuadProg
+            //
+            try
+            {
+                await Writer.WriteLineAsync();
+                await Writer.WriteLineAsync();
+                await Writer.Bold.WriteLineAsync($"Searching {(max ? "max" : "min")} via Accord.Math.QuadProg");
+                var sol = max ? AccordMaximize() : AccordMinimize();
+
+                if (sol is null)
+                {
+                    await Writer.Red.WriteLineAsync("Cound not find a solution");
+                } else
+                {
+                    await Writer.Green.WriteLineAsync($"x = {sol.Item1}; f(x) = {Function.Print(sol.Item2)}");
+                    await Writer.Indent.WriteLineAsync($"λ = {sol.Item3}");
+                }
+            }
+            catch (Exception ex)
+            {
+                await Writer.Red.WriteLineAsync($"An exception happened: '{ex.Message}'");
+                if (!string.IsNullOrWhiteSpace(ex.StackTrace))
+                {
+                    await Writer.Indent.Orange.WriteLineAsync(ex.StackTrace);
+                }
+            }
+
+            return solved;
         }
     }
 }

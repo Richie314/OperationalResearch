@@ -3,13 +3,12 @@ using System.Data;
 using Microsoft.Scripting.Utils;
 using OperationalResearch.ViewForms;
 using OperationalResearch.Models.Problems;
+using OperationalResearch.Models.Elements;
 
 namespace OperationalResearch.PageForms
 {
     public partial class QuadraticProgrammingForm : Form
     {
-        private int EquationsCount = 3;
-        private int VariablesCount = 3;
         public QuadraticProgrammingForm()
         {
             InitializeComponent();
@@ -17,96 +16,66 @@ namespace OperationalResearch.PageForms
 
         private void GenerateGrid()
         {
-            hessianMatrix.Rows.Clear();
-            hessianMatrix.ColumnCount = VariablesCount + 1;
             hessianMatrix.RowHeadersVisible = false;
-
-            constraintMatrix.Rows.Clear();
-            constraintMatrix.ColumnCount = VariablesCount + 1;
-            constraintMatrix.RowHeadersVisible = false;
-
-            linearCoeff.Rows.Clear();
-            linearCoeff.ColumnCount = VariablesCount;
-            linearCoeff.RowHeadersVisible = false;
-
-            for (int i = 0; i < hessianMatrix.ColumnCount; i++)
+            while (hessianMatrix.RowCount < polyhedronControl1.SpaceDimension)
             {
-                hessianMatrix.Columns[i].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                hessianMatrix.ColumnCount++;
+                int i = hessianMatrix.ColumnCount - 1;
+                hessianMatrix.Columns[i]
+                    .DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                hessianMatrix.Columns[i].Width = 50;
                 if (i == 0)
                 {
-                    hessianMatrix.Columns[i].Width = 80;
                     hessianMatrix.Columns[i].Name = "\\";
                     continue;
                 }
-                hessianMatrix.Columns[i].Width = 50;
                 hessianMatrix.Columns[i].Name = "x" + i;
+
                 string[] row = ["x" + i];
                 hessianMatrix.Rows.Add(row);
-
-                linearCoeff.Columns[i - 1].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-                linearCoeff.Columns[i - 1].Width = 50;
-                linearCoeff.Columns[i - 1].Name = "x" + i;
-
-                constraintMatrix.Columns[i - 1].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-                constraintMatrix.Columns[i - 1].Width = 50;
-                constraintMatrix.Columns[i - 1].Name = "x" + i;
             }
-            linearCoeff.Rows.Add();
-            linearCoeff.Rows[0].Height = 25;
-            constraintMatrix.Columns[VariablesCount].Name = "b";
-            constraintMatrix.Columns[VariablesCount].Width = 50;
-
-            for (int i = 0; i < EquationsCount; i++)
+            while (hessianMatrix.RowCount > polyhedronControl1.SpaceDimension)
             {
-                constraintMatrix.Rows.Add();
-                constraintMatrix.Rows[i].Height = 20;
+                hessianMatrix.ColumnCount--;
+                hessianMatrix.RowCount--;
             }
         }
 
+        private void SpaceDimensionChange(object? sender, PolyhedronControl.PolyhedronChangeEventArgs e)
+        {
+            linearFunctionControl1.setSize(e.SpaceDimension, sender, e);
+            GenerateGrid();
+        }
         private void LinearProgrammingForm_Load(object sender, EventArgs e)
         {
-            try
-            {
-                EquationsCount = (int)equationsCountInput.Value;
-                VariablesCount = (int)variablesCountInput.Value;
-                GenerateGrid();
-            }
-            catch (Exception err)
-            {
-                MessageBox.Show(err.Message);
-            }
+            polyhedronControl1.OnPolyhedronChange += 
+                new PolyhedronControl.PolyhedronChangeHandler(SpaceDimensionChange);
+            linearFunctionControl1.setSize(polyhedronControl1.SpaceDimension, sender, e);
+            GenerateGrid();
         }
-
-        private void resetTableBtn_Click(object sender, EventArgs e)
+        private async Task solve(bool max)
         {
-            try
-            {
-                EquationsCount = (int)equationsCountInput.Value;
-                VariablesCount = (int)variablesCountInput.Value;
-                GenerateGrid();
-            }
-            catch (Exception err)
-            {
-                MessageBox.Show(err.Message);
-            }
-        }
-
-        private async void maximizeBtn_Click(object sender, EventArgs e)
-        {
-            var LinearPart = LinearPartString();
-            var Hessian = HessianGridStr();
+            var Hessian = HessianGrid();
             if (Hessian is null)
             {
                 return;
             }
-            var Constarints = ConstraintGridStr();
-            if (Constarints is null)
+
+            if (polyhedronControl1.Polyhedron is null)
             {
+                MessageBox.Show(
+                    "Could not load the polyhedron!",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
                 return;
             }
             maximizeBtn.Enabled = minimizeBtn.Enabled = false;
 
-            QuadraticProblem problem = new(Constarints, Hessian, LinearPart);
+            QuadraticProblem problem = new(
+                polyhedronControl1.Polyhedron,
+                Hessian,
+                linearFunctionControl1.Vector ?? Vector.Empty);
 
             var Form = new ProblemForm<QuadraticProblem>(problem, "QuadProg");
             void closeFormCallback(object? sender, FormClosedEventArgs e)
@@ -116,7 +85,10 @@ namespace OperationalResearch.PageForms
             Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
             Form.Show();
 
-            if (await problem.SolveMax([ Form.Writer ]))
+            bool solved = max ?
+                await problem.SolveMax([Form.Writer]) :
+                await problem.SolveMin([Form.Writer]);
+            if (solved)
             {
                 MessageBox.Show(
                     "Quadratic Programming problem solved",
@@ -138,87 +110,10 @@ namespace OperationalResearch.PageForms
                 graphForm.Show();
             }
         }
-        private async void minimizeBtn_Click(object sender, EventArgs e)
-        {
-            var LinearPart = LinearPartString();
-            var Hessian = HessianGridStr();
-            if (Hessian is null)
-            {
-                return;
-            }
-            var Constarints = ConstraintGridStr();
-            if (Constarints is null)
-            {
-                return;
-            }
-            maximizeBtn.Enabled = minimizeBtn.Enabled = false;
+        private async void maximizeBtn_Click(object sender, EventArgs e) => await solve(true);
+        private async void minimizeBtn_Click(object sender, EventArgs e) => await solve(false);
 
-            QuadraticProblem problem = new(Constarints, Hessian, LinearPart);
-
-            var Form = new ProblemForm<QuadraticProblem>(problem, "QuadProg");
-            void closeFormCallback(object? sender, FormClosedEventArgs e)
-            {
-                maximizeBtn.Enabled = minimizeBtn.Enabled = true;
-            };
-            Form.FormClosed += new FormClosedEventHandler(closeFormCallback);
-            Form.Show();
-
-            if (await problem.SolveMin([Form.Writer]))
-            {
-                MessageBox.Show(
-                    "Quadratic Programming problem solved",
-                    "Problem solved", MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show(
-                    "Quadratic Programming problem could not be solved",
-                    "Error", MessageBoxButtons.OKCancel,
-                    MessageBoxIcon.Error);
-            }
-            maximizeBtn.Enabled = minimizeBtn.Enabled = true;
-
-            if (problem.Solver.Domain?.Cols == 2)
-            {
-                var graphForm = new CartesianForm([], problem.Solver.Domain);
-                graphForm.Show();
-            }
-        }
-
-
-        private string[][]? ConstraintGridStr()
-        {
-            var list = new List<string[]>();
-            bool containsBlank = false;
-            for (int row = 0; row < constraintMatrix.RowCount; row++)
-            {
-                List<string> currRow = [];
-                for (int col = 0; col < constraintMatrix.ColumnCount; col++)
-                {
-                    containsBlank |= string.IsNullOrWhiteSpace((string)constraintMatrix[col, row].Value);
-                    currRow.Add((string)constraintMatrix[col, row].Value);
-                }
-                list.Add([.. currRow]);
-            }
-            if (containsBlank)
-            {
-                if (DialogResult.Yes != MessageBox.Show(
-                    "There are blank cells in the constraint input," + Environment.NewLine +
-                    "The algorithms cannot run with unknown values." + Environment.NewLine +
-                    "Do you want to fill in with zeros?",
-                    "Blank cells",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Warning))
-                {
-                    return null;
-                }
-                list = list.Select(
-                    row => row.Select(x => string.IsNullOrWhiteSpace(x) ? "0" : x).ToArray()).ToList();
-            }
-            return [.. list];
-        }
-        private string[][]? HessianGridStr()
+        private Matrix? HessianGrid()
         {
             var list = new List<string[]>();
             bool containsBlank = false;
@@ -247,17 +142,7 @@ namespace OperationalResearch.PageForms
                 list = list.Select(
                     row => row.Select(x => string.IsNullOrWhiteSpace(x) ? "0" : x).ToArray()).ToList();
             }
-            return [.. list];
-        }
-        private string[] LinearPartString()
-        {
-            var terms = new List<string>();
-            for (int i = 0; i < linearCoeff.ColumnCount; i++)
-            {
-                terms.Add(
-                    string.IsNullOrWhiteSpace((string)linearCoeff[i, 0].Value) ? "0" : (string)linearCoeff[i, 0].Value);
-            }
-            return [.. terms];
+            return new Matrix([.. list]);
         }
 
     }

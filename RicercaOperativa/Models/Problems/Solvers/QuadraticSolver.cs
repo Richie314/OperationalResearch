@@ -16,7 +16,7 @@ namespace OperationalResearch.Models.Problems.Solvers
             {
                 throw new InvalidOperationException("Problem not yet initialized");
             }
-            return await quadProg.MaximizeFlow(loggers.FirstOrDefault());
+            return await quadProg.SolveFlow(loggers.FirstOrDefault(), max: true);
         }
         public async Task<bool> SolveMinAsync(IEnumerable<IndentWriter?> loggers)
         {
@@ -24,7 +24,7 @@ namespace OperationalResearch.Models.Problems.Solvers
             {
                 throw new InvalidOperationException("Problem not yet initialized");
             }
-            return await quadProg.MinimizeFlow(loggers.FirstOrDefault());
+            return await quadProg.SolveFlow(loggers.FirstOrDefault(), max: false);
         }
 
         public Task<bool> SolveIntegerMaxAsync(IEnumerable<IndentWriter?> loggers)
