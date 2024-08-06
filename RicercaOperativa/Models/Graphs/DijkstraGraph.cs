@@ -13,10 +13,19 @@ namespace OperationalResearch.Models.Graphs
         {
             public int[] p { get; }
             public Vector π { get; }
-            public DijkstraResult(IEnumerable<int> p, Vector π)
-            {
+
+            public int radix { get; }
+            private Graph<EdgeType> OriginalGraph { get; }
+
+            public DijkstraResult(
+                IEnumerable<int> p, 
+                Vector π, 
+                int radix, 
+                CostGraph<EdgeType> OriginalGraph
+            ) {
                 ArgumentNullException.ThrowIfNull(p, nameof(p));
                 ArgumentNullException.ThrowIfNull(π, nameof(π));
+                ArgumentNullException.ThrowIfNull(OriginalGraph, nameof(OriginalGraph));
                 if (p.Count() != π.Size)
                 {
                     throw new ArgumentException(
@@ -24,31 +33,39 @@ namespace OperationalResearch.Models.Graphs
                 }
                 this.p = p.ToArray();
                 this.π = π;
+                this.radix = radix;
+                this.OriginalGraph = OriginalGraph;
             }
-            public Tuple<Graph<Edge>, Vector> Graph(
-                int r, 
-                Graph<EdgeType> mainEdges)
+            private Tuple<CostGraph<EdgeType>, Vector> GetGraph()
             {
-                List<Edge> edges = [];
+                List<EdgeType> edges = [];
                 for (int dest = p.Length - 1; dest >= 0; dest--)
                 {
                     if (p[dest] < 0 || p[dest] == dest) 
                         continue;
-                    edges.Add(new Edge(from: p[dest], dest));
+                    var edge = OriginalGraph[from: p[dest], to: dest];
+                    if (edge is null)
+                    {
+                        throw new DataMisalignedException(
+                            $"Edge {new Edge(p[dest], dest)} not found in the original graph");
+                    }
+                    edges.Add(edge);
                 }
 
-                Vector x = Vector.Zeros(mainEdges.Edges.Count());
+                Vector x = Vector.Zeros(OriginalGraph.Edges.Count());
                 for (int node  = 0; node < p.Length; node++)
                 {
-                    for (int curr = node; curr != r && p[curr] >= 0; curr = p[curr])
+                    for (int curr = node; curr != radix && p[curr] >= 0; curr = p[curr])
                     {
-                        int xIndex = mainEdges.GetEdgeIndex(from: p[curr], to: curr);
+                        int xIndex = OriginalGraph.GetEdgeIndex(from: p[curr], to: curr);
                         x[xIndex] = x[xIndex] + Fraction.One;
                     }
                 }
 
-                return new Tuple<Graph<Edge>, Vector>(new Graph<Edge>(edges), x);
+                return new Tuple<CostGraph<EdgeType>, Vector>(new CostGraph<EdgeType>(edges), x);
             }
+
+            public Tuple<CostGraph<EdgeType>, Vector> Get { get => GetGraph(); }
         }
         public async Task<DijkstraResult?> Dijkstra(
             IndentWriter? Writer = null, int startNode = 0, int? maxIterations = 20)
@@ -134,7 +151,7 @@ namespace OperationalResearch.Models.Graphs
                 }
             }
 
-            return new DijkstraResult(p, π);
+            return new DijkstraResult(p, π, startNode, this);
         }
 
     }

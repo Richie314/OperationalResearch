@@ -569,7 +569,7 @@ namespace OperationalResearch.Models.Graphs
                     await Writer.WriteLineAsync($"Final π = {dijkstra.π}");
                     try
                     {
-                        var g = dijkstra.Graph(startNode.Value, this);
+                        var g = dijkstra.Get;
                         await Writer.Green.WriteLineAsync(
                             $"Minimum paths {startNode.Value + 1}-tree = {g.Item1}");
                         await Writer.Green.WriteLineAsync(

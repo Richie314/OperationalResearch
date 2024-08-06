@@ -246,5 +246,68 @@ namespace OperationaResearchTest
                     $"{flow} != {result.Item4}");
             }
         }
+
+        [DataRow(
+            new string[]
+            {
+                "1-2- 7- 8",
+                "1-3- 9- 5",
+                "2-4- 3- 5",
+                "2-5- 9-11",
+                "3-2-10- 9",
+                "3-5- 4- 6",
+                "4-6- 3-11",
+                "5-4- 6- 4",
+                "5-7- 9- 8",
+                "6-5- 6-10",
+                "7-6- 6- 7"
+            },
+            1,
+            "3 3 2 0 0 2 1 0 1 0 0"
+        )]
+        [DataRow(
+            new string[]
+            {
+                "1-2- 9- 5",
+                "1-3- 5-12",
+                "1-4-10- 9",
+                "2-4- 4-10",
+                "3-5- 7-10",
+                "4-3- 3- 8",
+                "4-6- 7- 4",
+                "5-4- 8- 6",
+                "5-7- 4- 4",
+                "6-5- 7- 9",
+                "6-7- 7- 6",
+            },
+            1,
+            "1 3 2 0 2 0 1 0 1 0 0"
+        )]
+        [TestMethod]
+        public async Task Dijkstra(
+            string[] edgeStrings,
+            int r,
+            string x
+        ) {
+            r--;
+            Assert.IsTrue(r >= 0);
+
+            var edges = edgeStrings.Select(s => ParseTestString(s).Item1);
+            Assert.IsTrue(edges.Any());
+
+            var g = new CostGraph<BoundedCostEdge>(edges);
+            Assert.IsTrue(g.N > r);
+
+            var result = await g.Dijkstra(Writer: null, startNode: r, maxIterations: 15);
+            Assert.IsNotNull(result);
+
+            Vector? solution = Vector.FromString(x.Split(' '));
+            Assert.IsNotNull(solution);
+
+            CollectionAssert.AreEqual(
+                solution.Get, 
+                result.Get.Item2.Get,
+                $"{solution} != {result.Get.Item2} ({result.Get.Item1})");
+        }
     }
 }
