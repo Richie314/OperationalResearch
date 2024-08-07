@@ -1,8 +1,3 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 # This workflow will build, test, sign and package a WPF or Windows Forms desktop application
 # built on .NET Core.
 # To learn how to migrate your existing application to .NET Core,
@@ -55,10 +50,10 @@ jobs:
     runs-on: windows-latest
     
     env:
-      Solution_Name: OperationalResearch.sln
-      Test_Project_Path: OperationalResearchTest\OperationalResearchTest.csproj
-      Wap_Project_Directory: OperationalResearchWAP
-      Wap_Project_Path: OperationalResearchWAP\OperationalResearchWAP.wapproj
+      Solution_Name: .\OperationalResearch.sln
+      Test_Project_Path: .\OperationalResearchTest\OperationalResearchTest.csproj
+      Wap_Project_Directory: .\OperationalResearchWAP
+      Wap_Project_Path: .\OperationalResearchWAP\OperationalResearchWAP.wapproj
 
     steps:
     - name: Checkout
@@ -78,7 +73,7 @@ jobs:
 
     # Execute all unit tests in the solution
     - name: Execute unit tests
-      run: dotnet test
+      run: dotnet test $env:Test_Project_Path
 
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     - name: Restore the application
