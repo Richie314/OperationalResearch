@@ -7,13 +7,13 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="18a98737-46dd-4e55-9c3e-2db8fba84884"
+    Name="0c464fed-42fc-4470-af8b-ccdd950e3151"
     Publisher="CN=Richie"
     Version="1.0.0.0" />
 
   <Properties>
-    <DisplayName>OperationaResearch</DisplayName>
-    <PublisherDisplayName>Richie</PublisherDisplayName>
+    <DisplayName>Operational Research</DisplayName>
+    <PublisherDisplayName>Richie314</PublisherDisplayName>
     <Logo>Images\StoreLogo.png</Logo>
   </Properties>
 
@@ -31,15 +31,17 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="Operationa Research Graphic solver"
-        Description="Operationa Research problems graphic solver"
+        DisplayName="OperationalResearch"
+        Description="Operational research problems solver"
         BackgroundColor="transparent"
         Square150x150Logo="Images\Square150x150Logo.png"
         Square44x44Logo="Images\Square44x44Logo.png">
-        <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png" />
+        <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png"  ShortName="Operational Research" Square71x71Logo="Images\Square71x71Logo.png" Square310x310Logo="Images\Square310x310Logo.png">
+          <uap:ShowNameOnTiles>
+            <uap:ShowOn Tile="square310x310Logo"/>
+          </uap:ShowNameOnTiles>
+        </uap:DefaultTile >
         <uap:SplashScreen Image="Images\SplashScreen.png" />
-        <uap:InitialRotationPreference>
-          <uap:Rotation Preference="landscape"/></uap:InitialRotationPreference>
       </uap:VisualElements>
     </Application>
   </Applications>
