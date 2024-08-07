@@ -102,11 +102,32 @@
     <Content Include="Images\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Images\StoreLogo.png" />
     <Content Include="Images\Wide310x150Logo.scale-200.png" />
-    <None Include="OperationalResearchWAP_TemporaryKey.pfx" />
+    <Content Include="Square150x150Logo.scale-100.png" />
+    <Content Include="Square150x150Logo.scale-150.png" />
     <Content Include="Square150x150Logo.scale-400.png" />
     <Content Include="Square310x310Logo.scale-100.png" />
     <Content Include="Square310x310Logo.scale-200.png" />
+    <Content Include="Square44x44Logo.scale-100.png" />
+    <Content Include="Square44x44Logo.scale-400.png" />
+    <Content Include="Square44x44Logo.targetsize-256.png" />
+    <Content Include="Square71x71Logo.scale-100.png" />
+    <Content Include="Square71x71Logo.scale-200.png" />
     <Content Include="Square71x71Logo.scale-400.png" />
+    <None Include="Images\icon-284.png" />
+    <None Include="Images\icon-142.png" />
+    <None Include="Images\icon-071.png" />
+    <None Include="Images\icon-600.png" />
+    <None Include="Images\icon-300.png" />
+    <None Include="Images\icon-150.png" />
+    <None Include="Images\icon-225.png" />
+    <None Include="Images\icon-620.png" />
+    <None Include="Images\icon-310.png" />
+    <None Include="Images\icon-176.png" />
+    <None Include="Images\icon-088.png" />
+    <None Include="Images\icon-044.png" />
+    <None Include="Images\icon-256.png" />
+    <None Include="Images\icon-050.png" />
+    <None Include="OperationalResearchWAP_TemporaryKey.pfx" />
   </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
   <ItemGroup>
