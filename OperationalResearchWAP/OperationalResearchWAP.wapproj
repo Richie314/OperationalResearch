@@ -57,6 +57,7 @@
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <NoWarn>$(NoWarn);NU1702</NoWarn>
     <PackageCertificateThumbprint>C4E4F210980EA5161AC0052DD0DCC8DED042E964</PackageCertificateThumbprint>
+    <EntryPointProjectUniqueName>..\RicercaOperativa\OperationalResearch.csproj</EntryPointProjectUniqueName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <DefaultLanguage>en-US</DefaultLanguage>
@@ -110,5 +111,8 @@
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RicercaOperativa\OperationalResearch.csproj" />
   </ItemGroup>
 </Project>
