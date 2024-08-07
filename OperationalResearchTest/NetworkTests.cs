@@ -8,7 +8,7 @@ using OperationalResearch.Models;
 using OperationalResearch.Models.Elements;
 using OperationalResearch.Models.Graphs;
 
-namespace OperationaResearchTest
+namespace OperationalResearchTest
 {
     [TestClass]
     public class NetworkTests

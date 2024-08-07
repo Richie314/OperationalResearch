@@ -1,10 +1,9 @@
 using Fractions;
-using IronPython.Runtime;
 using OperationalResearch.Extensions;
 using OperationalResearch.Models;
 using OperationalResearch.Models.Elements;
 
-namespace OperationaResearchTest
+namespace OperationalResearchTest
 {
     [TestClass]
     public class KnapsnackTest

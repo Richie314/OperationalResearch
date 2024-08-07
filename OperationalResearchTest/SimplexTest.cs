@@ -8,7 +8,7 @@ using Vector = OperationalResearch.Models.Elements.Vector;
 using Matrix = OperationalResearch.Models.Elements.Matrix;
 using OperationalResearch.Extensions;
 
-namespace OperationaResearchTest
+namespace OperationalResearchTest
 {
     [TestClass]
     public class SimplexTest

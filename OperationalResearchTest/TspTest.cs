@@ -5,7 +5,7 @@ using OperationalResearch.Extensions;
 using OperationalResearch.Models.Graphs;
 using OperationalResearch.Models.Problems;
 
-namespace OperationaResearchTest
+namespace OperationalResearchTest
 {
     [TestClass]
     public class TspTest

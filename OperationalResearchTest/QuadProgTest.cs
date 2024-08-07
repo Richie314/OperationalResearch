@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using OperationalResearch.Models;
 using OperationalResearch.Models.Elements;
 
-namespace OperationaResearchTest
+namespace OperationalResearchTest
 {
     [TestClass]
     public class QuadProgTest
