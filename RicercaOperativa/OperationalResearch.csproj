@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows10.0.22000.0</TargetFramework>
+    <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -12,7 +13,7 @@
     <PackageProjectUrl>https://github.com/Richie314/OperationalResearch</PackageProjectUrl>
     <PackageIcon>icon_small.png</PackageIcon>
     <RepositoryUrl>https://github.com/Richie314/OperationalResearch</RepositoryUrl>
-    <StartupObject></StartupObject>
+    <StartupObject>OperationalResearch.Program</StartupObject>
     <Company>Richie314</Company>
     <Authors>Richie314</Authors>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
