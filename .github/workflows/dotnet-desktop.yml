@@ -55,10 +55,10 @@ jobs:
     runs-on: windows-latest
     
     env:
-      Solution_Name: OperationalResearch.sln
-      Test_Project_Path: OperationalResearchTest\OperationalResearchTest.csproj
-      Wap_Project_Directory: OperationalResearchWAP
-      Wap_Project_Path: OperationalResearchWAP\OperationalResearchWAP.wapproj
+      Solution_Name: .\OperationalResearch.sln
+      Test_Project_Path: .\OperationalResearchTest\OperationalResearchTest.csproj
+      Wap_Project_Directory: .\OperationalResearchWAP
+      Wap_Project_Path: .\OperationalResearchWAP\OperationalResearchWAP.wapproj
 
     steps:
     - name: Checkout
