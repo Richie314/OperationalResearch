@@ -15,6 +15,7 @@
     <StartupObject></StartupObject>
     <Company>Richie314</Company>
     <Authors>Richie314</Authors>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <ItemGroup>
