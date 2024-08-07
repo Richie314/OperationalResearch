@@ -5,21 +5,18 @@ using OperationalResearch.Extensions;
 using OperationalResearch.Models.Elements;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Windows.UI.Core;
 using Matrix = OperationalResearch.Models.Elements.Matrix;
 using Vector = OperationalResearch.Models.Elements.Vector;
 
 namespace OperationalResearch.Models
 {
-    internal class QuadProg
+    public class QuadProg
     {
         private readonly QuadraticObjectiveFunction f;
         private readonly Matrix H;
         private readonly Vector lin;
         private readonly Polyhedron P;
+        public bool IsValid { get => H.Rows == 2; }
         public QuadProg(Matrix H, Vector linearPart, Polyhedron p)
         {
             ArgumentNullException.ThrowIfNull(H, nameof(H));
