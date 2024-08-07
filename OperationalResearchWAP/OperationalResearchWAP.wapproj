@@ -118,7 +118,9 @@
     <Content Include="Square71x71Logo.scale-400.png" />
     <Content Include="Images\Square71x71Logo.scale-100.png" />
     <Content Include="StoreLogo.scale-100.png" />
+    <Content Include="StoreLogo.scale-200.png" />
     <Content Include="StoreLogo.scale-400.png" />
+    <None Include="Images\icon-100.png" />
     <None Include="Images\icon-284.png" />
     <None Include="Images\icon-142.png" />
     <None Include="Images\icon-071.png" />

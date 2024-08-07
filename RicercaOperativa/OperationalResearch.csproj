@@ -8,6 +8,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
+    <UapDefaultAssetScale>100</UapDefaultAssetScale>
     <Title>Operational Research</Title>
     <Description>Operational Research solver</Description>
     <PackageProjectUrl>https://github.com/Richie314/OperationalResearch</PackageProjectUrl>
