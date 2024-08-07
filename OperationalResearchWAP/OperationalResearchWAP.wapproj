@@ -113,7 +113,7 @@
     <Content Include="Square71x71Logo.scale-100.png" />
     <Content Include="Square71x71Logo.scale-200.png" />
     <Content Include="Square71x71Logo.scale-400.png" />
-    <None Include="Images\Square71x71Logo.png" />
+    <Content Include="Images\Square71x71Logo.scale-100.png" />
     <None Include="Images\icon-284.png" />
     <None Include="Images\icon-142.png" />
     <None Include="Images\icon-071.png" />
