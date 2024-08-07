@@ -72,16 +72,13 @@ namespace OperationalResearch.Models.Elements
             return b.Concat(Vector.Zeros(Cols));
         }
 
-        public int[]? RandomBasis(int maxGuesses = 1000)
+        public int[]? RandomBasis()
         {
-            Random rnd = Random.Shared;
-            for (int guesses = 0; guesses < maxGuesses; guesses++) {
-
-                int[] B = [.. rnd.GetItems(AllRows, A.Cols)];
-                if (OkBasis(GetMatrix(), GetVector(), B))
-                {
-                    return B.Sorted();
-                }
+            //Random rnd = Random.Shared;
+            var allBasis = getAllBasis();
+            if (allBasis.Any())
+            {
+                return allBasis.First();//.ElementAt(rnd.Next(0, allBasis.Count()));
             }
             return null;
         }
@@ -188,11 +185,11 @@ namespace OperationalResearch.Models.Elements
 
         public Vector? RandomInternalPoint(int maxGuesses = 2000)
         {
-            int[]? B = RandomBasis(maxGuesses / 2);
+            int[]? B = RandomBasis();
             if (B is null || B.Length == 0)
             {
                 Random rnd = Random.Shared;
-                for (int guesses = 0; guesses < maxGuesses / 2; guesses++)
+                for (int guesses = 0; guesses < maxGuesses; guesses++)
                 {
                     var x = Vector.Rand(Cols);
                     if (IsInside(x))
