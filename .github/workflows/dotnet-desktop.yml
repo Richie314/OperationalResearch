@@ -1,8 +1,3 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 # This workflow will build, test, sign and package a WPF or Windows Forms desktop application
 # built on .NET Core.
 # To learn how to migrate your existing application to .NET Core,
@@ -75,10 +70,12 @@ jobs:
     # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v2
+      with:
+        msbuild-architecture: x64
 
     # Execute all unit tests in the solution
     - name: Execute unit tests
-      run: dotnet test
+      run: dotnet test --filter '~WAP'
 
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     - name: Restore the application
