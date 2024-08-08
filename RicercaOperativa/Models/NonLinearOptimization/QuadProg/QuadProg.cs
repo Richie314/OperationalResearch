@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using Matrix = OperationalResearch.Models.Elements.Matrix;
 using Vector = OperationalResearch.Models.Elements.Vector;
 
-namespace OperationalResearch.Models
+namespace OperationalResearch.Models.NonLinearOptimization.QuadProg
 {
     public class QuadProg
     {
@@ -50,7 +50,8 @@ namespace OperationalResearch.Models
             var b = P.GetVector();
             foreach (var i in P.AllRows)
             {
-                constraints.Add(new LinearConstraint(numberOfVariables: A.Cols) { 
+                constraints.Add(new LinearConstraint(numberOfVariables: A.Cols)
+                {
                     CombinedAs = A[i].ToDouble().ToArray(),
                     ShouldBe = ConstraintType.LesserThanOrEqualTo,
                     Value = b[i].ToDouble()
@@ -157,7 +158,7 @@ namespace OperationalResearch.Models
                 {
                     continue;
                 }
-                Vector v = Fraction.MinusOne * (lin + (H * x));
+                Vector v = Fraction.MinusOne * (lin + H * x);
                 var partialλ = s.Inv * v;
 
                 Vector λ = Vector.Zeros(A.Rows);
@@ -219,8 +220,8 @@ namespace OperationalResearch.Models
             {
                 await Writer.Indent.WriteLineAsync(
                     $"λ{i + 1} * (" +
-                    string.Join(" + ", 
-                        A.ColsIndeces.Select(j => $"{Function.Print(A[i, j])} * x{j + 1}")) + 
+                    string.Join(" + ",
+                        A.ColsIndeces.Select(j => $"{Function.Print(A[i, j])} * x{j + 1}")) +
                     $" - {Function.Print(b[i])}) = 0"
                 );
             }
@@ -231,26 +232,27 @@ namespace OperationalResearch.Models
                 await Writer.Indent.WriteLineAsync(
                     string.Join(" + ",
                         A.ColsIndeces.Select(j => $"{Function.Print(A[i, j])} * x{j + 1}")) +
-                    $" - {Function.Print(b[i])}) <= 0"
+                    $" - {Function.Print(b[i])} <= 0"
                 );
             }
         }
 
         public async Task<bool> SolveFlow(
-            IndentWriter? Writer = null, 
+            Vector? pointOfInterest = null,
+            IndentWriter? Writer = null,
             bool max = true)
         {
             Writer ??= IndentWriter.Null;
             bool solved = false;
             await Writer.WriteLineAsync($"det(Hf) = {Function.Print(H.Det)}");
 
+            await Writer.WriteLineAsync();
+            await Writer.WriteLineAsync();
             //
             // Solve in R^2
             //
             try
             {
-                await Writer.WriteLineAsync();
-                await Writer.WriteLineAsync();
                 await Writer.Bold.WriteLineAsync("Searching points in ℝ^2");
                 var x = WhereGradientIsZero();
                 if (x is null)
@@ -270,13 +272,13 @@ namespace OperationalResearch.Models
                 }
             }
 
+            await Writer.WriteLineAsync();
+            await Writer.WriteLineAsync();
             //
             // LKKT
             //
             try
             {
-                await Writer.WriteLineAsync();
-                await Writer.WriteLineAsync();
                 await Writer.Bold.WriteLineAsync("Solving LKKT system:");
                 await PrintLKKT(Writer);
                 await Writer.WriteLineAsync();
@@ -317,13 +319,14 @@ namespace OperationalResearch.Models
                             .Where(t => t.Item3 == LKKTPointType.Max)
                             .Select(t => Evaluate(t.Item1)).Max();
                         foreach (var x in lkkt
-                            .Where(t => t.Item3 == LKKTPointType.Max && 
+                            .Where(t => t.Item3 == LKKTPointType.Max &&
                                 Evaluate(t.Item1) == maxValue)
                             .Select(t => t.Item1))
                         {
                             await Writer.Green.WriteLineAsync($"Global maximum: x = {x}");
                         }
-                    } else
+                    }
+                    else
                     {
                         var minValue = lkkt
                             .Where(t => t.Item3 == LKKTPointType.Min)
@@ -338,7 +341,8 @@ namespace OperationalResearch.Models
                     }
                 }
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 await Writer.Red.WriteLineAsync($"An exception happened: '{ex.Message}'");
                 if (!string.IsNullOrWhiteSpace(ex.StackTrace))
                 {
@@ -346,23 +350,90 @@ namespace OperationalResearch.Models
                 }
             }
 
+            await Writer.WriteLineAsync();
+            await Writer.WriteLineAsync();
             //
             // LKKT via Accord.Math.QuadProg
             //
             try
             {
-                await Writer.WriteLineAsync();
-                await Writer.WriteLineAsync();
                 await Writer.Bold.WriteLineAsync($"Searching {(max ? "max" : "min")} via Accord.Math.QuadProg");
                 var sol = max ? AccordMaximize() : AccordMinimize();
 
                 if (sol is null)
                 {
                     await Writer.Red.WriteLineAsync("Cound not find a solution");
-                } else
+                }
+                else
                 {
                     await Writer.Green.WriteLineAsync($"x = {sol.Item1}; f(x) = {Function.Print(sol.Item2)}");
                     await Writer.Indent.WriteLineAsync($"λ = {sol.Item3}");
+                }
+            }
+            catch (Exception ex)
+            {
+                await Writer.Red.WriteLineAsync($"An exception happened: '{ex.Message}'");
+                if (!string.IsNullOrWhiteSpace(ex.StackTrace))
+                {
+                    await Writer.Indent.Orange.WriteLineAsync(ex.StackTrace);
+                }
+            }
+
+            await Writer.WriteLineAsync();
+            await Writer.WriteLineAsync();
+            //
+            // min/max via Franke-Wolfe method
+            //
+            try
+            {
+                await Writer.Bold.WriteLineAsync($"Searching {(max ? "max" : "min")} via Franke-Wolfe method");
+
+                var fw = new QuadProgFrankeWolfe(P, H, lin);
+
+                var sol = max ? 
+                    await fw.SolveMax(startX: pointOfInterest, Writer.Indent) :
+                    await fw.SolveMin(startX: pointOfInterest, Writer.Indent);
+
+                if (sol is null)
+                {
+                    await Writer.Red.WriteLineAsync("Cound not find a solution");
+                }
+                else
+                {
+                    await Writer.Green.WriteLineAsync($"x = {sol}; f(x) = {Evaluate(sol)}");
+                }
+            }
+            catch (Exception ex)
+            {
+                await Writer.Red.WriteLineAsync($"An exception happened: '{ex.Message}'");
+                if (!string.IsNullOrWhiteSpace(ex.StackTrace))
+                {
+                    await Writer.Indent.Orange.WriteLineAsync(ex.StackTrace);
+                }
+            }
+
+            await Writer.WriteLineAsync();
+            await Writer.WriteLineAsync();
+            //
+            // min/max via Projected Gradient Descent
+            //
+            try
+            {
+                await Writer.Bold.WriteLineAsync($"Searching {(max ? "max" : "min")} via Projected Gradient Descent");
+
+                var fw = new QuadProgProjectedGradientDescent(P, H, lin);
+
+                var sol = max ?
+                    await fw.SolveMax(startX: pointOfInterest, Writer.Indent) :
+                    await fw.SolveMin(startX: pointOfInterest, Writer.Indent);
+
+                if (sol is null)
+                {
+                    await Writer.Red.WriteLineAsync("Cound not find a solution");
+                }
+                else
+                {
+                    await Writer.Green.WriteLineAsync($"x = {sol}; f(x) = {Evaluate(sol)}");
                 }
             }
             catch (Exception ex)

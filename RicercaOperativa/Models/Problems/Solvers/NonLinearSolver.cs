@@ -1,15 +1,15 @@
 ﻿using OperationalResearch.Extensions;
 using OperationalResearch.Models.Elements;
-using OperationalResearch.Models.Python;
+using OperationalResearch.Models.NonLinearOptimization;
 
 namespace OperationalResearch.Models.Problems.Solvers
 {
-    public class NonLinearSolver(Vector? startingPoint = null) : ISolving<Elements.Polyhedron, string>
+    public class NonLinearSolver(Vector? startingPoint = null) : ISolving<Polyhedron, string>
     {
-        private ProjectedGradient? projectedGradient = null;
-        private FrankWolfe? frankWolfe = null;
+        private PythonProjectedGradientDescent? projectedGradient = null;
+        private PythonFrankWolfe? frankWolfe = null;
         private Vector? startingPoint = startingPoint;
-        public Elements.Polyhedron? Domain { get; set; } = null;
+        public Polyhedron? Domain { get; set; } = null;
         public string? CoDomain { get; set; } = null;
         public async Task<bool> SolveMinAsync(IEnumerable<IndentWriter?> writers)
         {
@@ -19,8 +19,8 @@ namespace OperationalResearch.Models.Problems.Solvers
             }
             var results = await Task.WhenAll(
                 new[] {
-                    projectedGradient.SolveMinFlow(writers.FirstOrDefault(), startingPoint),
-                    frankWolfe.SolveMinFlow(writers.ElementAtOrDefault(1), startingPoint)
+                    projectedGradient.SolveFlow(min: true, Writer: writers.FirstOrDefault(), startX: startingPoint),
+                    frankWolfe.SolveFlow(min: true, Writer: writers.ElementAtOrDefault(1), startX: startingPoint)
                 });
             return results.Any(x => x); // At least one succeded
         }
@@ -32,8 +32,8 @@ namespace OperationalResearch.Models.Problems.Solvers
             }
             var results = await Task.WhenAll(
                 new[] {
-                    projectedGradient.SolveMaxFlow(writers.FirstOrDefault(), startingPoint),
-                    frankWolfe.SolveMaxFlow(writers.ElementAtOrDefault(1), startingPoint)
+                    projectedGradient.SolveFlow(min: false, Writer: writers.FirstOrDefault(), startX: startingPoint),
+                    frankWolfe.SolveFlow(min: false, Writer: writers.ElementAtOrDefault(1), startX: startingPoint)
                 });
             return results.Any(x => x); // At least one succeded
         }
@@ -47,13 +47,13 @@ namespace OperationalResearch.Models.Problems.Solvers
             throw new NotImplementedException("Can't solve for integers");
         }
 
-        public void SetData(Elements.Polyhedron p, string pythonString)
+        public void SetData(Polyhedron p, string pythonString)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(pythonString);
             Domain = p;
             CoDomain = pythonString;
-            projectedGradient = new ProjectedGradient(p, pythonString);
-            frankWolfe = new FrankWolfe(p, pythonString);
+            projectedGradient = new PythonProjectedGradientDescent(p, pythonString);
+            frankWolfe = new PythonFrankWolfe(p, pythonString);
         }
     }
 }

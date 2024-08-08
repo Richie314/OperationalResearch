@@ -16,7 +16,6 @@ namespace OperationalResearch.ViewForms
         public WebViewForm(string url)
         {
             InitializeComponent();
-            this.url = url;
             this.url = string.IsNullOrWhiteSpace(url) ? 
                 "https://www.github.com" : url;
         }

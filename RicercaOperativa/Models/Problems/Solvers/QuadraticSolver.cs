@@ -1,14 +1,15 @@
 ﻿using OperationalResearch.Extensions;
 using OperationalResearch.Models.Elements;
+using OperationalResearch.Models.NonLinearOptimization.QuadProg;
 
 namespace OperationalResearch.Models.Problems.Solvers
 {
-    public class QuadraticSolver : ISolving<Elements.Polyhedron, Tuple<Matrix, Vector>>
+    public class QuadraticSolver : ISolving<Polyhedron, Tuple<Matrix, Vector, Vector?>>
     {
         private QuadProg? quadProg = null;
 
-        public Elements.Polyhedron? Domain { get; set; } = null;
-        public Tuple<Matrix, Vector>? CoDomain { get; set; } = null;
+        public Polyhedron? Domain { get; set; } = null;
+        public Tuple<Matrix, Vector, Vector?>? CoDomain { get; set; } = null;
 
         public async Task<bool> SolveMaxAsync(IEnumerable<IndentWriter?> loggers)
         {
@@ -16,7 +17,10 @@ namespace OperationalResearch.Models.Problems.Solvers
             {
                 throw new InvalidOperationException("Problem not yet initialized");
             }
-            return await quadProg.SolveFlow(loggers.FirstOrDefault(), max: true);
+            return await quadProg.SolveFlow(
+                pointOfInterest: CoDomain?.Item3, 
+                Writer: loggers.FirstOrDefault(), 
+                max: true);
         }
         public async Task<bool> SolveMinAsync(IEnumerable<IndentWriter?> loggers)
         {
@@ -24,7 +28,10 @@ namespace OperationalResearch.Models.Problems.Solvers
             {
                 throw new InvalidOperationException("Problem not yet initialized");
             }
-            return await quadProg.SolveFlow(loggers.FirstOrDefault(), max: false);
+            return await quadProg.SolveFlow(
+                pointOfInterest: CoDomain?.Item3,
+                Writer: loggers.FirstOrDefault(),
+                max: false);
         }
 
         public Task<bool> SolveIntegerMaxAsync(IEnumerable<IndentWriter?> loggers)
@@ -36,7 +43,7 @@ namespace OperationalResearch.Models.Problems.Solvers
             throw new NotImplementedException("Can't solve for integers");
         }
 
-        public void SetData(Elements.Polyhedron p, Tuple<Matrix, Vector> codomain)
+        public void SetData(Polyhedron p, Tuple<Matrix, Vector, Vector?> codomain)
         {
             Domain = p;
             CoDomain = codomain;

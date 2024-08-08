@@ -214,24 +214,27 @@ namespace OperationalResearch.Models.Problems
     /// <summary>
     /// Analize a function inside a polyhedron. The function, as well as its gradient, must be written in python
     /// </summary>
-    public class NonLinearProblem(Elements.Polyhedron p, string s, Vector? startingPoint = null) : 
-        Problem<Elements.Polyhedron, string, NonLinearSolver>(p, s, new NonLinearSolver(startingPoint))
+    public class NonLinearProblem(Polyhedron p, string s, Vector? startingPoint = null) : 
+        Problem<Polyhedron, string, NonLinearSolver>(p, s, new NonLinearSolver(startingPoint))
     {
         public NonLinearProblem(string[][] polyhedron, string s, string[]? startingPoint = null) :
-            this(Elements.Polyhedron.FromStringMatrix(polyhedron), s, Vector.FromString(startingPoint)) { }
+            this(Polyhedron.FromStringMatrix(polyhedron), s, Vector.FromString(startingPoint)) { }
     }
 
     /// <summary>
     /// Analyze a poliynomial function of multiple variables inside a polyhedron
     /// </summary>
-    public class QuadraticProblem(Polyhedron p, Matrix Hessian, Vector Linear) : 
-        Problem<Polyhedron, Tuple<Matrix, Vector>, QuadraticSolver>
+    public class QuadraticProblem(Polyhedron p, Matrix Hessian, Vector Linear, Vector? PointToStudy = null) : 
+        Problem<Polyhedron, Tuple<Matrix, Vector, Vector?>, QuadraticSolver>
             (p,
-             new Tuple<Matrix, Vector>(Hessian, Linear),
+             new Tuple<Matrix, Vector, Vector?>(Hessian, Linear, PointToStudy),
              new QuadraticSolver())
     {
-        public QuadraticProblem(string[][] polyhedron, string[][] hessian, string[]? linear) :
-            this(Polyhedron.FromStringMatrix(polyhedron), new Matrix(hessian), Vector.FromString(linear) ?? Vector.Empty) { }
+        public QuadraticProblem(string[][] polyhedron, string[][] hessian, string[]? linear, string[]? pointToStudy = null) :
+            this(Polyhedron.FromStringMatrix(polyhedron), 
+                new Matrix(hessian), 
+                Vector.FromString(linear) ?? Vector.Empty,
+                Vector.FromString(pointToStudy)) { }
     }
 
     #endregion

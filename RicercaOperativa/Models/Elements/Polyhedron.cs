@@ -271,8 +271,26 @@ namespace OperationalResearch.Models.Elements
             new Polyhedron(matrixRow.Row, new Vector(limit), xPos);
 
         public Polyhedron Copy() => new Polyhedron(A.Copy(), b.Copy(), ForcePositive);
-        public Polyhedron RemoveEquation(int index) =>
-            new Polyhedron(A[A.RowsIndeces.Where(j => j != index)], b.RemoveAt(index));
+        public Polyhedron RemoveEquation(int index)
+        {
+            if (index < 0)
+            {
+                throw new ArgumentException("Invalid index: can't be below 0");
+            }
+            if (index >= A.Rows)
+            {
+                throw new ArgumentException($"Invalid index: can't be over {A.Rows}");
+            }
+            if (index < A.Rows)
+            {
+                return new Polyhedron(A[A.RowsIndeces.Where(j => j != index)], b.RemoveAt(index));
+            }
+            var newA = GetMatrix();
+            var newB = GetVector();
+            return new Polyhedron(
+                newA[newA.RowsIndeces.Where(j => j != index)], 
+                newB.RemoveAt(index));
+        }
 
         public static Polyhedron operator &(Polyhedron? l, Polyhedron? r)
         {

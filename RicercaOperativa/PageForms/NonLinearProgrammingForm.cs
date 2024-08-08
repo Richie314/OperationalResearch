@@ -11,187 +11,73 @@ namespace OperationalResearch.PageForms
     public partial class NonLinearProgrammingForm : Form
     {
 
-        private int EquationsCount = 3;
-        private int VariablesCount = 3;
         public NonLinearProgrammingForm()
         {
             InitializeComponent();
         }
-        private void GenerateGrid()
+
+        private async void SpaceDimensionChange(object? sender, PolyhedronControl.PolyhedronChangeEventArgs e)
         {
-            matrix.Rows.Clear();
-            matrix.ColumnCount = VariablesCount + 1;
-            matrix.RowHeadersVisible = false;
-
-            startPointInput.Rows.Clear();
-            startPointInput.ColumnCount = VariablesCount;
-            startPointInput.RowHeadersVisible = false;
-
-            for (int i = 0; i < matrix.ColumnCount; i++)
-            {
-                matrix.Columns[i].Width = 50;
-                matrix.Columns[i].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-                if (i < VariablesCount)
-                {
-                    matrix.Columns[i].Name = "x" + (i + 1).ToString();
-
-                    startPointInput.Columns[i].Width = 50;
-                    startPointInput.Columns[i].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-                    startPointInput.Columns[i].Name = "x" + (i + 1).ToString();
-                }
-                else
-                {
-                    matrix.Columns[i].Name = "b";
-                }
-            }
-            for (int i = 0; i < EquationsCount; i++)
-            {
-                string[] row = new string[VariablesCount + 1];
-                matrix.Rows.Add(row);
-                matrix.Rows[i].Height = 20;
-            }
-            startPointInput.Rows.Add(new string[VariablesCount]);
-            startPointInput.Rows[0].Height = 25;
-
-
-            GetPythonSnippet();
+            linearFunctionControl1.setSize(e.SpaceDimension, sender, e);
+            await pythonFunctionControl1.setSize(e.SpaceDimension);
         }
-        private void GetPythonSnippet()
-        {
-            pythonInput.Clear();
-            string libs = "import math" + Environment.NewLine;
-            string comment =
-                "# Expect input to be made of floats" + Environment.NewLine +
-                "# Return a single float in the main function and a tuple in its gradient" + Environment.NewLine +
-                "# Use 4 spaces instead of tabs!" + Environment.NewLine;
 
-            IEnumerable<string> xArray = Enumerable.Range(1, VariablesCount).Select(i => $"x{i}");
-            IEnumerable<string> xFloatArray = xArray.Select(x => $"{x}: float");
-            IEnumerable<string> xSquareArray = xArray.Select(x => $"{x}**2");
-            string f =
-                "def f(" + string.Join(", ", xFloatArray.ToArray()) + "):" + Environment.NewLine +
-                "    return (" + string.Join(" + ", xSquareArray.ToArray()) + ") / 2" + Environment.NewLine;
-            string grad =
-                "def gradF(" + string.Join(", ", xFloatArray.ToArray()) + "):" + Environment.NewLine +
-                "    return " + string.Join(", ", xArray.ToArray()) + Environment.NewLine;
-            string wholeScript =
-                libs +
-                comment +
-                Environment.NewLine +
-                f +
-                Environment.NewLine +
-                grad;
 
-            pythonInput.Text = wholeScript;
-        }
-        private void button1_Click(object sender, EventArgs e)
+        private async Task Solve(bool max)
         {
-            try
-            {
-                EquationsCount = (int)numberOfEquationsInput.Value;
-                VariablesCount = (int)dimensionOfSpaceInput.Value;
-                GenerateGrid();
-            }
-            catch (Exception err)
+            //
+            // Retrieve the parameters
+            //
+            if (polyhedronControl1.Polyhedron is null)
             {
                 MessageBox.Show(
-                    err.Message, "An error happened", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    "Invalid polyhedron", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                return;
             }
-        }
-
-        private void NonLinearProgrammingForm_Load(object sender, EventArgs e)
-        {
-            try
-            {
-                EquationsCount = (int)numberOfEquationsInput.Value;
-                VariablesCount = (int)dimensionOfSpaceInput.Value;
-                GenerateGrid();
-            }
-            catch (Exception err)
+            var code = await pythonFunctionControl1.getCode();
+            if (string.IsNullOrWhiteSpace(code))
             {
                 MessageBox.Show(
-                    err.Message, "An error happened", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            }
-        }
-
-        private string[][]? MainGridStr()
-        {
-            var list = new List<string[]>();
-            bool containsBlank = false;
-            for (int row = 0; row < matrix.RowCount; row++)
-            {
-                List<string> currRow = [];
-                for (int col = 0; col < matrix.ColumnCount; col++)
-                {
-                    containsBlank = containsBlank || string.IsNullOrWhiteSpace((string)matrix[col, row].Value);
-                    currRow.Add((string)matrix[col, row].Value);
-                }
-                list.Add([.. currRow]);
-            }
-            if (containsBlank)
-            {
-                if (DialogResult.Yes != MessageBox.Show(
-                    "There are blank cells in the input," + Environment.NewLine +
-                    "The algorithms cannot run with unknown values." + Environment.NewLine +
-                    "Do you want to fill in with zeros?",
-                    "Blank cells",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Warning))
-                {
-                    return null;
-                }
-                list = list.Select(
-                    row => row.Select(x => string.IsNullOrWhiteSpace(x) ? "0" : x).ToArray()).ToList();
-            }
-            return [.. list];
-        }
-        private string[]? GetStartingPoint()
-        {
-            var arr = new string[VariablesCount];
-            for (int col = 0; col < startPointInput.ColumnCount; col++)
-            {
-                arr[col] = (string)startPointInput[col, 0].Value;
-                if (string.IsNullOrWhiteSpace(arr[col]))
-                {
-                    return null;
-                }
-            }
-            return arr;
-        }
-
-        private async void solveMinButton_Click(object sender, EventArgs e)
-        {
-            solveMinButton.Enabled = false;
-            string[][]? mainGrid = MainGridStr();
-            if (mainGrid is null || mainGrid.Length == 0)
-            {
-                solveMinButton.Enabled = true;
+                    "Empty code." + Environment.NewLine + "Write your function to continue", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
 
-            NonLinearProblem problem = new(mainGrid, pythonInput.Text, startingPoint: GetStartingPoint());
+            //
+            // Create the problem
+            // 
+            NonLinearProblem problem = new(
+                polyhedronControl1.Polyhedron, 
+                code, 
+                startingPoint: linearFunctionControl1.Vector);
 
-            var dialogForm1 = new ProblemForm<NonLinearProblem>(problem, "Projected Gradient");
+            //
+            // Create the windows
+            //
+            var dialogForm1 = new ProblemForm<NonLinearProblem>(problem, "Projected Gradient Descent");
             var dialogForm2 = new ProblemForm<NonLinearProblem>(problem, "Franke-Wolfe");
             bool OneFormDisposed = false;
             void closeFormCallback(object? sender, FormClosedEventArgs e)
             {
                 if (OneFormDisposed)
                 {
-                    solveMinButton.Enabled = true;
+                    solveMaxButton.Enabled = solveMinButton.Enabled = true;
                 }
                 OneFormDisposed = true;
             };
+            solveMaxButton.Enabled = solveMinButton.Enabled = false;
             dialogForm1.FormClosed += new FormClosedEventHandler(closeFormCallback);
             dialogForm1.Show();
             dialogForm2.FormClosed += new FormClosedEventHandler(closeFormCallback);
             dialogForm2.Show();
 
-            if (await problem.SolveMin([dialogForm1.Writer, dialogForm2.Writer]))
+            if (max ? 
+                await problem.SolveMax([dialogForm1.Writer, dialogForm2.Writer]) :
+                await problem.SolveMin([dialogForm1.Writer, dialogForm2.Writer]))
             {
                 MessageBox.Show(
                     "Non Linear Programming problem solved",
-                    "Problem solved", MessageBoxButtons.OK,
+                    "Problem solved", 
+                    MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
             }
             else
@@ -202,54 +88,25 @@ namespace OperationalResearch.PageForms
                     MessageBoxIcon.Error);
             }
 
+            //
+            // Eventually display the domain
+            //
             if (problem.Solver.Domain?.Cols == 2)
             {
                 var graphForm = new CartesianForm([], problem.Solver.Domain);
                 graphForm.Show();
             }
         }
-        private async void solveMaxButton_Click(object sender, EventArgs e)
+
+
+        private async void solveMinButton_Click(object sender, EventArgs e) => await Solve(max: false);
+        private async void solveMaxButton_Click(object sender, EventArgs e) => await Solve(max: true);
+
+        private async void NonLinearProgrammingForm_Load(object sender, EventArgs e)
         {
-            solveMinButton.Enabled = false;
-            string[][]? mainGrid = MainGridStr();
-            if (mainGrid is null || mainGrid.Length == 0)
-            {
-                solveMinButton.Enabled = true;
-                return;
-            }
-
-            NonLinearProblem problem = new(mainGrid, pythonInput.Text, startingPoint: GetStartingPoint());
-
-            var dialogForm1 = new ProblemForm<NonLinearProblem>(problem, "Projected Gradient");
-            var dialogForm2 = new ProblemForm<NonLinearProblem>(problem, "Franke-Wolfe");
-            bool OneFormDisposed = false;
-            void closeFormCallback(object? sender, FormClosedEventArgs e)
-            {
-                if (OneFormDisposed)
-                {
-                    solveMinButton.Enabled = true;
-                }
-                OneFormDisposed = true;
-            };
-            dialogForm1.FormClosed += new FormClosedEventHandler(closeFormCallback);
-            dialogForm1.Show();
-            dialogForm2.FormClosed += new FormClosedEventHandler(closeFormCallback);
-            dialogForm2.Show();
-
-            if (await problem.SolveMax([dialogForm1.Writer, dialogForm2.Writer]))
-            {
-                MessageBox.Show(
-                    "Non Linear Programming problem solved",
-                    "Problem solved", MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show(
-                    "Non Linear Programming problem could not be solved",
-                    "Error", MessageBoxButtons.OKCancel,
-                    MessageBoxIcon.Error);
-            }
+            polyhedronControl1.OnPolyhedronChange += new PolyhedronControl.PolyhedronChangeHandler(SpaceDimensionChange);
+            linearFunctionControl1.setSize(polyhedronControl1.SpaceDimension, sender, e);
+            await pythonFunctionControl1.setSize(polyhedronControl1.SpaceDimension);
         }
     }
 }

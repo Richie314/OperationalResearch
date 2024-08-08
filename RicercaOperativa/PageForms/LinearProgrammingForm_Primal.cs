@@ -78,8 +78,6 @@ namespace OperationalResearch.PageForms
                 var graphForm = new CartesianForm([], problem.Solver.Domain);
                 graphForm.Show();
             }
-
-            maximizeBtn.Enabled = minimizeBtn.Enabled = true;
         }
 
         private async void maximizeBtn_Click(object sender, EventArgs e) => await SolveProblem(true);

@@ -6,11 +6,11 @@ namespace OperationalResearch.ViewForms
 {
     internal class CartesianForm : WebViewForm
     {
-        private readonly Models.Elements.Polyhedron? p;
+        private readonly Polyhedron? p;
         private readonly IEnumerable<Point2> Points;
         public CartesianForm(
             IEnumerable<Point2> points,
-            Models.Elements.Polyhedron? polyhedron = null) : base(WebPath)
+            Polyhedron? polyhedron = null) : base(WebPath)
         {
             webView.NavigationCompleted += WebView_NavigationCompleted;
             p = polyhedron;

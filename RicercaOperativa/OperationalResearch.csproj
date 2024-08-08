@@ -74,6 +74,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Assets\AceCodeContainer.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\GeoGebraLoader.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

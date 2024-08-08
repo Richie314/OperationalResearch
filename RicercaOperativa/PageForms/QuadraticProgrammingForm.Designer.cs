@@ -36,6 +36,8 @@
             label4 = new Label();
             polyhedronControl1 = new PolyhedronControl();
             linearFunctionControl1 = new LinearFunctionControl();
+            linearFunctionControl2 = new LinearFunctionControl();
+            label1 = new Label();
             ((System.ComponentModel.ISupportInitialize)hessianMatrix).BeginInit();
             SuspendLayout();
             // 
@@ -104,24 +106,45 @@
             polyhedronControl1.MinimumSize = new Size(589, 416);
             polyhedronControl1.Name = "polyhedronControl1";
             polyhedronControl1.Polyhedron = null;
-            polyhedronControl1.Size = new Size(736, 416);
+            polyhedronControl1.Size = new Size(736, 427);
             polyhedronControl1.TabIndex = 15;
             // 
             // linearFunctionControl1
             // 
-            linearFunctionControl1.Location = new Point(15, 36);
+            linearFunctionControl1.Location = new Point(9, 36);
             linearFunctionControl1.Margin = new Padding(3, 4, 3, 4);
             linearFunctionControl1.MinimumSize = new Size(585, 90);
             linearFunctionControl1.Name = "linearFunctionControl1";
-            linearFunctionControl1.Size = new Size(1079, 112);
+            linearFunctionControl1.Size = new Size(1085, 112);
             linearFunctionControl1.TabIndex = 16;
             linearFunctionControl1.Vector = null;
+            // 
+            // linearFunctionControl2
+            // 
+            linearFunctionControl2.Location = new Point(9, 611);
+            linearFunctionControl2.Margin = new Padding(3, 4, 3, 4);
+            linearFunctionControl2.MinimumSize = new Size(585, 90);
+            linearFunctionControl2.Name = "linearFunctionControl2";
+            linearFunctionControl2.Size = new Size(1085, 112);
+            linearFunctionControl2.TabIndex = 17;
+            linearFunctionControl2.Vector = null;
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(15, 587);
+            label1.Name = "label1";
+            label1.Size = new Size(587, 20);
+            label1.TabIndex = 18;
+            label1.Text = "Point of Interest (starting point for iterative methods and needs multipliers to be found)";
             // 
             // QuadraticProgrammingForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1108, 736);
+            Controls.Add(label1);
+            Controls.Add(linearFunctionControl2);
             Controls.Add(linearFunctionControl1);
             Controls.Add(polyhedronControl1);
             Controls.Add(label4);
@@ -149,5 +172,7 @@
         private Label label4;
         private PolyhedronControl polyhedronControl1;
         private LinearFunctionControl linearFunctionControl1;
+        private LinearFunctionControl linearFunctionControl2;
+        private Label label1;
     }
 }

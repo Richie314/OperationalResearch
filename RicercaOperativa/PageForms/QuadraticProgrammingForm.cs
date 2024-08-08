@@ -44,6 +44,7 @@ namespace OperationalResearch.PageForms
         private void SpaceDimensionChange(object? sender, PolyhedronControl.PolyhedronChangeEventArgs e)
         {
             linearFunctionControl1.setSize(e.SpaceDimension, sender, e);
+            linearFunctionControl2.setSize(e.SpaceDimension, sender, e);
             GenerateGrid();
         }
         private void LinearProgrammingForm_Load(object sender, EventArgs e)
@@ -51,6 +52,7 @@ namespace OperationalResearch.PageForms
             polyhedronControl1.OnPolyhedronChange += 
                 new PolyhedronControl.PolyhedronChangeHandler(SpaceDimensionChange);
             linearFunctionControl1.setSize(polyhedronControl1.SpaceDimension, sender, e);
+            linearFunctionControl2.setSize(polyhedronControl1.SpaceDimension, sender, e);
             GenerateGrid();
         }
         private async Task solve(bool max)
@@ -75,7 +77,8 @@ namespace OperationalResearch.PageForms
             QuadraticProblem problem = new(
                 polyhedronControl1.Polyhedron,
                 Hessian,
-                linearFunctionControl1.Vector ?? Vector.Empty);
+                linearFunctionControl1.Vector ?? Vector.Empty,
+                linearFunctionControl2.Vector);
 
             var Form = new ProblemForm<QuadraticProblem>(problem, "QuadProg");
             void closeFormCallback(object? sender, FormClosedEventArgs e)

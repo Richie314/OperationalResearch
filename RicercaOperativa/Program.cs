@@ -18,13 +18,16 @@ namespace OperationalResearch
         }
         static void Application_ThreadException(object sender, ThreadExceptionEventArgs e)
         {
-            MessageBox.Show(
+            var r = MessageBox.Show(
                 e.Exception.Message + Environment.NewLine + 
                 e.Exception.StackTrace ?? string.Empty,
                 "An exception caused the app to fail",
-                MessageBoxButtons.OK,
+                MessageBoxButtons.AbortRetryIgnore,
                 MessageBoxIcon.Error);
-            Application.Exit();
+            if (r == DialogResult.Abort)
+            {
+                Application.Exit();
+            }
         }
     }
 }
