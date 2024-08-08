@@ -5,6 +5,7 @@ using OperationalResearch.Extensions;
 using OperationalResearch.Models.Elements;
 using System;
 using System.Collections.Generic;
+using static IronPython.Modules.PythonCsvModule;
 using Matrix = OperationalResearch.Models.Elements.Matrix;
 using Vector = OperationalResearch.Models.Elements.Vector;
 
@@ -236,7 +237,48 @@ namespace OperationalResearch.Models.NonLinearOptimization.QuadProg
                 );
             }
         }
+        public async Task<LKKTPointType> ClassifyGivenPoint(IndentWriter Writer, Vector x)
+        {
+            var gradF = H * x + lin;
+            await Writer.WriteLineAsync($"∇f(x) = {gradF}");
+            if (!P.IsOnBorder(x))
+            {
+                if (gradF.IsZero)
+                {
+                    await Writer.Indent.Purple.WriteLineAsync(
+                        "x is not on the border of the polyhedron but ∇f(x) = 0, so x is a stationary point (λ = 0)"); 
+                } else
+                {
+                    await Writer.Indent.Orange.Italic.WriteLineAsync(
+                        "x is not on the border of the polyhedron, so can't be an LKKT solution");
+                }
+                return LKKTPointType.Unknown;
+            }
+            var g = P.GetMatrix() * x - P.GetVector();
+            var B = g.ZeroIndexes;
+            if (B.Length > x.Size)
+            {
+                await Writer.Orange.WriteLineAsync(
+                    $"It appears that ({string.Join(", ", B.Select(i => $"λ{i + 1}"))}) != 0 but we don't have enough equations (we have {x.Size}) to solve for the coefficients");
+            }
+            await Writer.Blue.WriteLineAsync("Solving λ[B] = - (A[B].T)^-1 ∇f(x); λ[N] = 0");
+            var s = P.GetMatrix()[B].T;
+            if (s.Det.IsZero)
+            {
+                await Writer.Orange.WriteLineAsync("Cannot solve: matrix can't be inverted");
+                return LKKTPointType.Unknown;
+            }
 
+            Vector λ = Vector.Zeros(g.Size);
+            var λ_B = Fraction.MinusOne * s.Inv * gradF;
+            for (int i = 0; i < λ_B.Size; i++)
+            {
+                λ[B[i]] = λ_B[i];
+            }
+
+            await Writer.WriteLineAsync($"λ = {λ}");
+            return ClassifyLKKTPoint(λ);
+        }
         public async Task<bool> SolveFlow(
             Vector? pointOfInterest = null,
             IndentWriter? Writer = null,
@@ -338,6 +380,30 @@ namespace OperationalResearch.Models.NonLinearOptimization.QuadProg
                         {
                             await Writer.Green.WriteLineAsync($"Global minimum: x = {x}");
                         }
+                    }
+                }
+                
+                //
+                // Analyze the given point
+                //
+                if (pointOfInterest is not null && pointOfInterest.Size == H.Cols)
+                {
+                    await Writer.Blue.Bold.WriteLineAsync($"Studying x = {pointOfInterest}");
+                    switch (await ClassifyGivenPoint(Writer.Indent, pointOfInterest))
+                    {
+                        case LKKTPointType.Max:
+                            await Writer.Indent.WriteLineAsync("x is a local maximum point");
+                            break;
+                        case LKKTPointType.Min:
+                            await Writer.Indent.WriteLineAsync("x is a local minimum point");
+                            break;
+                        case LKKTPointType.Saddle:
+                            await Writer.Indent.WriteLineAsync("x is a saddle point");
+                            break;
+                        case LKKTPointType.Unknown:
+                        default:
+                            await Writer.Indent.Red.WriteLineAsync("x cannot be classified");
+                            break;
                     }
                 }
             }
