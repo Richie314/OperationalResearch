@@ -86,7 +86,7 @@ jobs:
       if: ${{ matrix.configuration == 'Release' }}
       with:
         name: App Package
-        path: ${{ env.Wap_Project_Directory }}\Build\OperationalResearchWAP_?.?.?.?_x86_bundle.msixupload
+        path: ${{ env.Wap_Project_Directory }}\Build\OperationalResearchWAP_1.0.0.0_x86_bundle.msixupload
         if-no-files-found: error
         compression-level: 4
         overwrite: true
