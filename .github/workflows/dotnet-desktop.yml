@@ -22,7 +22,7 @@ jobs:
 
     strategy:
       matrix:
-        configuration: [Release] # [Debug, Release]
+        configuration: [Debug, Release] # [Release]
 
     runs-on: windows-latest
     
@@ -71,7 +71,7 @@ jobs:
       env:
         Appx_Bundle: Always
         Appx_Bundle_Platforms: x86|x64
-        Appx_Package_Build_Mode: SideLoadOnly
+        Appx_Package_Build_Mode: StoreUpload
         Configuration: ${{ matrix.configuration }}
 
     # Remove the pfx
@@ -81,7 +81,7 @@ jobs:
     # Upload the MSIX package: https://github.com/marketplace/actions/upload-a-build-artifact
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
-      if: ${{ matrix.configuration }} == "Release"
+      if: ${{ matrix.configuration == 'Release' }}
       with:
         name: App Package
         path: ${{ env.Wap_Project_Directory }}\AppPackages
