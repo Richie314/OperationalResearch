@@ -88,7 +88,7 @@ jobs:
     # Create a Release if version tags were passed
     - name: Create Release
       id: create_release
-      if: ${{ matrix.configuration == 'Release' }} && ${{ env.Create_Release }}
+      if: ${{ (matrix.configuration == 'Release') && (env.Create_Release == true) }}
       uses: actions/create-release@v1
       with:
         tag_name: ${{ github.ref }}
@@ -106,8 +106,7 @@ jobs:
       uses: nanoufo/action-upload-artifacts-and-release-assets@v2
       if: ${{ matrix.configuration == 'Release' }}
       with:
-        path: |
-          ${{ env.Wap_Project_Directory }}\AppPackages\*.msix
+        path: ${{ env.Wap_Project_Directory }}\AppPackages\*.msix
         upload-release-files: ${{ env.Create_Release }}
         release-upload-url: ${{ steps.create_release.outputs.upload_url }}
         if-no-files-found: 'error'
