@@ -4,8 +4,6 @@ using Fractions;
 using OperationalResearch.Extensions;
 using OperationalResearch.Models.Elements;
 using System;
-using System.Collections.Generic;
-using static IronPython.Modules.PythonCsvModule;
 using Matrix = OperationalResearch.Models.Elements.Matrix;
 using Vector = OperationalResearch.Models.Elements.Vector;
 
