@@ -13,6 +13,8 @@ on:
   push:
     tags:
       - "v*"
+    branches:
+      - master
 
 jobs:
 
@@ -72,11 +74,11 @@ jobs:
 
     # Create the app package by building and packaging the Windows Application Packaging project
     - name: Create the app package
-      run: msbuild $env:Wap_Project_Path /p:Configuration=$env:Configuration /p:UapAppxPackageBuildMode=$env:Appx_Package_Build_Mode /p:AppxBundle=$env:Appx_Bundle /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:PackageCertificatePassword=${{ secrets.Pfx_Key }}
+      run: msbuild $env:Solution_Name /p:Configuration=$env:Configuration /p:UapAppxPackageBuildMode=$env:Appx_Package_Build_Mode /p:AppxBundle=$env:Appx_Bundle /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:PackageCertificatePassword=${{ secrets.Pfx_Key }}
       env:
-        Appx_Bundle: Always
+        Appx_Bundle: Never
         Appx_Bundle_Platforms: x86|x64
-        Appx_Package_Build_Mode: StoreUpload # CI/StoreUpload/SideLoadOnly
+        Appx_Package_Build_Mode: SideLoadOnly # CI/StoreUpload/SideLoadOnly
         Configuration: ${{ matrix.configuration }}
 
     # Remove the pfx
@@ -86,7 +88,7 @@ jobs:
     # Create a Release if version tags were passed
     - name: Create Release
       id: create_release
-      if: ${{ matrix.configuration == 'Release' }}
+      if: ${{ matrix.configuration == 'Release' }} && ${{ env.Create_Release }}
       uses: actions/create-release@v1
       with:
         tag_name: ${{ github.ref }}
@@ -105,7 +107,7 @@ jobs:
       if: ${{ matrix.configuration == 'Release' }}
       with:
         path: |
-          ${{ env.Wap_Project_Directory }}\AppPackages\*.msixupload
+          ${{ env.Wap_Project_Directory }}\AppPackages\*.msix
         upload-release-files: ${{ env.Create_Release }}
         release-upload-url: ${{ steps.create_release.outputs.upload_url }}
         if-no-files-found: 'error'
