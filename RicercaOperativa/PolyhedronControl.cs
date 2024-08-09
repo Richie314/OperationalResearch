@@ -11,7 +11,7 @@ namespace OperationalResearch
         public class PolyhedronChangeEventArgs : EventArgs
         {
             public Polyhedron? CurrentPolyhedron { get; set; }
-            public int SpaceDimension { get; set; } 
+            public int SpaceDimension { get; set; }
             public PolyhedronChangeEventArgs(Polyhedron? data, int spaceDimension)
             {
                 CurrentPolyhedron = data;
@@ -32,7 +32,7 @@ namespace OperationalResearch
 
         #endregion
 
-        public Polyhedron? Polyhedron { get; set; }
+        public Polyhedron? Polyhedron { get; private set; } = null;
         public int SpaceDimension { get => (int)spaceDimension.Value; }
         public PolyhedronControl()
         {
@@ -41,7 +41,7 @@ namespace OperationalResearch
             // Handle changes in values
             xPositiveCheckbox.CheckedChanged += regeneratePolyhedron;
             matrix.CellValueChanged += regeneratePolyhedron;
-            
+
             // Handle changes in dimensions
             spaceDimension.ValueChanged += addOrRemoveColumn;
             equationsCount.ValueChanged += addOrRemoveRow;
@@ -70,7 +70,7 @@ namespace OperationalResearch
             }
             while (matrix.ColumnCount - 2 < targetColumnCount)
             {
-                matrix.Columns.Insert(matrix.ColumnCount - 2, 
+                matrix.Columns.Insert(matrix.ColumnCount - 2,
                     new DataGridViewColumn(matrix.Columns[0].CellTemplate));
 
                 // Change the name of the last row added
@@ -134,7 +134,8 @@ namespace OperationalResearch
                         string? operation = cell?.FormattedValue.ToString();
                         ArgumentException.ThrowIfNullOrWhiteSpace(operation);
                         currRow.Add(operation);
-                    } else
+                    }
+                    else
                     {
                         containsBlank = containsBlank || string.IsNullOrWhiteSpace((string)matrix[col, row].Value);
                         currRow.Add((string)matrix[col, row].Value);
@@ -153,6 +154,59 @@ namespace OperationalResearch
                     row => row.Select(x => string.IsNullOrWhiteSpace(x) ? "0" : x).ToArray()).ToList();
             }
             return [.. list];
+        }
+        
+        private string oldPoints = "0;0 | 1;1 | 0;1 | 1;0";
+        private void fromPointsButton_Click(object sender, EventArgs e)
+        {
+
+            var s = Microsoft.VisualBasic.Interaction.InputBox(
+                "Vertices",
+                "Insert the vertices of the Polyhedron",
+                oldPoints);
+            if (string.IsNullOrWhiteSpace(s))
+            {
+                return;
+            }
+            oldPoints = s;
+
+            var points = s
+                .Split('|', StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Split(';', StringSplitOptions.TrimEntries))
+                .Where(x => x.Length == 2)
+                .Select(x => Vector.FromString(x) ?? Vector.Empty)
+                .Where(x => !x.IsEmpty);
+            try
+            {
+                var p = Polyhedron.FromBidimensionalPoints(points);
+                spaceDimension.Value = 2;
+                setColumns(2);
+                equationsCount.Value = p.A.Rows;
+                xPositiveCheckbox.Checked = p.ForcePositive;
+
+                matrix.Rows.Clear();
+                foreach (int i in p.A.RowsIndeces)
+                {
+                    matrix.Rows.Add(new string[]
+                    {
+                        p.A[i][0].ToString(),
+                        p.A[i][1].ToString(),
+                        "<=",
+                        p.b[i].ToString()
+                    });
+                }
+
+                // Polyhedron = p;
+                regeneratePolyhedron(sender, e);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "An error happened",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
     }
 }

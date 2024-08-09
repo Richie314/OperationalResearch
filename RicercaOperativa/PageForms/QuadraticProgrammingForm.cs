@@ -72,7 +72,6 @@ namespace OperationalResearch.PageForms
                     MessageBoxIcon.Warning);
                 return;
             }
-            maximizeBtn.Enabled = minimizeBtn.Enabled = false;
 
             QuadraticProblem problem = new(
                 polyhedronControl1.Polyhedron,
@@ -80,6 +79,7 @@ namespace OperationalResearch.PageForms
                 linearFunctionControl1.Vector ?? Vector.Empty,
                 linearFunctionControl2.Vector);
 
+            maximizeBtn.Enabled = minimizeBtn.Enabled = false;
             var Form = new ProblemForm<QuadraticProblem>(problem, "QuadProg");
             void closeFormCallback(object? sender, FormClosedEventArgs e)
             {

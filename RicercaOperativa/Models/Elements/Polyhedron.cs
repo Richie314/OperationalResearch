@@ -332,5 +332,91 @@ namespace OperationalResearch.Models.Elements
         {
             get => BasisVertex(GetMatrix(), GetVector(), B);
         }
+
+        public static Tuple<Fraction, Fraction, Fraction> GetLineFrom2Points(Vector x1, Vector x2)
+        {
+            if (x1 == x2)
+            {
+                throw new ArgumentException("Points can't must be different to find a line");
+            }
+
+            if (x1.Size != 2 || x2.Size != 2)
+            {
+                throw new ArgumentException(
+                    $"Points must be in ℝ^2 (given sizes {x1.Size} and {x2.Size})");
+            }
+
+            var s = new Matrix(new Fraction[,]
+            {
+                { x1[0], Fraction.One },
+                { x2[0], Fraction.One }
+            });
+            if (!s.Det.IsZero)
+            {
+                var mq = s.Inv * new Vector(x1[1], x2[1]);
+                mq = new Vector(mq[0], Fraction.MinusOne, mq[1]).Simplify();
+                return new Tuple<Fraction, Fraction, Fraction>(mq[0], mq[1], mq[2]);
+            }
+
+
+            // x1[0] == x2[0] here. Equation is x = x1[0] => 1*x + 0*y -x1[0] = 0
+            return new Tuple<Fraction, Fraction, Fraction>(
+                x1[0].Denominator, 
+                Fraction.Zero, 
+                Fraction.MinusOne * x1[0].Numerator);
+        }
+        public static Polyhedron FromBidimensionalPoints(IEnumerable<Vector> points)
+        {
+            if (points.Count() < 3)
+            {
+                throw new ArgumentException(
+                    $"Not enough points were given ({points.Count()} < 3)");
+            }
+
+            List<Tuple<Fraction, Fraction, Fraction>> Lines = [];
+            Vector predecessor = points.First(), point = points.First();
+
+            while (true)
+            {
+                // Find the nearest point but exclude the predecessor
+                var target = points
+                    .Where(p => p != predecessor && p != point)
+                    .OrderBy(p => (p - point).Norm2)
+                    .First();
+                Lines.Add(GetLineFrom2Points(point, target));
+
+                if (target == points.First())
+                {
+                    break;
+                }
+                predecessor = point;
+                point = target;
+            }
+
+            var vectors = Lines.Select(eq =>
+            {
+                var d = points
+                    .Select(p => eq.Item1 * p[0] + eq.Item2 * p[1] + eq.Item3)
+                    .Where(di => !di.IsZero);
+                if (!d.Any())
+                {
+                    throw new DataMisalignedException(
+                        $"It was impossible to biuld a disequation from the line {Function.Print(eq.Item1)}*x + {Function.Print(eq.Item2)}*y + {Function.Print(eq.Item3)} = 0");
+                }
+                return d.First().IsPositive ?
+                    new Tuple<Vector, Fraction>(
+                        new Vector(eq.Item1, eq.Item2) * Fraction.MinusOne,
+                        eq.Item3) :
+                     new Tuple<Vector, Fraction>(
+                        new Vector(eq.Item1, eq.Item2),
+                        eq.Item3 * Fraction.MinusOne);
+
+            });
+
+            var A = new Matrix(vectors.Select(r => r.Item1.Get).ToArray());
+            var b = new Vector(vectors.Select(r => r.Item2).ToArray());
+
+            return new Polyhedron(A, b);
+        }
     }
 }

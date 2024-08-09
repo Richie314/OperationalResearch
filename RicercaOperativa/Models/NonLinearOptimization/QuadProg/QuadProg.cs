@@ -254,13 +254,25 @@ namespace OperationalResearch.Models.NonLinearOptimization.QuadProg
             }
             var g = P.GetMatrix() * x - P.GetVector();
             var B = g.ZeroIndexes;
-            if (B.Length > x.Size)
+            var A = P.GetMatrix();
+            await Writer.Blue.WriteLineAsync("Solving λ[B] = - (A[B].T)^-1 ∇f(x); λ[N] = 0");
+            if (B.Length != x.Size)
             {
                 await Writer.Orange.WriteLineAsync(
                     $"It appears that ({string.Join(", ", B.Select(i => $"λ{i + 1}"))}) != 0 but we don't have enough equations (we have {x.Size}) to solve for the coefficients");
+                if (B.Length > x.Size)
+                {
+                    // We have more coeffs than equations
+                    return LKKTPointType.Unknown;
+                }
+                // We have more equations than coeffs
+
+                await Writer.Indent.WriteLineAsync(
+                    $"Ignoring {x.Size - B.Length} equations");
+                A = A.T[A.ColsIndeces.SkipLast(x.Size - B.Length)].T;
+                gradF = gradF[gradF.Indices.SkipLast(x.Size - B.Length)];
             }
-            await Writer.Blue.WriteLineAsync("Solving λ[B] = - (A[B].T)^-1 ∇f(x); λ[N] = 0");
-            var s = P.GetMatrix()[B].T;
+            var s = A[B].T;
             if (s.Det.IsZero)
             {
                 await Writer.Orange.WriteLineAsync("Cannot solve: matrix can't be inverted");
@@ -298,10 +310,11 @@ namespace OperationalResearch.Models.NonLinearOptimization.QuadProg
                 if (x is null)
                 {
                     await Writer.Red.WriteLineAsync("Could not find points where ∇f(x, y) = (0, 0)");
-                    return false;
+                } else
+                {
+                    await Writer.Green.WriteLineAsync($"∇f({Function.Print(x[0])}, {Function.Print(x[1])}) = (0, 0)");
+                    await Writer.WriteLineAsync($"f({Function.Print(x[0])}, {Function.Print(x[1])}) = {Function.Print(Evaluate(x))}");
                 }
-                await Writer.Green.WriteLineAsync($"∇f({Function.Print(x[0])}, {Function.Print(x[1])}) = (0, 0)");
-                await Writer.WriteLineAsync($"f({Function.Print(x[0])}, {Function.Print(x[1])}) = {Function.Print(Evaluate(x))}");
             }
             catch (Exception ex)
             {
@@ -451,7 +464,8 @@ namespace OperationalResearch.Models.NonLinearOptimization.QuadProg
             //
             try
             {
-                await Writer.Bold.WriteLineAsync($"Searching {(max ? "max" : "min")} via Franke-Wolfe method");
+                await Writer.Bold.WriteLineAsync(
+                    $"Searching {(max ? "max" : "min")} via Franke-Wolfe method");
 
                 var fw = new QuadProgFrankeWolfe(P, H, lin);
 

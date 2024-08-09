@@ -87,7 +87,6 @@
             polyhedronControl1.Margin = new Padding(3, 5, 3, 5);
             polyhedronControl1.MinimumSize = new Size(589, 416);
             polyhedronControl1.Name = "polyhedronControl1";
-            polyhedronControl1.Polyhedron = null;
             polyhedronControl1.Size = new Size(606, 492);
             polyhedronControl1.TabIndex = 16;
             // 

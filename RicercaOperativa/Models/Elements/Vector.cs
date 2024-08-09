@@ -378,7 +378,7 @@ namespace OperationalResearch.Models.Elements
         {
             get => v.Find(x => x.Denominator != 1);
         }
-        public int[] integerIndeces
+        public int[] IntegerIndeces
         {
             get => v.Find(x => x.Denominator == 1);
         }
@@ -436,11 +436,35 @@ namespace OperationalResearch.Models.Elements
         {
             return b == 0 ? a : GCD(b, a % b);
         }
+        private static BigInteger LCM(BigInteger a, BigInteger b)
+        {
+            BigInteger num1, num2;
+            if (a > b)
+            {
+                num1 = a; num2 = b;
+            }
+            else
+            {
+                num1 = b; num2 = a;
+            }
+
+            for (BigInteger i = 1; i < num2; i++)
+            {
+                BigInteger mult = num1 * i;
+                if (mult % num2 == 0)
+                {
+                    return mult;
+                }
+            }
+            return num1 * num2;
+        }
         public Vector Simplify()
         {
             BigInteger numGcd = v.Select(i => i.Numerator).Aggregate(GCD);
-            BigInteger denGcd = v.Select(i => i.Denominator).Aggregate(GCD);
+            BigInteger denGcd = v.Select(i => i.Denominator).Aggregate(LCM);
             return this * new Fraction(denGcd, numGcd);
         }
+
+        public Fraction Norm2 { get => (this * this).Sqrt(); }
     }
 }
