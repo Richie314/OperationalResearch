@@ -93,16 +93,16 @@ jobs:
     # Create a Release if version tags were passed
     - name: Create Release
       id: create_release
-      if: ${{ matrix.configuration == 'Release' && startsWith(github.ref, 'refs/tags/v') }}
+      if: ${{ (matrix.configuration == 'Release') && startsWith(github.ref, 'refs/tags/v') }}
       uses: actions/create-release@v1
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
         draft: false
         prerelease: false
+        token: ${{ secrets.GITHUB_TOKEN }}
         body: |
           Release notes for ${{ github.ref }}
-        token: ${{ secrets.GITHUB_TOKEN }}
 
     # Upload the artifacts to the newly created release 
     - name: Upload artifacts and release assets
@@ -113,3 +113,6 @@ jobs:
           ${{ env.Wap_Project_Directory }}\AppPackages\*.msixupload
         upload-release-files: startsWith(github.ref, 'refs/tags/v')
         release-upload-url: ${{ steps.create_release.outputs.upload_url }}
+        if-no-files-found: 'error'
+        compression-level: 4
+
