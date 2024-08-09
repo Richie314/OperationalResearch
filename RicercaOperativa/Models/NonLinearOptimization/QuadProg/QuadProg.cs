@@ -388,6 +388,7 @@ namespace OperationalResearch.Models.NonLinearOptimization.QuadProg
                 //
                 if (pointOfInterest is not null && pointOfInterest.Size == H.Cols)
                 {
+                    await Writer.WriteLineAsync();
                     await Writer.Blue.Bold.WriteLineAsync($"Studying x = {pointOfInterest}");
                     switch (await ClassifyGivenPoint(Writer.Indent, pointOfInterest))
                     {

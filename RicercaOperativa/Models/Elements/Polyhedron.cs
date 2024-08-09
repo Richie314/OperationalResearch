@@ -36,7 +36,9 @@ namespace OperationalResearch.Models.Elements
 
         public bool IsOutside(Vector x) => !IsInside(x);
 
-        public bool IsOnBorder(Vector x) => A * x == b;
+        public bool IsOnBorder(Vector x) => 
+            IsInside(x) && 
+            (((A * x) - b).ZeroIndexes.Any() || (ForcePositive && x.ZeroIndexes.Any()));
 
         public Polyhedron AddRow(Vector aRow, Fraction bVal)
         {
