@@ -39,7 +39,6 @@ jobs:
       Wap_Project_Directory: .\OperationalResearchWAP
       Wap_Project_Path: .\OperationalResearchWAP\OperationalResearchWAP.wapproj
 
-      App_Packages_Archive: AppPackages.zip
       App_Packages_Directory: AppPackages
       
       # MsixPackageId: Richie314.OperationalResearch
@@ -112,6 +111,7 @@ jobs:
       env:
         Appx_Bundle: Never # Always
         Appx_Package_Build_Mode: SideLoadOnly # CI/StoreUpload/SideLoadOnly
+        App_Packages_Archive: ${{ matrix.configuration }}-${{ matrix.platform }}.zip
         Configuration: ${{ matrix.configuration }}
         TargetPlatform: ${{ matrix.platform }}
         AppInstallerUri: ${{ github.server_url }}/${{ github.repository_owner }}/${{ steps.repo_name.outputs.repository-name }}/releases/latest
@@ -123,15 +123,18 @@ jobs:
 
     - name: Create archive
       run: Compress-Archive -Path $env:Wap_Project_Directory\$env:App_Packages_Directory\* -DestinationPath $env:Wap_Project_Directory\$env:App_Packages_Directory\$env:App_Packages_Archive
+      env:
+        App_Packages_Archive: ${{ matrix.configuration }}-${{ matrix.platform }}.zip
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.configuration }}-${{ matrix.platform }}.zip
+        name: ${{ env.App_Packages_Archive }}
         path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}\${{ env.App_Packages_Archive }}
         overwrite: true
         if-no-files-found: error
-        compression-level: 4
+      env:
+        App_Packages_Archive: ${{ matrix.configuration }}-${{ matrix.platform }}.zip
 
     # Create a Release if version tags were passed
     - name: Create Release
@@ -156,6 +159,7 @@ jobs:
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        App_Packages_Archive: ${{ matrix.configuration }}-${{ matrix.platform }}.zip
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}\${{ env.App_Packages_Archive }}
