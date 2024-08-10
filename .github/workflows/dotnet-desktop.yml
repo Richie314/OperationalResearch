@@ -130,7 +130,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: matrix.configuration == 'Release'
       with:
-        name: ${{ env.App_Packages_Archive }}
+        name: ${{ matrix.platform }} Package
         path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}\${{ env.App_Packages_Archive }}
         overwrite: true
         if-no-files-found: error
@@ -139,6 +139,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: matrix.configuration == 'Release'
       with:
+        name: ${{ matrix.platform }} Installer
         path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}\OperationalResearchWAP_1.0.0.0_${{ matrix.platform }}_Test\*.msix
         overwrite: true
         if-no-files-found: error
