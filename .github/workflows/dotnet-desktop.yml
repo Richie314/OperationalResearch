@@ -162,7 +162,7 @@ jobs:
         draft: false
         prerelease: false
         body: |
-          Version ${{ github.ref }} is here
+          Version ${{ steps.bersion.output.version }} is here
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
