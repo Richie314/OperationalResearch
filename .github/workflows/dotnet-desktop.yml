@@ -52,7 +52,7 @@ jobs:
 
     - name: Get tag
       id: version
-      if: env.Create_Release
+      if: ${{ env.Create_Release }}
       uses: dawidd6/action-get-tag@v1
       with:
         strip_v: true
@@ -69,7 +69,7 @@ jobs:
 
     
     - name: Update manifest version
-      if: env.Create_Release
+      if: ${{ env.Create_Release }}
       run: |
         [xml]$manifest = get-content ".\$env:Wap_Project_Directory\Package.appxmanifest"
         $manifest.Package.Identity.Version = "${{ steps.version.outputs.tag }}"
@@ -142,7 +142,7 @@ jobs:
     # Create a Release if version tags were passed
     - name: Create Release
       id: create_release
-      if: env.Create_Release
+      if: ${{ env.Create_Release }}
       uses: actions/create-release@v1
       with:
         tag_name: ${{ github.ref }}.${{ matrix.configuration }}.${{ matrix.platform }}
@@ -158,7 +158,7 @@ jobs:
     # Upload release asset:   https://github.com/actions/upload-release-asset
     - name: Update release asset
       id: upload-release-asset
-      if: env.Create_Release
+      if: ${{ env.Create_Release }}
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
