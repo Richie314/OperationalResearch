@@ -1,13 +1,4 @@
-# This workflow will build, test, sign and package a WPF or Windows Forms desktop application
-# built on .NET Core.
-# To learn how to migrate your existing application to .NET Core,
-# refer to https://docs.microsoft.com/en-us/dotnet/desktop-wpf/migration/convert-project-from-net-framework
-#
-# For more information on GitHub Actions, refer to https://github.com/features/actions
-# For a complete CI/CD sample to get started with GitHub Action workflows for Desktop Applications,
-# refer to https://github.com/microsoft/github-actions-for-desktop-apps
-
-name: .NET Core Desktop
+name: .NET Core Build and release
 
 on:
   push:
@@ -44,19 +35,32 @@ jobs:
       Actions_Allow_Unsecure_Commands: true
       Create_Release: ${{ (matrix.configuration == 'Release') && (startsWith(github.ref, 'refs/tags/v')) }}
 
+    # Checkout the code
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
+    # Parse version tag, if present
     - name: Get tag
-      id: version
+      id: tag
       if: ${{ env.Create_Release == 'true' }}
       uses: dawidd6/action-get-tag@v1
       with:
         strip_v: true
 
+    # Use version tag if present and '1.0.0.0' if not present
+    - name: Detect version
+      id: version
+      run: |
+        echo "v=$v" >> "$GITHUB_OUTPUT"
+        echo "Msix_File_Name=$path\OperationalResearchWAP_$v_${{ matrix.platform }}_Test\*.msix" >> "$GITHUB_OUTPUT"
+      env: 
+        v: ${{ (env.Create_Release == 'true') && steps.tag.outputs.tag ||  '1.0.0.0'  }}
+        path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}
+
+    # Extract repo name to use it in manifest
     - name: Get repo name for the manifest
       id: repo_name
       uses: MariachiBear/get-repo-name-action@v1.1.0
@@ -66,13 +70,12 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
-
     
+    # Update manifest with version and repo info
     - name: Update manifest version
-      if: ${{ env.Create_Release == 'true' }}
       run: |
         [xml]$manifest = get-content ".\$env:Wap_Project_Directory\Package.appxmanifest"
-        $manifest.Package.Identity.Version = "${{ steps.version.outputs.tag }}"
+        $manifest.Package.Identity.Version = "${{ steps.version.outputs.v }}"
         $manifest.Package.Identity.Name = "${{ github.repository_owner }}.${{ steps.repo_name.outputs.repository-name }}"
         $manifest.Package.Identity.Publisher = "${{ github.repository_owner }}"
         $manifest.Package.Properties.DisplayName = "${{ env.MsixPackageDisplayName }}"
@@ -116,11 +119,13 @@ jobs:
     - name: Remove the pfx
       run: Remove-Item -path $env:Wap_Project_Directory\GitHubActionsWorkflow.pfx
 
+    # Compress the archive to upload it later
     - name: Create archive
       run: Compress-Archive -Path $env:Wap_Project_Directory\$env:App_Packages_Directory\* -DestinationPath $env:Wap_Project_Directory\$env:App_Packages_Directory\$env:App_Packages_Archive
       env:
         App_Packages_Archive: ${{ matrix.configuration }}-${{ matrix.platform }}.zip
 
+    # Upload artifacts
     - name: Upload Package artifact
       uses: actions/upload-artifact@v4
       if: matrix.configuration == 'Release'
@@ -129,13 +134,12 @@ jobs:
         path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}\${{ env.App_Packages_Archive }}
         overwrite: true
         if-no-files-found: error
-
     - name: Upload Installer artifact
       uses: actions/upload-artifact@v4
       if: matrix.configuration == 'Release'
       with:
         name: ${{ matrix.platform }} Installer
-        path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}\OperationalResearchWAP_1.0.0.0_${{ matrix.platform }}_Test\*.msix
+        path: ${{ steps.version.outputs.Msix_File_Name }}
         overwrite: true
         if-no-files-found: error
 
@@ -156,8 +160,7 @@ jobs:
 
 
     # Upload release asset:   https://github.com/actions/upload-release-asset
-    - name: Update release asset
-      id: upload-release-asset
+    - name: Update release package
       if: ${{ env.Create_Release == 'true' }}
       uses: actions/upload-release-asset@v1
       env:
@@ -165,7 +168,18 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}\${{ env.App_Packages_Archive }}
-        asset_name: ${{ env.App_Packages_Archive }}
+        asset_name: ${{ matrix.platform }} Archive
         asset_content_type: application/zip
+
+    - name: Update release installer
+      if: ${{ env.Create_Release == 'true' }}
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ steps.version.outputs.Msix_File_Name }}
+        asset_name: ${{ matrix.platform }} Installer
+        asset_content_type: application/msix
 
 
