@@ -54,8 +54,9 @@ jobs:
     - name: Detect version
       id: version
       run: |
-        echo "version=$v" >> $GITHUB_OUTPUT
-        echo "Msix_File_Name=$path\OperationalResearchWAP_$v_${{ matrix.platform }}_Test\*.msix" >> $GITHUB_OUTPUT
+        Write-Output ::set-output name=version::$Env:v
+        $full_path="$env:path\OperationalResearchWAP_$env:v_${{ matrix.platform }}_Test\*.msix"
+        Write-Output ::set-output name=Msix_File_Name::$full_path
       env: 
         v: ${{ (env.Create_Release == 'true') && steps.tag.outputs.tag ||  '1.0.0.0'  }}
         path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}
