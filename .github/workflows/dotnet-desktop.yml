@@ -57,7 +57,7 @@ jobs:
 
     - name: Get tag
       id: version
-      if: env.Create_Release
+      if: ${{ env.Create_Release == true }}
       uses: dawidd6/action-get-tag@v1
       with:
         strip_v: true
@@ -74,7 +74,7 @@ jobs:
 
     
     - name: Update manifest version
-      if: env.Create_Release
+      if: ${{ env.Create_Release == true }}
       run: |
         [xml]$manifest = get-content ".\$env:Wap_Project_Directory\Package.appxmanifest"
         $manifest.Package.Identity.Version = "${{ steps.version.outputs.tag }}"
