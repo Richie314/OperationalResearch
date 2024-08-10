@@ -55,9 +55,12 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Use Nerdbank.GitVersioning to set version variables
-      uses: dotnet/nbgv@master
-      id: nbgv
+    - name: Get tag
+      id: version
+      if: ${{ env.Create_Release }}
+      uses: dawidd6/action-get-tag@v1
+      with:
+        strip_v: true
 
     # Install the .NET Core workload
     - name: Install .NET Core
@@ -70,9 +73,10 @@ jobs:
       uses: MariachiBear/get-repo-name-action@v1.1.0
     
     - name: Update manifest version
+      if: ${{ env.Create_Release }}
       run: |
         [xml]$manifest = get-content ".\$env:Wap_Project_Directory\Package.appxmanifest"
-        $manifest.Package.Identity.Version = "${{ steps.nbgv.outputs.SimpleVersion }}.0"
+        $manifest.Package.Identity.Version = "${{ steps.version.outputs.tag }}"
         $manifest.Package.Identity.Name = "${{ github.repository_owner }}.${{ steps.repo_name.outputs.repository-name }}"
         $manifest.Package.Identity.Publisher = "${{ github.repository_owner }}"
         $manifest.Package.Properties.DisplayName = "${{ env.MsixPackageDisplayName }}"
@@ -119,14 +123,23 @@ jobs:
     - name: Create archive
       run: Compress-Archive -Path $env:Wap_Project_Directory\$env:App_Packages_Directory\* -DestinationPath $env:Wap_Project_Directory\$env:App_Packages_Directory\$env:App_Packages_Archive
 
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.configuration }}-${{ matrix.platform }}.zip
+        path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}\${{ env.App_Packages_Archive }}
+        overwrite: true
+        if-no-files-found: error
+        compression-level: 4
+
     # Create a Release if version tags were passed
     - name: Create Release
       id: create_release
       if: ${{ (matrix.configuration == 'Release') && (env.Create_Release == true) }}
       uses: actions/create-release@v1
       with:
-        tag_name: ${{ github.ref }}.${{ matrix.configuration }}
-        release_name: ${{ matrix.configuration }} ${{ github.ref }}
+        tag_name: ${{ github.ref }}.${{ matrix.configuration }}.${{ matrix.platform }}
+        release_name: ${{ matrix.configuration }} ${{ github.ref }} ${{ matrix.platform }}
         draft: false
         prerelease: false
         body: |
@@ -135,15 +148,17 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
-    # Upload the artifacts to the newly created release 
-    - name: Upload artifacts and release assets
-      uses: nanoufo/action-upload-artifacts-and-release-assets@v2
-      if: ${{ matrix.configuration == 'Release' }}
+    # Upload release asset:   https://github.com/actions/upload-release-asset
+    - name: Update release asset
+      id: upload-release-asset
+      if: ${{ (matrix.configuration == 'Release') && (env.Create_Release == true) }}
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        path: |
-          ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}\*.msix
-        upload-release-files: ${{ env.Create_Release }}
-        release-upload-url: ${{ steps.create_release.outputs.upload_url }}
-        if-no-files-found: 'error'
-        compression-level: 4
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}\${{ env.App_Packages_Archive }}
+        asset_name: ${{ env.App_Packages_Archive }}
+        asset_content_type: application/zip
+
 
