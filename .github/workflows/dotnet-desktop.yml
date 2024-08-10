@@ -40,13 +40,14 @@ jobs:
       Wap_Project_Path: .\OperationalResearchWAP\OperationalResearchWAP.wapproj
 
       App_Packages_Directory: AppPackages
+      App_Packages_Archive: ${{ matrix.configuration }}-${{ matrix.platform }}.zip
       
       # MsixPackageId: Richie314.OperationalResearch
       # MsixPublisherId: CN=Richie314
       MsixPackageDisplayName: Operational Research
       
       Actions_Allow_Unsecure_Commands: true
-      Create_Release: ${{ startsWith(github.ref, 'refs/tags/v') }}
+      Create_Release: ${{ (startsWith(github.ref, 'refs/tags/v')) }}
 
     steps:
     - name: Checkout
@@ -56,7 +57,7 @@ jobs:
 
     - name: Get tag
       id: version
-      if: ${{ env.Create_Release == true }}
+      if: ${{ (env.Create_Release == true) }}
       uses: dawidd6/action-get-tag@v1
       with:
         strip_v: true
@@ -73,7 +74,7 @@ jobs:
 
     
     - name: Update manifest version
-      if: ${{ env.Create_Release == true }}
+      if: ${{ (env.Create_Release == true) }}
       run: |
         [xml]$manifest = get-content ".\$env:Wap_Project_Directory\Package.appxmanifest"
         $manifest.Package.Identity.Version = "${{ steps.version.outputs.tag }}"
@@ -111,7 +112,6 @@ jobs:
       env:
         Appx_Bundle: Never # Always
         Appx_Package_Build_Mode: SideLoadOnly # CI/StoreUpload/SideLoadOnly
-        App_Packages_Archive: ${{ matrix.configuration }}-${{ matrix.platform }}.zip
         Configuration: ${{ matrix.configuration }}
         TargetPlatform: ${{ matrix.platform }}
         AppInstallerUri: ${{ github.server_url }}/${{ github.repository_owner }}/${{ steps.repo_name.outputs.repository-name }}/releases/latest
@@ -126,15 +126,22 @@ jobs:
       env:
         App_Packages_Archive: ${{ matrix.configuration }}-${{ matrix.platform }}.zip
 
-    - name: Upload artifact
+    - name: Upload Package artifact
       uses: actions/upload-artifact@v4
+      if: matrix.configuration == 'Release'
       with:
         name: ${{ env.App_Packages_Archive }}
         path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}\${{ env.App_Packages_Archive }}
         overwrite: true
         if-no-files-found: error
-      env:
-        App_Packages_Archive: ${{ matrix.configuration }}-${{ matrix.platform }}.zip
+
+    - name: Upload Installer artifact
+      uses: actions/upload-artifact@v4
+      if: matrix.configuration == 'Release'
+      with:
+        path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}\OperationalResearchWAP_1.0.0.0_${{ matrix.platform }}_Test\*.msix
+        overwrite: true
+        if-no-files-found: error
 
     # Create a Release if version tags were passed
     - name: Create Release
@@ -159,7 +166,6 @@ jobs:
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        App_Packages_Archive: ${{ matrix.configuration }}-${{ matrix.platform }}.zip
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}\${{ env.App_Packages_Archive }}
