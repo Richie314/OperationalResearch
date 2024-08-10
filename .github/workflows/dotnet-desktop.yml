@@ -55,7 +55,7 @@ jobs:
       id: version
       run: |
         Write-Output "::set-output name=version::$Env:v"
-        $full_path="$Env:msix_path\OperationalResearchWAP_$Env:v_${{ matrix.platform }}_Test\*.msix"
+        $full_path = "$Env:msix_path\OperationalResearchWAP_" + $Env:v + "_${{ matrix.platform }}_Test\*.msix"
         Write-Output "::set-output name=Msix_File_Name::$full_path"
       env: 
         v: ${{ (env.Create_Release == 'true') && steps.tag.outputs.tag ||  '1.0.0.0'  }}
