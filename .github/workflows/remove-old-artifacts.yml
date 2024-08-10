@@ -1,16 +1,14 @@
 name: Remove old artifacts
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  schedule:
+    - cron: '0 1 * * *'
 jobs:
   remove-old-artifacts:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
       - name: Remove old artifacts
         uses: c-hive/gha-remove-artifacts@v1
         with:
           age: '2 days'
           skip-recent: 2
+          skip-tags: true
