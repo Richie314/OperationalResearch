@@ -55,11 +55,11 @@ jobs:
       id: version
       run: |
         Write-Output "::set-output name=version::$Env:v"
-        $full_path="$Env:path\OperationalResearchWAP_$Env:v_${{ matrix.platform }}_Test\*.msix"
+        $full_path="$Env:msix_path\OperationalResearchWAP_$Env:v_${{ matrix.platform }}_Test\*.msix"
         Write-Output "::set-output name=Msix_File_Name::$full_path"
       env: 
         v: ${{ (env.Create_Release == 'true') && steps.tag.outputs.tag ||  '1.0.0.0'  }}
-        path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}
+        msix_path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}
 
     # Print detected versions
     - name: Print version
