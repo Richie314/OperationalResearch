@@ -57,10 +57,14 @@ jobs:
 
     - name: Get tag
       id: version
-      if: ${{ env.Create_Release }}
+      if: env.Create_Release
       uses: dawidd6/action-get-tag@v1
       with:
         strip_v: true
+
+    - name: Get repo name for the manifest
+      id: repo_name
+      uses: MariachiBear/get-repo-name-action@v1.1.0
 
     # Install the .NET Core workload
     - name: Install .NET Core
@@ -68,12 +72,9 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
-    - name: Get repo name for the manifest
-      id: repo_name
-      uses: MariachiBear/get-repo-name-action@v1.1.0
     
     - name: Update manifest version
-      if: ${{ env.Create_Release }}
+      if: env.Create_Release
       run: |
         [xml]$manifest = get-content ".\$env:Wap_Project_Directory\Package.appxmanifest"
         $manifest.Package.Identity.Version = "${{ steps.version.outputs.tag }}"
