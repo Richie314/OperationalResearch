@@ -44,4 +44,4 @@ jobs:
             $url = "${{ steps.info.outputs.url }}"
 
             & curl.exe -JLO https://aka.ms/wingetcreate/latest
-            & .\wingetcreate.exe update $package -s -v $version -u $url86 $url64 -t "${{ secrets.WINGET_TOKEN }}"
+            & .\wingetcreate.exe update $package -s -v $version -u $url86 $url64 -t "${{ secrets.GITHUB_TOKEN }}"
