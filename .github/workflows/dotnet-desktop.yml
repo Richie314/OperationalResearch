@@ -65,12 +65,6 @@ jobs:
         v: ${{ (env.Create_Release == 'true') && steps.tag.outputs.tag ||  '1.0.0.0'  }}
         msix_path: ${{ env.Wap_Project_Directory }}\${{ env.App_Packages_Directory }}
 
-    # Print detected versions
-    - name: Print version
-      run: |
-        echo "version=${{ steps.version.outputs.version }}"
-        echo "File_Name=${{ steps.version.outputs.Msix_File_Name }}" 
-
     # Extract repo name to use it in manifest
     - name: Get repo name for the manifest
       id: repo_name
@@ -157,24 +151,23 @@ jobs:
         if-no-files-found: error
 
   release:
-    name: Create Release ${{ needs.build.outputs.version }}
+    name: Create Release
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [build]
     runs-on: ubuntu-latest
 
-    env:
-      download-folder: ./assets
-
     steps:
 
-      # Download all the artifacts
+      # Download all the artifacts (already unzips them)
       - name: Download artifacts
+        id: artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ${{ env.download-folder }}
+          path: ./assets/
+          merge-multiple: true
 
       # Create the actual release
-      - name: Create the Release
+      - name: Create Release ${{ needs.build.outputs.version }}
         id: create_release
         uses: actions/create-release@v1
         with:
@@ -187,12 +180,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    
-
       # Upload release assets
-      - name: Update release package
+      - name: uploade installer to Release  ${{ needs.build.outputs.version }}
         uses: AButler/upload-release-assets@v3.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-id: ${{ steps.create_release.outputs.id }}
-          files: ${{ env.download-folder }}/*
+          files: ${{ steps.artifacts.outcome.download-path }}/*.msix

@@ -303,5 +303,8 @@ namespace OperationalResearch.Models
                 return false;
             }
         }
+
+        public Matrix C { get => c; }
+        public Matrix W { get => w; }
     }
 }

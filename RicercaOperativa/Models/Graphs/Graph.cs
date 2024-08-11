@@ -160,7 +160,7 @@ namespace OperationalResearch.Models.Graphs
         public IEnumerable<int[]> AllBidirectionalCycles() =>
             FindAllCycles(true).Select(c => c.ToArray());
 
-        private List<List<int>> FindAllCycles(bool symmetric)
+        public List<List<int>> FindAllCycles(bool symmetric)
         {
             List<List<int>> cycles = new List<List<int>>();
             var dict = GetConnectionDictionary(symmetric);

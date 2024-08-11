@@ -340,6 +340,74 @@ namespace OperationalResearch.Models.Graphs
 
             return bestCycle;
         }
+
+        public MinimumCostAssign MinimumCostAssign
+        { 
+            get => new MinimumCostAssign(
+                BuildMatrix(Bidirectional) + Matrix.Identity(N) * Fraction.PositiveInfinity // set cii 0 +inf to avoid self loops
+            );
+        }
+
+
+        /// <summary>
+        /// Solves as an assignment of minimum cost and applies the "patches" algortihm
+        /// </summary>
+        /// <returns>Best cycle, lb, ub (cycle cost)</returns>
+        public async Task<
+            Tuple<IEnumerable<EdgeType>, Fraction, Fraction>?> MinCostAssignUpperEstimate(
+            IndentWriter? Writer)
+        {
+            Writer ??= IndentWriter.Null;
+
+            await Writer.Bold.WriteLineAsync("Solving assignment of min cost");
+            var mca = MinimumCostAssign;
+            var x = await mca.SolveNonCooperative(Writer);
+
+            if (x is null)
+            {
+                await Writer.Indent.Red.WriteLineAsync("Could not solve");
+                return null;
+            }
+
+            var xVector = new Vector(x.M.Flatten()); 
+            var lb = new Vector(x.M.Apply((x, i, j) => x * mca.C[i, j]).Flatten()).SumOfComponents();
+            await Writer.WriteLineAsync($"x = {xVector} with cost {Function.Print(lb)}");
+
+
+            await Writer.Bold.WriteLineAsync("Applying \"Patches\" Algorithm");
+
+            // Detect cycles as bidirectional because we are searching in the graph of the solution
+            var cycles = FromMatrix(x).FindAllCycles(false);
+            if (cycles is null || !cycles.Any())
+            {
+                await Writer.Indent.Red.WriteLineAsync("No cycle was found");
+                return null;
+            }
+
+            foreach (var C in cycles)
+            {
+                await Writer.Indent.WriteLineAsync($"Found cycle: {string.Join('-', C.Select(i => i + 1))}");
+            }
+
+            while (cycles.Count() > 1)
+            {
+                var C1 = cycles.First();
+                var C2 = cycles.ElementAt(1);
+
+                // merge here
+            }
+
+            var cycleEdges = GetEdges(cycles.First(), true);
+            if (cycleEdges is null || !cycleEdges.Any())
+            {
+                return null;
+            }
+
+            var ub = Cost(cycleEdges);
+
+            return new Tuple<IEnumerable<EdgeType>, Fraction, Fraction>(cycleEdges, lb, ub);
+        }
+
         #endregion
 
         #region Library
