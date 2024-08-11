@@ -57,7 +57,7 @@ jobs:
     - name: Detect version
       id: version
       run: |
-        Write-Output "version::$Env:v" >> $Env:GITHUB_OUTPUT
+        Write-Output "version=$Env:v" >> $Env:GITHUB_OUTPUT
         $file_name = "OperationalResearchWAP_" + $Env:v + "_${{ matrix.platform }}"
         $full_path = "$Env:msix_path\" + $file_name + "_Test\" + $file_name + ".msix"
         Write-Output "Msix_File_Name=$full_path" >> $Env:GITHUB_OUTPUT

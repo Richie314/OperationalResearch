@@ -10,10 +10,6 @@ jobs:
     runs-on: windows-latest
     steps:
 
-      # Download wingetcreate
-      - name: Get wingetcreate
-        run: 
-
       # Get repo name
       - name: Get repository name
         id: repo_name
