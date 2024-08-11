@@ -215,9 +215,9 @@ namespace OperationalResearch.Models
                 }
             }
             await Writer.Indent.WriteLineAsync("Calculating representation of X...");
-            await Writer.Indent.WriteLineAsync($"x = {GetXRepresentation()}");
+            await Writer.Indent.WriteLineAsync($"min c * x = {GetTargetFunctionRepresentation()}");
 
-            await Writer.WriteLineAsync("Setting constarints...");
+            await Writer.WriteLineAsync("Setting constraints...");
             // Each worker is assigned to at most max task size.
             foreach (int worker in Workers)
             {
@@ -247,6 +247,11 @@ namespace OperationalResearch.Models
             {
                 foreach (int task in Jobs)
                 {
+                    if (c[task, worker].IsPositiveInfinity)
+                    {
+                        obj.AddTerm(x[task, worker], int.MaxValue);
+                        continue;
+                    }
                     obj.AddTerm(x[task, worker], c[task, worker].ToInt32()); // Add costs of each task
                 }
             }
@@ -259,12 +264,12 @@ namespace OperationalResearch.Models
             CpSolverStatus status = solver.Solve(model);
             if (status != CpSolverStatus.Optimal && status != CpSolverStatus.Feasible)
             {
-                await Writer.WriteLineAsync("CpSolver could not solve the problem.");
+                await Writer.Red.WriteLineAsync("CpSolver could not solve the problem.");
                 return null;
             }
 
 
-            Matrix ret = new Matrix();
+            Matrix ret = new Matrix(c.Rows, c.Cols);
             await Writer.WriteLineAsync("Building solution...");
             foreach (int worker in Workers)
             {
@@ -288,18 +293,16 @@ namespace OperationalResearch.Models
                 {
                     return false;
                 }
-                await Writer.WriteLineAsync($"Solution X = {x}");
+                await Writer.Green.WriteLineAsync($"Solution X = {x}");
                 return true;
             }
             catch (Exception ex)
             {
-                await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
-#if DEBUG
-                if (ex.StackTrace is not null)
+                await Writer.Red.WriteLineAsync($"Exception happened: '{ex.Message}'");
+                if (!string.IsNullOrWhiteSpace(ex.StackTrace))
                 {
-                    await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
+                    await Writer.Orange.Indent.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
                 }
-#endif
                 return false;
             }
         }

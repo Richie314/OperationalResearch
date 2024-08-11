@@ -172,6 +172,15 @@ namespace OperationalResearch.Models.Graphs
                 FindCyclesDFS(node, node, visited, cycles, dict);
             }
 
+            if (!symmetric)
+            {
+                foreach (var edge in Edges)
+                {
+                    if (dict[edge.To].Contains(edge.From))
+                        cycles.Add([edge.From, edge.To]);
+                }
+            }
+
             return cycles;
         }
 
@@ -213,7 +222,7 @@ namespace OperationalResearch.Models.Graphs
         {
             if (s < 0 || t < 0 || s >= N || t >= N)
             {
-                throw new ArgumentException($"Invalid path points: {s + 1} -> {t + 1}");
+                throw new ArgumentException($"Invalid path points: {s + 1} → {t + 1}");
             }
 
             bool[] visited = new bool[N];

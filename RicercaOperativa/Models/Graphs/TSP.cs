@@ -57,23 +57,42 @@ namespace OperationalResearch.Models.Graphs
         {
             startNode ??= 0;
             k ??= startNode.Value;
+
+            await Writer.Bold.WriteLineAsync($"Lower bound via {k.Value + 1}-tree");
             var kTree = await FindKTree(
                 k.Value, Bidirectional, Writer.Indent);
-    
+
+            await Writer.WriteLineAsync();
+            await Writer.Bold.WriteLineAsync($"Upper bound via nearest node algorithm from {startNode}");
             var nearestNode = await NearestNodeUpperEstimate(Writer.Indent, startNode);
 
             if (kTree is null || nearestNode is null)
             {
-                await Writer.WriteLineAsync("Could not calculate the bounds. Failure");
+                await Writer.Red.WriteLineAsync("Could not calculate the bounds. Failure");
                 return null;
             }
 
+            await Writer.WriteLineAsync();
             var lb = Cost(kTree);
-            await Writer.WriteLineAsync($"{k.Value + 1}-tree ({Function.Print(lb)}): {Function.Print(kTree)}");
+            await Writer.Green.WriteLineAsync($"{k.Value + 1}-tree ({Function.Print(lb)}): {Function.Print(kTree)}");
             var ub = Cost(nearestNode, Bidirectional);
             await Writer.WriteLineAsync($"Nearest node from {startNode.Value + 1} ({Function.Print(ub)}): {Function.Print(nearestNode)}");
 
 
+            await Writer.WriteLineAsync();
+            await Writer.Bold.WriteLineAsync("Bounds via assignment of minimum cost");
+            var mca = await MinCostAssignEstimates(Writer.Indent);
+            if (mca is null)
+            {
+                await Writer.Orange.Indent.WriteLineAsync("Could not solve");
+            } else
+            {
+                await Writer.Blue.WriteLineAsync($"lb = {Function.Print(mca.Item2)}; ub = {Function.Print(mca.Item3)}");
+                await Writer.Blue.WriteLineAsync($"cycle {string.Join(", ", mca.Item1)}");
+            }
+
+            await Writer.WriteLineAsync();
+            await Writer.WriteLineAsync();
             var bnbresult = await BranchAndBound(Writer, N, Edges, k.Value, ub, bnb, null, Bidirectional);
             return bnbresult.Item2;
         }
@@ -101,7 +120,7 @@ namespace OperationalResearch.Models.Graphs
             }
             var lb = Cost(kTree);
 
-            await Writer.WriteLineAsync($"P({pSubRow},{pRow}) -> ({Function.Print(lb)}, {Function.Print(ub)})");
+            await Writer.WriteLineAsync($"P({pSubRow},{pRow}) → ({Function.Print(lb)}, {Function.Print(ub)})");
             await Writer.WriteLineAsync($"{k + 1}-tree: {Function.Print(kTree)}");
 
             if (lb > ub)
@@ -207,22 +226,20 @@ namespace OperationalResearch.Models.Graphs
                 var result = await BestHamiltonCycle(Writer, startNode, k, bnb);
                 if (result is null)
                 {
-                    await Writer.WriteLineAsync("Problem was not solved by euristichs");
+                    await Writer.Red.WriteLineAsync("Problem was not solved by euristichs");
                     return false;
                 }
-                await Writer.WriteLineAsync($"Cycle: {Function.Print(result)}");
-                await Writer.WriteLineAsync($"Cost: {Function.Print(Cost(result))}");
+                await Writer.Green.Bold.WriteLineAsync($"Cycle: {Function.Print(result)}");
+                await Writer.Green.Bold.WriteLineAsync($"Cost: {Function.Print(Cost(result))}");
                 return true;
             }
             catch (Exception ex)
             {
-                await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
-#if DEBUG
-                if (ex.StackTrace is not null)
+                await Writer.Red.WriteLineAsync($"Exception happened: '{ex.Message}'");
+                if (!string.IsNullOrWhiteSpace(ex.StackTrace))
                 {
-                    await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
+                    await Writer.Orange.Indent.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
                 }
-#endif
                 return false;
             }
         }
@@ -312,7 +329,7 @@ namespace OperationalResearch.Models.Graphs
                 }
                 nodes.Add(start);
                 await Writer.WriteLineAsync(
-                        $"Cycle: {string.Join('-', nodes.Select(node => (node + 1).ToString()))}");
+                        $"Cycle: {string.Join('→', nodes.Select(node => (node + 1).ToString()))}");
 
                 Fraction currCost = Cost(nodes, bidirectional: true);
                 await Writer.WriteLineAsync($"has cost {Function.Print(currCost)}");
@@ -335,7 +352,7 @@ namespace OperationalResearch.Models.Graphs
             }
 
             await Writer.WriteLineAsync(
-                $"Best cycle is: {string.Join('-', bestCycle.Select(node => (node + 1).ToString()))}");
+                $"Best cycle is: {string.Join('→', bestCycle.Select(node => (node + 1).ToString()))}");
             await Writer.WriteLineAsync($"Best cost is: {Function.Print(bestCost)}");
 
             return bestCycle;
@@ -344,7 +361,7 @@ namespace OperationalResearch.Models.Graphs
         public MinimumCostAssign MinimumCostAssign
         { 
             get => new MinimumCostAssign(
-                BuildMatrix(Bidirectional) + Matrix.Identity(N) * Fraction.PositiveInfinity // set cii 0 +inf to avoid self loops
+                BuildMatrix(Bidirectional) + Matrix.Diag(Fraction.PositiveInfinity, N) // set cii 0 +inf to avoid self loops
             );
         }
 
@@ -354,139 +371,162 @@ namespace OperationalResearch.Models.Graphs
         /// </summary>
         /// <returns>Best cycle, lb, ub (cycle cost)</returns>
         public async Task<
-            Tuple<IEnumerable<EdgeType>, Fraction, Fraction>?> MinCostAssignUpperEstimate(
+            Tuple<IEnumerable<EdgeType>, Fraction, Fraction>?> MinCostAssignEstimates(
             IndentWriter? Writer)
         {
             Writer ??= IndentWriter.Null;
 
-            await Writer.Bold.WriteLineAsync("Solving assignment of min cost");
-            var mca = MinimumCostAssign;
-            var x = await mca.SolveNonCooperative(Writer);
-
-            if (x is null)
+            try
             {
-                await Writer.Indent.Red.WriteLineAsync("Could not solve");
-                return null;
-            }
 
-            var xVector = new Vector(x.M.Flatten()); 
-            var lb = new Vector(x.M.Apply((x, i, j) => x * mca.C[i, j]).Flatten()).SumOfComponents();
-            await Writer.WriteLineAsync($"x = {xVector} with cost {Function.Print(lb)}");
+                await Writer.WriteLineAsync("Solving assignment of min cost");
+                var mca = MinimumCostAssign;
+                var x = await mca.SolveNonCooperative(Writer);
 
-
-            await Writer.Bold.WriteLineAsync("Applying \"Patches\" Algorithm");
-
-            // Detect cycles as bidirectional because we are searching in the graph of the solution
-            var cycles = FromMatrix(x).FindAllCycles(false);
-            if (cycles is null || !cycles.Any())
-            {
-                await Writer.Indent.Red.WriteLineAsync("No cycle was found");
-                return null;
-            }
-
-            foreach (var C in cycles)
-            {
-                await Writer.Indent.WriteLineAsync($"Found cycle: {string.Join('-', C.Select(i => i + 1))}");
-            }
-
-            while (cycles.Count() > 1)
-            {
-                var C1 = cycles.First();
-                var C2 = cycles.ElementAt(1);
-
-                List<Tuple<Fraction, IEnumerable<int>>> WaysToMerge = [];
-
-                foreach (int i in C1)
+                if (x is null)
                 {
-                    // Add edges (i, j); (k, l)
-                    // Remove edges (k, j); (i, l)
-                    int iPos = C1.IndexOf(i);
-                    var C1EndsWithI = C1
-                        .Skip(iPos + 1).Concat(
-                        C1.Take(iPos + 1));
+                    await Writer.Indent.Red.WriteLineAsync("Could not solve");
+                    return null;
+                }
 
-                    int l = C1EndsWithI.First();
-                    foreach (int j in C2)
+                var xVector = new Vector(x.M.Flatten());
+                var lb = new Vector(x.M.Apply((x, i, j) => 
+                    x > Fraction.Zero ? x * mca.C[i, j] : Fraction.Zero).Flatten()).SumOfComponents();
+                await Writer.WriteLineAsync($"x = {xVector} with cost {Function.Print(lb)}");
+
+                await Writer.Indent.WriteLineAsync(string.Join(", ", 
+                    x.M.Apply((x, i, j) => x > Fraction.Zero ? $"{i + 1}→{j + 1}" : "")
+                    .Flatten().Where(i => !string.IsNullOrWhiteSpace(i))));
+
+
+                await Writer.Bold.WriteLineAsync("Applying \"Patches\" Algorithm");
+
+                // Detect cycles as bidirectional because we are searching in the graph of the solution
+                var cycles = FromMatrix(x).FindAllCycles(false).Where(c => c.First() == c.Min()).ToList();
+                if (cycles is null || !cycles.Any())
+                {
+                    await Writer.Indent.Red.WriteLineAsync("No cycle was found");
+                    return null;
+                }
+
+                foreach (var C in cycles)
+                {
+                    await Writer.Indent.WriteLineAsync($"Found cycle: {string.Join('→', C.Select(i => i + 1))}");
+                }
+
+                await Writer.WriteLineAsync();
+
+                while (cycles.Count() > 1)
+                {
+                    var C1 = cycles.First();
+                    var C2 = cycles.ElementAt(1);
+
+                    List<Tuple<Fraction, IEnumerable<int>>> WaysToMerge = [];
+
+                    foreach (int i in C1)
                     {
-                        int jPos = C2.IndexOf(j);
-                        var C2StartsWithJ = C2.Skip(jPos).Concat(C2.Take(jPos));
+                        // Add edges (i, j); (k, l)
+                        // Remove edges (k, j); (i, l)
+                        int iPos = C1.IndexOf(i);
+                        var C1EndsWithI = C1
+                            .Skip(iPos + 1).Concat(
+                            C1.Take(iPos + 1));
 
-                        int k = C2StartsWithJ.Last(); // Get predecessor
-
-                        var newCycle = C1EndsWithI.Concat(C2StartsWithJ);
-
-                        // Edges to add:
-
-                        // (i, j)
-                        var ij = FindEdge(i, j);
-                        if (ij is null && Bidirectional)
+                        int l = C1EndsWithI.First();
+                        foreach (int j in C2)
                         {
-                            ij = FindEdge(j, i);
+                            int jPos = C2.IndexOf(j);
+                            var C2StartsWithJ = C2.Skip(jPos).Concat(C2.Take(jPos));
+
+                            int k = C2StartsWithJ.Last(); // Get predecessor
+
+                            var newCycle = C1EndsWithI.Concat(C2StartsWithJ);
+
+                            // Edges to add:
+
+                            // (i, j)
+                            var ij = FindEdge(i, j);
+                            if (ij is null && Bidirectional)
+                            {
+                                ij = FindEdge(j, i);
+                            }
+                            if (ij is null)
+                                continue;
+
+                            // (k,l)
+                            var kl = FindEdge(k, l);
+                            if (kl is null && Bidirectional)
+                            {
+                                kl = FindEdge(l, k);
+                            }
+                            if (kl is null)
+                                continue;
+
+
+                            // Edges to remove:
+
+                            // (k, j)
+                            var kj = FindEdge(k, j);
+                            if (kj is null && Bidirectional)
+                            {
+                                kj = FindEdge(j, k);
+                            }
+                            if (kj is null)
+                                continue;
+
+                            // (i,l)
+                            var il = FindEdge(i, l);
+                            if (il is null && Bidirectional)
+                            {
+                                il = FindEdge(l, i);
+                            }
+                            if (il is null)
+                                continue;
+
+                            var costVariation = ij.Cost + kl.Cost - kj.Cost - il.Cost;
+                            WaysToMerge.Add(new Tuple<Fraction, IEnumerable<int>>(costVariation, newCycle));
                         }
-                        if (ij is null)
-                            continue;
-
-                        // (k,l)
-                        var kl = FindEdge(k, l);
-                        if (kl is null && Bidirectional)
-                        {
-                            kl = FindEdge(l, k);
-                        }
-                        if (kl is null)
-                            continue;
-
-
-                        // Edges to remove:
-
-                        // (k, j)
-                        var kj = FindEdge(k, j);
-                        if (kj is null && Bidirectional)
-                        {
-                            kj = FindEdge(j, k);
-                        }
-                        if (kj is null)
-                            continue;
-
-                        // (i,l)
-                        var il = FindEdge(i, l);
-                        if (il is null && Bidirectional)
-                        {
-                            il = FindEdge(l, i);
-                        }
-                        if (il is null)
-                            continue;
-
-                        var costVariation = ij.Cost + kl.Cost - kj.Cost - il.Cost;
-                        WaysToMerge.Add(new Tuple<Fraction, IEnumerable<int>>(costVariation, newCycle));
                     }
+
+                    if (!WaysToMerge.Any())
+                    {
+                        return null;
+                    }
+
+                    var bestMerge = WaysToMerge.MinBy(t => t.Item1);
+                    if (bestMerge is null)
+                    {
+                        // Should not happen
+                        return null;
+                    }
+
+                    // Remove
+                    cycles = cycles.Skip(1).ToList(); // Remove the first element
+                    cycles[0] = bestMerge.Item2.ToList(); // Transform the second element in the new cycle
+
+                    await Writer.Indent.WriteLineAsync(
+                        $"Merging {string.Join('→', C1.Select(i => i + 1))} and {string.Join('→', C2.Select(i => i + 1))} into {string.Join('→', bestMerge.Item2.Select(i => i + 1))}; Cost raise: {Function.Print(bestMerge.Item1)}");
                 }
 
-                if (!WaysToMerge.Any())
+                var cycle = cycles.First(); cycle.Add(cycle.First());
+                var cycleEdges = GetEdges(cycle, true);
+                if (cycleEdges is null || !cycleEdges.Any())
                 {
                     return null;
                 }
 
-                var bestMerge = WaysToMerge.MinBy(t => t.Item1);
-                if (bestMerge is null)
-                {
-                    // Should not happen
-                    return null;
-                }
+                var ub = Cost(cycleEdges);
 
-                // Remove
-                cycles = cycles.Skip(1).ToList(); // Remove the first element
-                cycles[0] = bestMerge.Item2.ToList(); // Transform the second element in the new cycle
+                return new Tuple<IEnumerable<EdgeType>, Fraction, Fraction>(cycleEdges, lb, ub);
             }
-
-            var cycleEdges = GetEdges(cycles.First(), true);
-            if (cycleEdges is null || !cycleEdges.Any())
-            {
+            catch (Exception ex) {
+                await Writer.Red.WriteLineAsync($"Exception '{ex.Message}'");
+                if (!string.IsNullOrWhiteSpace(ex.StackTrace))
+                {
+                    await Writer.Orange.Indent.WriteLineAsync(ex.StackTrace);
+                }
                 return null;
             }
-
-            var ub = Cost(cycleEdges);
-
-            return new Tuple<IEnumerable<EdgeType>, Fraction, Fraction>(cycleEdges, lb, ub);
         }
 
         #endregion
@@ -551,19 +591,17 @@ namespace OperationalResearch.Models.Graphs
                     await Writer.WriteLineAsync("Problem was not solved by the library");
                     return false;
                 }
-                await Writer.WriteLineAsync($"Found cycle: {Function.Print(result)}");
+                await Writer.WriteLineAsync($"Found cycle: {string.Join('→', result.Select(i => i + 1))}");
                 await Writer.WriteLineAsync($"Cost: {Function.Print(Cost(result, Bidirectional))}");
                 return true;
             }
             catch (Exception ex)
             {
-                await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
-#if DEBUG
-                if (ex.StackTrace is not null)
+                await Writer.Red.WriteLineAsync($"Exception happened: '{ex.Message}'");
+                if (!string.IsNullOrWhiteSpace(ex.StackTrace))
                 {
-                    await Writer.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
+                    await Writer.Orange.Indent.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
                 }
-#endif
                 return false;
             }
         }

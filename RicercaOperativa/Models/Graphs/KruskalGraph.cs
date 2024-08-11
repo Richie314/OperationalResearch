@@ -56,20 +56,22 @@ namespace OperationalResearch.Models.Graphs
                     e
                 };
                 var g2 = new Graph<EdgeType>(T2);
-                if (g2.HasCycle(symmetric))
+                var cycles = g2.FindAllCycles(symmetric);
+                if (cycles is not null && cycles.Any())
                 {
-                    await Writer.Indent.WriteLineAsync($"T U {{ {e} }} has a cycle -> edge is DISCARDED");
+                    await Writer.Indent.Brown.WriteLineAsync($"T U {{ {e} }} has a cycle → edge is DISCARDED");
+                    await Writer.Indent.Indent.WriteLineAsync($"Cycle: {string.Join('→', cycles.First().Select(i => i + 1))}");
                 }
                 else
                 {
                     T = T2;
-                    await Writer.Indent.WriteLineAsync($"T U {{ {e} }} has no cycle -> edge is CHOSEN");
+                    await Writer.Indent.Blue.WriteLineAsync($"T U {{ {e} }} has no cycle → edge is CHOSEN");
                 }
 
                 await Writer.WriteLineAsync();
                 if (T.Count() == graph.N - 1)
                 {
-                    await Writer.WriteLineAsync($"|T| = {T.Count()} = N - 1");
+                    await Writer.Purple.WriteLineAsync($"|T| = {T.Count()} = N - 1");
                     break;
                 }
             }

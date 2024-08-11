@@ -248,6 +248,17 @@ namespace OperationalResearch.Models.Elements
             }
             return I;
         }
+        public static Matrix Diag(Vector diag)
+        {
+            Matrix I = new Matrix(diag.Size, diag.Size);
+            foreach (int i in diag.Indices)
+            {
+                I[i, i] = diag[i];
+            }
+            return I;
+        }
+        public static Matrix Diag(Fraction elementToRepeat, int size) =>
+            Diag(Vector.Repeat(elementToRepeat, size));
         public static Matrix operator +(Matrix a, Matrix b)
         {
             ArgumentNullException.ThrowIfNull(a);
@@ -261,12 +272,12 @@ namespace OperationalResearch.Models.Elements
             {
                 throw new ArgumentException($"Matrixes have different column count ({a.Cols} != {b.Cols})");
             }
-            Fraction[,] c = a.m.Copy();
+            Fraction[,] c = new Fraction[a.Rows, a.Cols];
             for (int i = 0; i < c.Rows(); i++)
             {
                 for (int j = 0; j < c.Columns(); j++)
                 {
-                    c[i, j] += b[i, j];
+                    c[i, j] = a[i, j] + b[i, j];
                 }
             }
             return new Matrix(c);

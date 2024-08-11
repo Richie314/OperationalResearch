@@ -92,7 +92,7 @@ namespace OperationalResearch.Models.Graphs
 
                 var Cycles = new Graph<EdgeType>(tEdges.Append(Edges.ElementAt(pq)))
                     .AllBidirectionalCycles()
-                    .Where(c => c.Length > 0);
+                    .Where(c => c.Length > 1);
                 if (!Cycles.Any())
                 {
                     throw new DataMisalignedException("No cycle found but there should be at least one");
@@ -100,7 +100,7 @@ namespace OperationalResearch.Models.Graphs
                 foreach (var cycle in Cycles)
                 {
                     await Writer.WriteLineAsync(
-                        $"T U {{ {Edges.ElementAt(pq)} }} has cycle: {string.Join("-", cycle.Select(i => i + 1))}");
+                        $"T U {{ {Edges.ElementAt(pq)} }} has cycle: {string.Join("→", cycle.Select(i => i + 1))}");
                 }
                 var C = Cycles.First();
                 bool forward = false;
@@ -313,19 +313,20 @@ namespace OperationalResearch.Models.Graphs
                     L.Where(i => cReduced[i].IsNegative).Concat(
                         U.Where(i => cReduced[i].IsPositive))
                     .OrderBy(i => Edges.ElementAt(i)).First();
-                await Writer.WriteLineAsync($"Entering edge (p, q) = {Edges.ElementAt(pq)}");
+                await Writer.Blue.WriteLineAsync($"Entering edge (p, q) = {Edges.ElementAt(pq)}");
 
                 var Cycles = new Graph<EdgeType>(tEdges.Append(Edges.ElementAt(pq)))
                     .AllBidirectionalCycles()
-                    .Where(c => c.Length > 0);
+                    .Where(c => c.Length > 1)
+                    .Where(c => c.First() == c.Min());
                 if (!Cycles.Any())
                 {
                     throw new DataMisalignedException("No cycle found but there should be at least one");
                 }
                 foreach (var cycle in Cycles)
                 {
-                    await Writer.Indent.WriteLineAsync(
-                        $"T U {{ {Edges.ElementAt(pq)} }} has cycle: {string.Join("-", cycle.Select(i => i + 1))}");
+                    await Writer.Indent.Purple.WriteLineAsync(
+                        $"T U {{ {Edges.ElementAt(pq)} }} has cycle: {string.Join("→", cycle.Select(i => i + 1))}");
                 }
                 var C = Cycles.First();
                 bool forward = false;
@@ -340,7 +341,7 @@ namespace OperationalResearch.Models.Graphs
                     }
                 }
 
-                await Writer.WriteLineAsync(
+                await Writer.Blue.WriteLineAsync(
                     $"{Edges.ElementAt(pq)} is used {(forward ? "forward" : "reversed")} in cycle {string.Join("-", C.Select(i => i + 1))}");
 
                 if (U.Contains(pq))
@@ -429,7 +430,7 @@ namespace OperationalResearch.Models.Graphs
                     currentDirection.Where(e =>
                         u[GetEdgeIndex(e)] - x[GetEdgeIndex(e)] == θ))
                     .First();
-                await Writer.WriteLineAsync($"Exiting edge (r, s) = {rs}");
+                await Writer.Blue.WriteLineAsync($"Exiting edge (r, s) = {rs}");
 
                 // Update T, U, L
                 if (L.Contains(pq))
@@ -584,7 +585,7 @@ namespace OperationalResearch.Models.Graphs
             }
             catch (Exception ex)
             {
-                await Writer.WriteLineAsync($"Exception happened '{ex.Message}'");
+                await Writer.Red.WriteLineAsync($"Exception happened '{ex.Message}'");
             }
             return solved;
         }

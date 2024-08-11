@@ -1,4 +1,8 @@
 # Operational Research problem solver
+[![Build, test and release](https://github.com/Richie314/OperationalResearch/actions/workflows/dotnet-desktop.yml/badge.svg?branch=master)](https://github.com/Richie314/OperationalResearch/actions/workflows/dotnet-desktop.yml)
+
+[![Winget distribution](https://github.com/Richie314/OperationalResearch/actions/workflows/winget.yml/badge.svg)](https://github.com/Richie314/OperationalResearch/actions/workflows/winget.yml)
+
 This is a Windows Forms (GUI) application that solves problems of Operational Research
 
 ## Possible problems
