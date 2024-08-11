@@ -186,4 +186,4 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-id: ${{ steps.create_release.outputs.id }}
-          files: ${{ steps.artifacts.outcome.download-path }}/*.msix
+          files: ./assets/*.msix

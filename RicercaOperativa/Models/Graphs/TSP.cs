@@ -394,7 +394,88 @@ namespace OperationalResearch.Models.Graphs
                 var C1 = cycles.First();
                 var C2 = cycles.ElementAt(1);
 
-                // merge here
+                List<Tuple<Fraction, IEnumerable<int>>> WaysToMerge = [];
+
+                foreach (int i in C1)
+                {
+                    // Add edges (i, j); (k, l)
+                    // Remove edges (k, j); (i, l)
+                    int iPos = C1.IndexOf(i);
+                    var C1EndsWithI = C1
+                        .Skip(iPos + 1).Concat(
+                        C1.Take(iPos + 1));
+
+                    int l = C1EndsWithI.First();
+                    foreach (int j in C2)
+                    {
+                        int jPos = C2.IndexOf(j);
+                        var C2StartsWithJ = C2.Skip(jPos).Concat(C2.Take(jPos));
+
+                        int k = C2StartsWithJ.Last(); // Get predecessor
+
+                        var newCycle = C1EndsWithI.Concat(C2StartsWithJ);
+
+                        // Edges to add:
+
+                        // (i, j)
+                        var ij = FindEdge(i, j);
+                        if (ij is null && Bidirectional)
+                        {
+                            ij = FindEdge(j, i);
+                        }
+                        if (ij is null)
+                            continue;
+
+                        // (k,l)
+                        var kl = FindEdge(k, l);
+                        if (kl is null && Bidirectional)
+                        {
+                            kl = FindEdge(l, k);
+                        }
+                        if (kl is null)
+                            continue;
+
+
+                        // Edges to remove:
+
+                        // (k, j)
+                        var kj = FindEdge(k, j);
+                        if (kj is null && Bidirectional)
+                        {
+                            kj = FindEdge(j, k);
+                        }
+                        if (kj is null)
+                            continue;
+
+                        // (i,l)
+                        var il = FindEdge(i, l);
+                        if (il is null && Bidirectional)
+                        {
+                            il = FindEdge(l, i);
+                        }
+                        if (il is null)
+                            continue;
+
+                        var costVariation = ij.Cost + kl.Cost - kj.Cost - il.Cost;
+                        WaysToMerge.Add(new Tuple<Fraction, IEnumerable<int>>(costVariation, newCycle));
+                    }
+                }
+
+                if (!WaysToMerge.Any())
+                {
+                    return null;
+                }
+
+                var bestMerge = WaysToMerge.MinBy(t => t.Item1);
+                if (bestMerge is null)
+                {
+                    // Should not happen
+                    return null;
+                }
+
+                // Remove
+                cycles = cycles.Skip(1).ToList(); // Remove the first element
+                cycles[0] = bestMerge.Item2.ToList(); // Transform the second element in the new cycle
             }
 
             var cycleEdges = GetEdges(cycles.First(), true);
