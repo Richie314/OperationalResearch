@@ -1,0 +1,51 @@
+name: Update package managers
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  winget:
+    name: Update winget ${{ github.event.release.tag_name }}
+    runs-on: windows-latest
+    steps:
+
+      # Download wingetcreate
+      - name: Get wingetcreate
+        run: 
+
+      # Get repo name
+      - name: Get repository name
+        id: repo_name
+        uses: MariachiBear/get-repo-name-action@v1.1.0
+
+      # Get metadata from release
+      - name: Get repo info
+        id: info
+        run: |
+
+          $github = Invoke-RestMethod -uri "https://api.github.com/repos/${{ github.repository }}/releases" 
+
+          $targetRelease = $github | Where-Object -Property name -match 'Release'| Select -First 1
+          
+          $installerX64Url = $targetRelease | Select -ExpandProperty assets -First 1 | Where-Object -Property name -match '*x64.msix' | Select -ExpandProperty browser_download_url
+          $installerX86Url = $targetRelease | Select -ExpandProperty assets -First 1 | Where-Object -Property name -match '*.x86.msix' | Select -ExpandProperty browser_download_url
+          
+          $tag = "${{ github.event.release.tag_name }}"
+          $version = $tag.Substring(1)
+          
+          $packageName = "${{ github.repository_owner }}.${{ steps.repo_name.outputs.repository-name }}"
+
+          Write-Output "package=$packageName" >> $Env.GITHUB_OUTPUT
+          Write-Output "version=$version" >> $Env.GITHUB_OUTPUT
+          Write-Output "url86=$installerX86Url" >> $Env.GITHUB_OUTPUT
+          Write-Output "url64=$installerX64Url" >> $Env.GITHUB_OUTPUT
+
+      - name: Update winget package
+        run: |
+            $package = "${{ steps.info.outputs.package }}"
+            $version = "${{ steps.info.outputs.version }}"
+            $url = "${{ steps.info.outputs.url }}"
+
+            & curl.exe -JLO https://aka.ms/wingetcreate/latest
+            & .\wingetcreate.exe update $package -s -v $version -u $url86 $url64 -t "${{ secrets.WINGET_TOKEN }}"
