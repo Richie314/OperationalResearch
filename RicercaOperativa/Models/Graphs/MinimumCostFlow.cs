@@ -3,6 +3,7 @@ using Fractions;
 using OperationalResearch.Models.Elements;
 using OperationalResearch.Extensions;
 using Vector = OperationalResearch.Models.Elements.Vector;
+using System.Xml;
 
 namespace OperationalResearch.Models.Graphs
 {
@@ -275,10 +276,26 @@ namespace OperationalResearch.Models.Graphs
                 await Writer.WriteLineAsync($"x_L = {(Vector)Enumerable.Repeat(Fraction.Zero, L.Length).ToArray()}");
 
                 var xt = BasisFlow(T, U);
-                await Writer.WriteLineAsync($"x_t = {xt}");
+                await Writer.WriteLineAsync($"x_T = {xt}");
 
                 var x = BuildX(T, U);
                 await Writer.WriteLineAsync($"Full X = {x}");
+                if (T.Any(i => x[i].IsZero || x[i] == u[i]))
+                {
+                    var degIndexes = T
+                        .Where(i => x[i].IsZero || x[i] == u[i]).
+                        Select(i =>
+                        {
+                            var e = Edges.ElementAt(i);
+                            return $"x[{e.From + 1},{e.To + 1}] = {Function.Print(x[i])}";
+                        });
+                    await Writer.Indent.Blue.WriteLineAsync(
+                        $"x is degenerate: {string.Join("; ", degIndexes)}");
+                } else
+                {
+                    await Writer.Indent.Blue.WriteLineAsync(
+                        $"x is NOT degenerate: x_i ≠ 0 ∧ x_i ≠ u_i ∀ i ∈ T");
+                }
 
                 var π = BasisPotential(T);
                 await Writer.WriteLineAsync($"π = {π}");
