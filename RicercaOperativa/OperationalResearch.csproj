@@ -74,6 +74,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Assets\Credits.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Assets\AceCodeContainer.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -12,6 +12,7 @@ namespace OperationalResearch.ViewForms
             IEnumerable<Point2> points,
             Polyhedron? polyhedron = null) : base(WebPath)
         {
+            Text = "Cartesian plane view of Polyhedron";
             webView.NavigationCompleted += WebView_NavigationCompleted;
             p = polyhedron;
             if (p is not null && p.Cols != 2)
