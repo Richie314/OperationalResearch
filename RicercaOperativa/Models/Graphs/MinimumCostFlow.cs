@@ -289,11 +289,11 @@ namespace OperationalResearch.Models.Graphs
                             var e = Edges.ElementAt(i);
                             return $"x[{e.From + 1},{e.To + 1}] = {Function.Print(x[i])}";
                         });
-                    await Writer.Indent.Blue.WriteLineAsync(
+                    await Writer.Indent.Brown.WriteLineAsync(
                         $"x is degenerate: {string.Join("; ", degIndexes)}");
                 } else
                 {
-                    await Writer.Indent.Blue.WriteLineAsync(
+                    await Writer.Indent.Purple.WriteLineAsync(
                         $"x is NOT degenerate: x_i ≠ 0 ∧ x_i ≠ u_i ∀ i ∈ T");
                 }
 
@@ -302,9 +302,27 @@ namespace OperationalResearch.Models.Graphs
 
                 Vector cReduced = c.Indices.Select(
                     idx => c[idx] + π[Edges.ElementAt(idx).From] - π[Edges.ElementAt(idx).To]).ToArray();
-                await Writer.WriteLineAsync($"Reduced c = {cReduced}");
-                await Writer.WriteLineAsync($"Reduced cL = {cReduced[L]}");
-                await Writer.WriteLineAsync($"Reduced cU = {cReduced[U]}");
+                await Writer.WriteLineAsync($"c^π = {cReduced}");
+                await Writer.WriteLineAsync($"c^π_L = {cReduced[L]}");
+                await Writer.WriteLineAsync($"c^π_U = {cReduced[U]}");
+
+                if (cReduced.ZeroIndexes.Any(i => U.Contains(i) || L.Contains(i)))
+                {
+                    var degIndexes = cReduced.ZeroIndexes
+                        .Where(i => U.Contains(i) || L.Contains(i)).
+                        Select(i =>
+                        {
+                            var e = Edges.ElementAt(i);
+                            return $"c^π[{e.From + 1},{e.To + 1}]";
+                        });
+                    await Writer.Indent.Brown.WriteLineAsync(
+                        $"π is degenerate: {string.Join(" = ", degIndexes)} = 0");
+                }
+                else
+                {
+                    await Writer.Indent.Purple.WriteLineAsync(
+                        $"π is NOT degenerate: c^π_i ≠ 0 ∀ (i,j) : (i,j) ∈ L V (i,j) ∈ U");
+                }
 
                 if (Enumerable.Range(0, Edges.Count()).All(i =>
                     {
@@ -322,9 +340,6 @@ namespace OperationalResearch.Models.Graphs
                     await Writer.Green.WriteLineAsync($"Flow is optimal");
                     return x;
                 }
-                //var pql = L.Where(i => cReduced[i].IsNegative);
-                //var pqu = U.Where(i => cReduced[i].IsPositive);
-                //await Writer.WriteLineAsync($"{Function.Print(pql)} | {Function.Print(pqu)}");
 
                 var pq =
                     L.Where(i => cReduced[i].IsNegative).Concat(
