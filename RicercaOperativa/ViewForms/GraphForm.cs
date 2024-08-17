@@ -31,8 +31,12 @@ namespace OperationalResearch.ViewForms
             // create the graph content 
             foreach (GraphEdge Edge in graphToDisplay.Edges)
             {
+                if (Edge is null) continue;
                 var e = graph.AddEdge(
-                    (Edge.From + 1).ToString(), Edge.Label, (Edge.To + 1).ToString());
+                    (Edge.From + 1).ToString(), 
+                    Edge is CostEdge ? 
+                        Function.Print((Edge as CostEdge)?.Cost) : string.Empty, 
+                    (Edge.To + 1).ToString());
                 e.Attr.LineWidth = 1;
                 e.Attr.Weight = 1;
                 e.Attr.Color = Microsoft.Msagl.Drawing.Color.Blue;

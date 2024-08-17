@@ -94,6 +94,9 @@ namespace OperationalResearch.Models.Graphs
                             Nt.Add(i);
                         }
                     }
+                    Ns.Sort();
+                    Nt.Sort();
+
                     var APlusEdges = Edges.Where(e => Ns.Contains(e.From) && Nt.Contains(e.To)).ToArray();
                     
                     if (APlusEdges.Length == 0)

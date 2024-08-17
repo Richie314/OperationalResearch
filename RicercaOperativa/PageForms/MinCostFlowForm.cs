@@ -2,8 +2,11 @@
 using OperationalResearch.Models.Problems;
 using OperationalResearch.ViewForms;
 using System.Data;
+using Fractions;
+using OperationalResearch.Models.Graphs;
 using Matrix = OperationalResearch.Models.Elements.Matrix;
 using Vector = OperationalResearch.Models.Elements.Vector;
+using OperationalResearch.Models;
 
 namespace OperationalResearch.PageForms
 {
@@ -174,16 +177,31 @@ namespace OperationalResearch.PageForms
             {
                 MessageBox.Show(
                     "Flow problem solved",
-                    "Problem solved", MessageBoxButtons.OK,
+                    "Problem solved", 
+                    MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
             }
             else
             {
                 MessageBox.Show(
                     "Flow problem could not be solved",
-                    "Error", MessageBoxButtons.OKCancel,
+                    "Error", 
+                    MessageBoxButtons.OKCancel,
                     MessageBoxIcon.Error);
             }
+
+            if (problem.Logs.Any(t => t.Label == "Dijkstra"))
+            {
+                Tuple<int, int, Fraction>[]? log = 
+                    problem.Logs.First(t => t.Label == "Dijkstra").Value as Tuple<int, int, Fraction>[];
+                if (log is not null)
+                {
+                    var graph = new Graph<CostEdge>(
+                        log.Select(t => new CostEdge(t.Item3, t.Item1, t.Item2)));
+
+                    new GraphForm<Graph<CostEdge>, CostEdge>(graph).Show();
+                }
+            }    
         }
     }
 

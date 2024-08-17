@@ -4,6 +4,7 @@ using OperationalResearch.Models.Elements;
 using OperationalResearch.Extensions;
 using Vector = OperationalResearch.Models.Elements.Vector;
 using System.Xml;
+using System.Collections.Immutable;
 
 namespace OperationalResearch.Models.Graphs
 {
@@ -256,6 +257,8 @@ namespace OperationalResearch.Models.Graphs
 
             var T = GetEdgeIndices(startBasis).ToArray();
             var U = GetEdgeIndices(startU).ToArray();
+
+            int iteration = 0;
             while (true)
             {
                 var L = Enumerable.Range(0, Edges.Count())
@@ -280,6 +283,7 @@ namespace OperationalResearch.Models.Graphs
 
                 var x = BuildX(T, U);
                 await Writer.WriteLineAsync($"Full X = {x}");
+                Writer.LogObject($"x{iteration}", x);
                 if (T.Any(i => x[i].IsZero || x[i] == u[i]))
                 {
                     var degIndexes = T
@@ -299,6 +303,7 @@ namespace OperationalResearch.Models.Graphs
 
                 var π = BasisPotential(T);
                 await Writer.WriteLineAsync($"π = {π}");
+                Writer.LogObject($"π{iteration}", π);
 
                 Vector cReduced = c.Indices.Select(
                     idx => c[idx] + π[Edges.ElementAt(idx).From] - π[Edges.ElementAt(idx).To]).ToArray();
@@ -459,6 +464,7 @@ namespace OperationalResearch.Models.Graphs
 
                 Fraction θ = ThetaMinus > ThetaPlus ? ThetaPlus : ThetaMinus;
                 await Writer.WriteLineAsync($"θ = {Function.Print(θ)}");
+                Writer.LogObject($"θ{iteration}", Function.Print(θ));
 
                 var rs =
                     oppositeDirection.Where(e => x[GetEdgeIndex(e)] == θ).Concat(
@@ -501,6 +507,7 @@ namespace OperationalResearch.Models.Graphs
                 }
                 T.Sort();
                 U.Sort();
+                iteration++;
 
                 await Writer.WriteLineAsync();
                 await Writer.WriteLineAsync();
@@ -519,7 +526,7 @@ namespace OperationalResearch.Models.Graphs
             endNode = endNode ?? N - 1;
             if (startBasis is null)
             {
-                await Writer.WriteLineAsync($"Using {startNode.Value + 1}-tree as start base");
+                await Writer.WriteLineAsync($"Using {startNode.Value + 1}-tree as start basis");
                 var sTree = await FindKTree(startNode.Value, true, null);
                 if (sTree is not null)
                 {
@@ -574,7 +581,7 @@ namespace OperationalResearch.Models.Graphs
                     Fraction capacity = minflowmaxcut.Item3;
                     Vector x = minflowmaxcut.Item4;
 
-                    await Writer.Bold.WriteLineAsync(
+                    await Writer.Indent.Bold.WriteLineAsync(
                         $"N_s = N_{startNode.Value + 1} = {Function.Print(Ns)}");
                     await Writer.Indent.WriteLineAsync(
                         $"N_t = N_{endNode.Value + 1} = {Function.Print(Nt)}");
@@ -621,17 +628,34 @@ namespace OperationalResearch.Models.Graphs
                             $"Minimum paths {startNode.Value + 1}-tree = {g.Item1}");
                         await Writer.Green.WriteLineAsync(
                             $"Flow in {startNode.Value + 1}-tree = {g.Item2}");
+                        
+                        Writer.LogObject("Dijkstra", 
+                            Enumerable.Range(0, Edges.Count())
+                                .Where(i => !g.Item2[i].IsZero)
+                                .Select(i => new Tuple<int, int, Fraction>(
+                                    Edges.ElementAt(i).From,
+                                    Edges.ElementAt(i).To,
+                                    g.Item2[i]))
+                                .ToArray()
+                            );
                     }
                     catch (Exception ex) {
                         await Writer.Orange.WriteLineAsync(
                             $"Exception during reconstruction of graph from vector of predecessors:");
                         await Writer.Indent.Orange.WriteLineAsync(ex.Message);
+#if DEBUG
+                        await Writer.Indent.Indent.Orange.WriteLineAsync(ex.StackTrace);
+#endif
                     }
                 }
             }
             catch (Exception ex)
             {
                 await Writer.Red.WriteLineAsync($"Exception happened '{ex.Message}'");
+                if (!string.IsNullOrWhiteSpace(ex.StackTrace))
+                {
+                    await Writer.Indent.Orange.WriteLineAsync(ex.StackTrace);
+                }
             }
             return solved;
         }

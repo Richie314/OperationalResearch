@@ -41,7 +41,9 @@ namespace OperationalResearch.Models.Graphs
                 List<EdgeType> edges = [];
                 for (int dest = p.Length - 1; dest >= 0; dest--)
                 {
-                    if (p[dest] < 0 || p[dest] == dest) 
+                    if (
+                        dest < 0 || dest >= p.Length || 
+                        p[dest] < 0 || p[dest] == dest) 
                         continue;
                     var edge = OriginalGraph[from: p[dest], to: dest];
                     if (edge is null)
@@ -51,18 +53,30 @@ namespace OperationalResearch.Models.Graphs
                     }
                     edges.Add(edge);
                 }
+                edges.Sort();
 
                 Vector x = Vector.Zeros(OriginalGraph.Edges.Count());
-                for (int node  = 0; node < p.Length; node++)
+                foreach (int leaf in 
+                    Enumerable.Range(0, p.Length)
+                    .Where(i => !edges.Any(e => e.From == i)))
                 {
-                    for (int curr = node; curr != radix && p[curr] >= 0; curr = p[curr])
+                    // starting from leaf propagate towards radix
+                    for (int curr = leaf, sum = 1;
+                        curr != radix;
+                        curr = p[curr], sum++)
                     {
                         int xIndex = OriginalGraph.GetEdgeIndex(from: p[curr], to: curr);
-                        x[xIndex] = x[xIndex] + Fraction.One;
+                        if (xIndex < 0 || xIndex >= x.Size)
+                        {
+                            throw new DataMisalignedException(
+                                $"Could not find edge {new Edge(p[curr], curr)}. index found: {xIndex}");
+                        }
+                        x[xIndex] = sum;
                     }
                 }
 
-                return new Tuple<CostGraph<EdgeType>, Vector>(new CostGraph<EdgeType>(edges), x);
+                return new Tuple<CostGraph<EdgeType>, Vector>(
+                    new CostGraph<EdgeType>(edges), x);
             }
 
             public Tuple<CostGraph<EdgeType>, Vector> Get { get => GetGraph(); }
@@ -148,6 +162,7 @@ namespace OperationalResearch.Models.Graphs
                 {
                     await Writer.Indent.Orange.WriteLineAsync(
                         $"It appears that predecessor  that the predecessor of node {i + 1} is the node {i + 1} itself!");
+                    // p[i] = NO_PREDECESSOR;
                 }
             }
 
