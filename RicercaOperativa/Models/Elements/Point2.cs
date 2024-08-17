@@ -12,34 +12,49 @@ namespace OperationalResearch.Models.Elements
         public Fraction x, y;
         public string Label { get; set; }
         private static int UnNamedPointCounter = 0;
-        public static Point2 FromVector(Vector x, string? label = null)
+        public static Point2 FromVector(Vector? x, string? label = null)
         {
-            if (x.Size != 2)
+            if (x is null || x.Size != 2)
             {
                 throw new ArgumentException("Invalid size");
             }
             return new Point2() { 
                 x = x[0], 
                 y = x[1], 
-                Label = string.IsNullOrWhiteSpace(label) ? UnNamedPointCounter++.ToString() : label
+                Label = string.IsNullOrWhiteSpace(label) ? $"P_{UnNamedPointCounter++}" : label
             };
         }
 
-        public static Tuple<Point2, Point2>? FromLogs(LoggedObject<Tuple<Vector, Vector>> log)
+        public static Tuple<Point2, Point2>? FromLogs(Tuple<Vector, Vector>? fromAndV, string label)
         {
-            ArgumentNullException.ThrowIfNull(log, nameof(log));
-            if (log.Value is null)
+            if (fromAndV is null)
             {
                 return null;
             }
             try
             {
                 return new Tuple<Point2, Point2>(
-                    FromVector(log.Value.Item1), 
-                    FromVector(log.Value.Item2, log.Label));
+                    FromVector(fromAndV.Item1), 
+                    FromVector(fromAndV.Item2, label));
             } catch (ArgumentException) {
                 return null;
             }
-        } 
+        }
+
+
+        public static Point2 operator +(Point2 point1, Point2 point2) =>
+            new Point2()
+            {
+                x = point1.x + point2.x,
+                y = point1.y + point2.y,
+                Label = $"P_{UnNamedPointCounter++}"
+            };
+        public static Point2 operator -(Point2 point1, Point2 point2) =>
+            new Point2()
+            {
+                x = point1.x - point2.x,
+                y = point1.y - point2.y,
+                Label = $"P_{UnNamedPointCounter++}"
+            };
     }
 }

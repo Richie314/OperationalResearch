@@ -206,7 +206,7 @@ namespace OperationalResearch.Models.Elements
 
         public static Polyhedron FromStringMatrixAndVector(string[][] mat, string[] vector, bool ForcePositive = false)
         {
-            string[] Operators = ["<=", ">=", "=", "=="];
+            string[] Operators = ["<=", ">=", "=", "==", "≥", "≤"];
             if (!Operators.Contains(mat[0].Last().Trim()))
             {
                 // The matrix is in the form Ax <= b already
@@ -234,11 +234,13 @@ namespace OperationalResearch.Models.Elements
                 switch (mat[i].Last().Trim())
                 {
                     case "<=":
+                    case "≤":
                         // Std form
                         A.Add(r);
                         b.Add(b_strings[i]);
                         break;
                     case ">=":
+                    case "≥":
                         // Inverted form
                         A.Add(r * Fraction.MinusOne);
                         b.Add(b_strings[i] * Fraction.MinusOne);

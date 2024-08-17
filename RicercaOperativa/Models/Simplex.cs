@@ -48,6 +48,8 @@ namespace OperationalResearch.Models
             ArgumentNullException.ThrowIfNull(Writer);
             var A = P.GetMatrix();
             var b = P.GetVector();
+            Writer.LogObject("Polyhedron", P);
+            Writer.LogObject("Target function", c);
 
             int[] B = startBasis ?? P.RandomBasis() ?? throw new Exception("Could not find a random basis");
             int[] N = A.RowsIndeces.Where(i => !B.Contains(i)).ToArray();
@@ -68,6 +70,7 @@ namespace OperationalResearch.Models
                 await Writer.WriteLineAsync();
                 await Writer.WriteLineAsync();
                 await Writer.Bold.WriteLineAsync($"Step #{step}:");
+                Writer.LogObject($"Basis #{step}", B);
 
                 Matrix A_B = A[B];
                 await Writer.WriteLineAsync($"A_B = {A_B}");
@@ -93,10 +96,11 @@ namespace OperationalResearch.Models
 
                 Vector x = A_B_inv * b_B;
                 await Writer.WriteLineAsync($"x = {x}");
+                Writer.LogObject($"x #{step}", x);
                 var A_N_X = A_N * x;
                 if (A_N_X <= b_N)
                 {
-                    await Writer.Green.WriteLineAsync($"x is acceptable (A_N * x <= b_N)");
+                    await Writer.Green.WriteLineAsync($"x is acceptable (A_N * x ≤ b_N)");
 
                 } else
                 {
@@ -131,17 +135,25 @@ namespace OperationalResearch.Models
                 if (Y_B.IsPositiveOrZero) // y_b >= 0
                 {
                     // Optimal value
-                    await Writer.Bold.Blue.WriteLineAsync($"x is optimal (Y_B >= 0).");
+                    await Writer.Bold.Blue.WriteLineAsync($"x is optimal (Y_B ≥ 0).");
 
                     try
                     {
-                        await Gomory(Writer.Indent.Brown, P, x, B);
+                        if (x.FractionaryIndeces.Length == 0)
+                        {
+                            await Writer.Bold.Blue.WriteLineAsync(
+                                "x is an INTEGER solution: Gomory planes are not calculated");
+                        } else
+                        {
+                            await Gomory(Writer.Indent.Brown, P, x, B);
+                        }
                     } catch (Exception ex)
                     {
                         await Writer.Red.WriteLineAsync(
                             "Error in calculating Gomory plane: " + ex.Message);
                     }
 
+                    Writer.LogObject($"Optimal x", x);
                     return x;
                 } else {
                     await Writer.Italic.WriteLineAsync($"x is not yet optimal.");
@@ -157,7 +169,7 @@ namespace OperationalResearch.Models
                 if (N.All(i => !(A[i] * Wh).IsPositive))
                 {
                     // optimal value is +inf
-                    await Writer.WriteLineAsync($"A[i] * W_{h + 1} <= 0 for each i inside N");
+                    await Writer.WriteLineAsync($"A[i] * W_{h + 1} ≤ 0 for each i inside N");
                     await Writer.Orange.WriteLineAsync("Cannot solve problem with finite values");
                     return null;
                 }
@@ -425,8 +437,10 @@ namespace OperationalResearch.Models
 
             if (!P.ForcePositive)
             {
-                await Writer.WriteLineAsync("Equation x >= 0 not implicitly added. Gomory cuts may fail.");
-                await Writer.WriteLineAsync("Consider running again with the x >= 0 constraint added");
+                await Writer.WriteLineAsync(
+                    "Equation x ≥ 0 not implicitly added. Gomory cuts may fail.");
+                await Writer.WriteLineAsync(
+                    "Consider running again with the x ≥ 0 constraint added");
                 //throw new NotImplementedException("Functionality not yet implemented");
             }
 
@@ -497,11 +511,11 @@ namespace OperationalResearch.Models
 
                 if (!arr.Any())
                 {
-                    await Writer.WriteLineAsync($"0 >= {Function.Print(fullRow.Get.Last())}");
+                    await Writer.WriteLineAsync($"0 ≥ {Function.Print(fullRow.Get.Last())}");
                     continue;
                 }
                 await Writer.WriteLineAsync(
-                    string.Join(" ", arr) + $" >= {Function.Print(fullRow.Get.Last())}");
+                    string.Join(" ", arr) + $" ≥ {Function.Print(fullRow.Get.Last())}");
 
                 Vector components = Enumerable.Repeat(Fraction.Zero, a.Cols).ToArray();
                 Fraction bComp = XrcFrac[r];
@@ -534,7 +548,7 @@ namespace OperationalResearch.Models
                                     return (components[j].IsPositive ? "+" : "") + $"{Function.Print(components[j])}*x{j + 1}";
                                 }
                         )
-                    ) + $" <= {Function.Print(bComp)}");
+                    ) + $" ≤ {Function.Print(bComp)}");
                 
             }
             

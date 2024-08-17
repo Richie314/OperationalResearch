@@ -45,10 +45,12 @@
             appletOnLoad(api) {
                 window.api = api;
                 window.sched.forEach(s => api.evalCommand(s));
+                window.sched_hide.forEach(s => api.setVisible(s, false));
             }
         };
 
         window.sched = [];
+        window.sched_hide = [];
         var applet = new GGBApplet('5.0', parameters);
 
         //when used with Math Apps Bundle, uncomment this:
@@ -64,6 +66,14 @@
                 return;
             }
             ggbApplet.evalCommand(str);
+        }
+        function HidePoint(str) {
+            if (!str) return;
+            if (!('api' in window)) {
+                window.sched_hide.push(str);
+                return;
+            }
+            api.setVisible(str, false)
         }
     </script>
 

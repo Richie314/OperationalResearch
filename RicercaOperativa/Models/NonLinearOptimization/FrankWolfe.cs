@@ -37,8 +37,9 @@ namespace OperationalResearch.Models.NonLinearOptimization
             await Writer.WriteLineAsync($"b = {P.b}");
             if (P.ForcePositive)
             {
-                await Writer.Indent.WriteLineAsync("Implicitly added x >= 0 disequation");
+                await Writer.Indent.WriteLineAsync("Implicitly added x ≥ 0 disequation");
             }
+
             if (startX is not null && P.IsOutside(startX))
             {
                 await Writer.Orange.WriteLineAsync($"Starting x = {startX} is not in the polyhedron!");
@@ -61,6 +62,7 @@ namespace OperationalResearch.Models.NonLinearOptimization
                 await Writer.Bold.WriteLineAsync($"Iteration #{k}:");
 
                 await Writer.WriteLineAsync($"x_{k} = {xk}");
+                Writer.LogObject($"FW_{k}", xk);
 
                 if (P.IsOutside(xk)) // Check if A * xk <= b. In that case stop (an error has appened)
                 {
@@ -86,6 +88,9 @@ namespace OperationalResearch.Models.NonLinearOptimization
 
                 Vector dk = yk - xk;
                 await Writer.WriteLineAsync($"d_{k} = y_{k} - x_{k} = {dk}");
+                Writer.LogObject(
+                    $"FW_d{k}", 
+                    new Tuple<Vector, Vector>(xk, dk));
 
                 if (dk.IsZero)
                 {

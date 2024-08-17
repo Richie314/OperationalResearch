@@ -44,7 +44,7 @@ namespace OperationalResearch.Models
                 solver.MakeIntVar(lb, double.PositiveInfinity, $"x_{i + 1}")).ToArray();
             for (int i = 0; i < P.A.Rows; ++i)
             {
-                Constraint constraint = solver.MakeConstraint(lb, P.b[i].ToDouble(), $"A[{i + 1}] * x <= b_{i + 1}");
+                Constraint constraint = solver.MakeConstraint(lb, P.b[i].ToDouble(), $"A[{i + 1}] * x ≤ b_{i + 1}");
                 for (int j = 0; j < c.Size; ++j)
                 {
                     constraint.SetCoefficient(x[j], P.A[i, j].ToDouble());
@@ -84,31 +84,30 @@ namespace OperationalResearch.Models
                 await Writer.WriteLineAsync($"A|b = {P.A | P.b}");
                 if (P.ForcePositive)
                 {
-                    await Writer.WriteLineAsync($"x >= 0 added at the end of A added.");
+                    await Writer.WriteLineAsync($"x ≥ 0 added at the end of A added.");
                 }
                 await Writer.WriteLineAsync($"Maximize c = {c}");
                 await Writer.WriteLineAsync();
                 await Writer.WriteLineAsync();
-                await Writer.WriteLineAsync($"Building Google solver {SOLVER_ID}...");
+
+                await Writer.Bold.WriteLineAsync($"Building Google solver {SOLVER_ID}...");
                 int[]? sol = FindMax();
                 if (sol is null)
                 {
-                    await Writer.WriteLineAsync("No solution was found");
+                    await Writer.Red.WriteLineAsync("No solution was found");
                     return false;
                 }
-                await Writer.WriteLineAsync($"Solution X = {Function.Print(sol, false)}");
+                await Writer.Green.WriteLineAsync($"Solution X = {Function.Print(sol, false)}");
                 await Writer.WriteLineAsync($"c * X = {Function.Print(c * sol.Select(x => new Fraction(x)).ToArray())}");
                 return true;
             }
             catch (Exception ex)
             {
-                await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
-#if DEBUG
+                await Writer.Red.WriteLineAsync($"Exception happened: '{ex.Message}'");
                 if (!string.IsNullOrWhiteSpace(ex.StackTrace))
                 {
-                    await Writer.Indent.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
+                    await Writer.Indent.Orange.WriteLineAsync(ex.StackTrace);
                 }
-#endif
                 return false;
             }
         }
@@ -120,31 +119,30 @@ namespace OperationalResearch.Models
                 await Writer.WriteLineAsync($"A|b = {P.A | P.b}");
                 if (P.ForcePositive)
                 {
-                    await Writer.WriteLineAsync($"x >= 0 added at the end of A added.");
+                    await Writer.WriteLineAsync($"x ≥ 0 added at the end of A added.");
                 }
                 await Writer.WriteLineAsync($"Minimize c = {c}");
                 await Writer.WriteLineAsync();
                 await Writer.WriteLineAsync();
-                await Writer.WriteLineAsync($"Building Google solver {SOLVER_ID}...");
+
+                await Writer.Bold.WriteLineAsync($"Building Google solver {SOLVER_ID}...");
                 int[]? sol = FindMax();
                 if (sol is null)
                 {
-                    await Writer.WriteLineAsync("No solution was found");
+                    await Writer.Red.WriteLineAsync("No solution was found");
                     return false;
                 }
-                await Writer.WriteLineAsync($"Solution X = {Function.Print(sol, false)}");
+                await Writer.Green.WriteLineAsync($"Solution X = {Function.Print(sol, false)}");
                 await Writer.WriteLineAsync($"c * X = {Function.Print(c * sol.Select(x => new Fraction(x)).ToArray())}");
                 return true;
             }
             catch (Exception ex)
             {
-                await Writer.WriteLineAsync($"Exception happened: '{ex.Message}'");
-#if DEBUG
+                await Writer.Red.WriteLineAsync($"Exception happened: '{ex.Message}'");
                 if (!string.IsNullOrWhiteSpace(ex.StackTrace))
                 {
-                    await Writer.Indent.WriteLineAsync($"Stack Trace: {ex.StackTrace}");
+                    await Writer.Indent.Orange.WriteLineAsync(ex.StackTrace);
                 }
-#endif
                 return false;
             }
         }

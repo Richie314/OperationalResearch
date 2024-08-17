@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OperationalResearch.Models.Problems;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -11,10 +12,26 @@ namespace OperationalResearch.Extensions
     public class IndentWriter : StreamWriter, ICloneable
     {
         public int Indentation { get; set; } = 0;
-        public string IndentationString { get; set; } = "\t";
+        public const string IndentationString = "\t";
 
         private Color Color { get; set; } = Color.Black;
         private FontStyle FontStyle { get; set; } = FontStyle.Regular;
+
+        public string? LogCollectionId { get; set; } = null;
+        public IndentWriter LogObject<T>(string label, T? value)
+        {
+            if (string.IsNullOrWhiteSpace(LogCollectionId))
+            {
+                return this;
+            }
+            if (BaseStream == Null.BaseStream)
+            {
+                // This is a null writer
+                return this;
+            }
+            ObjectLogManager.Log<T>(LogCollectionId, label, value);
+            return this;
+        }
 
         private string GetIndent() => string.Join(string.Empty, Enumerable.Repeat(IndentationString, Indentation));
         public IndentWriter(Stream stream) : base(stream) { }

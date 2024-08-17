@@ -321,16 +321,16 @@ namespace OperationalResearch.Models.Graphs
                 else
                 {
                     await Writer.Indent.Purple.WriteLineAsync(
-                        $"π is NOT degenerate: c^π_i ≠ 0 ∀ (i,j) : (i,j) ∈ L V (i,j) ∈ U");
+                        $"π is NOT degenerate: c^π[i,j] ≠ 0 ∀ (i,j) : (i,j) ∈ L ∨ (i,j) ∈ U");
                 }
 
                 if (Enumerable.Range(0, Edges.Count()).All(i =>
                     {
-                        if (x[i] == Fraction.Zero)
+                        if (L.Contains(i))
                         {
                             return cReduced[i] >= Fraction.Zero;
                         }
-                        if (x[i] == u[i])
+                        if (U.Contains(i))
                         {
                             return cReduced[i] <= Fraction.Zero;
                         }
@@ -338,6 +338,9 @@ namespace OperationalResearch.Models.Graphs
                     }))
                 {
                     await Writer.Green.WriteLineAsync($"Flow is optimal");
+                    await Writer.Indent.WriteLineAsync($"c^π[i,j] ≥ 0 ∀ (i,j) ∈ L");
+                    await Writer.Indent.WriteLineAsync($"c^π[i,j] ≤ 0 ∀ (i,j) ∈ U");
+                    await Writer.Indent.WriteLineAsync($"c^π[i,j] = 0 ∀ (i,j) ∈ T");
                     return x;
                 }
 
@@ -358,7 +361,7 @@ namespace OperationalResearch.Models.Graphs
                 foreach (var cycle in Cycles)
                 {
                     await Writer.Indent.Purple.WriteLineAsync(
-                        $"T U {{ {Edges.ElementAt(pq)} }} has cycle: {string.Join("→", cycle.Select(i => i + 1))}");
+                        $"T ∪ {{ {Edges.ElementAt(pq)} }} has cycle: {string.Join("→", cycle.Select(i => i + 1))}");
                 }
                 var C = Cycles.First();
                 bool forward = false;
@@ -524,7 +527,10 @@ namespace OperationalResearch.Models.Graphs
                 }
             }
             bool solved = false;
+            
+            //
             // Flow of min cost
+            //
             try
             {
                 var sol = await SolveBounded(startBasis, startU, Writer);
@@ -547,7 +553,9 @@ namespace OperationalResearch.Models.Graphs
                 }
             }
 
+            //
             // Min-cut and max-flow
+            //
             try
             {
                 await Writer.WriteLineAsync();
@@ -574,6 +582,11 @@ namespace OperationalResearch.Models.Graphs
                         $"u(N_{startNode.Value + 1}, N_{endNode.Value + 1}) = {Function.Print(capacity)}");
 
                     await Writer.Bold.Green.WriteLineAsync($"Max flow x = {x}");
+
+                    Writer.LogObject("N_s", Function.Print(Ns));
+                    Writer.LogObject("N_t", Function.Print(Nt));
+                    Writer.LogObject("u(N_s, N_t)", Function.Print(capacity));
+                    Writer.LogObject("Max flow", x);
                 }
             }
             catch (Exception ex)
@@ -585,8 +598,9 @@ namespace OperationalResearch.Models.Graphs
                 }
             }
 
-
+            //
             // Minimum paths tree
+            //
             try
             {
                 await Writer.WriteLineAsync();

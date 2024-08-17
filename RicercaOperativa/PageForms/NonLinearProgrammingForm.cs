@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using OperationalResearch.ViewForms;
+using OperationalResearch.Models.Elements;
 
 namespace OperationalResearch.PageForms
 {
@@ -31,14 +32,20 @@ namespace OperationalResearch.PageForms
             if (polyhedronControl1.Polyhedron is null)
             {
                 MessageBox.Show(
-                    "Invalid polyhedron", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    "Invalid polyhedron", 
+                    "Error", 
+                    MessageBoxButtons.OK, 
+                    MessageBoxIcon.Exclamation);
                 return;
             }
             var code = await pythonFunctionControl1.getCode();
             if (string.IsNullOrWhiteSpace(code))
             {
                 MessageBox.Show(
-                    "Empty code." + Environment.NewLine + "Write your function to continue", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    "Empty code." + Environment.NewLine + "Write your function to continue", 
+                    "Error", 
+                    MessageBoxButtons.OK, 
+                    MessageBoxIcon.Exclamation);
                 return;
             }
 
@@ -84,7 +91,8 @@ namespace OperationalResearch.PageForms
             {
                 MessageBox.Show(
                     "Non Linear Programming problem could not be solved",
-                    "Error", MessageBoxButtons.OKCancel,
+                    "Error", 
+                    MessageBoxButtons.OKCancel,
                     MessageBoxIcon.Error);
             }
 
@@ -93,7 +101,13 @@ namespace OperationalResearch.PageForms
             //
             if (problem.Solver.Domain?.Cols == 2)
             {
-                var graphForm = new CartesianForm([], problem.Solver.Domain);
+                var graphForm = new CartesianForm(
+                    problem.LogsOfType<Vector>()
+                        .Select(t => Point2.FromVector(t.Value, t.Label)),
+                    problem.Solver.Domain,
+                    problem.LogsOfType<Tuple<Vector, Vector>>()
+                        .Select(t => Point2.FromLogs(t.Value, t.Label))
+                );
                 graphForm.Show();
             }
         }

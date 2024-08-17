@@ -59,6 +59,7 @@ namespace OperationalResearch.Models.NonLinearOptimization
                 }
 
                 await Writer.WriteLineAsync($"x_{k} = {xk}");
+                Writer.LogObject($"PGD_{k}", xk);
                 if (p.IsOutside(xk)) // Check if A * xk <= b. In that case stop (an error has appened)
                 {
                     await Writer.Indent.Orange.WriteLineAsync($"Vector x_{k} is out of bound!");
@@ -79,6 +80,9 @@ namespace OperationalResearch.Models.NonLinearOptimization
 
                 Vector dk = H * gradXk * (IsMin ? Fraction.MinusOne : Fraction.One);
                 await Writer.WriteLineAsync($"d_{k} = {dk}");
+                Writer.LogObject(
+                    $"PGD_d{k}",
+                    new Tuple<Vector, Vector>(xk, dk));
 
 
                 if (dk.IsZero) // dk == 0
@@ -121,7 +125,7 @@ namespace OperationalResearch.Models.NonLinearOptimization
                     continue;
                 }
 
-                Fraction tMax = FindTMaxMin(A, xk, dk, b, IsMin);
+                Fraction tMax = FindTMaxMin(A, xk, dk, b, true);
                 await Writer.WriteLineAsync($"t_{k}^ = {Function.Print(tMax)}");
 
                 if (tMax.IsNegative)

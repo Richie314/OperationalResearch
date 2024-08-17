@@ -343,26 +343,38 @@ namespace OperationalResearch.Models.NonLinearOptimization.QuadProg
                 else
                 {
                     solved = true;
+                    int counter = 1;
                     foreach (Tuple<Vector, Vector, LKKTPointType> tuple in lkkt)
                     {
                         await Writer.WriteLineAsync(
                             $"x = {tuple.Item1}; f(x) = {Function.Print(Evaluate(tuple.Item1))}");
                         await Writer.Indent.WriteLineAsync($"λ = {tuple.Item2}");
+
+                        string pointLabel = string.Empty;
+
                         switch (tuple.Item3)
                         {
                             case LKKTPointType.Max:
+                                pointLabel = "Maximum";
                                 await Writer.Indent.Italic.WriteLineAsync("x is a local maximum point");
                                 break;
                             case LKKTPointType.Min:
+                                pointLabel = "Minimum";
                                 await Writer.Indent.Italic.WriteLineAsync("x is a local minimum point");
                                 break;
                             case LKKTPointType.Saddle:
+                                pointLabel = "Saddle";
                                 await Writer.Indent.Purple.WriteLineAsync("x is a saddle point");
                                 break;
                             case LKKTPointType.Unknown:
                             default:
                                 await Writer.Indent.Orange.WriteLineAsync("x cannot be classified");
                                 break;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(pointLabel))
+                        {
+                            Writer.LogObject($"St_{counter++}", tuple.Item1);
                         }
                     }
 

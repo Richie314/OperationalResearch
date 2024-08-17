@@ -75,6 +75,8 @@ namespace OperationalResearch
 
                 // Change the name of the last row added
                 matrix.Columns[matrix.ColumnCount - 3].Name = $"x{matrix.ColumnCount - 2}";
+                matrix.Columns[matrix.ColumnCount - 3]
+                    .DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             }
         }
         private void addOrRemoveRow(object? sender, EventArgs e)
@@ -191,7 +193,7 @@ namespace OperationalResearch
                     {
                         p.A[i][0].ToString(),
                         p.A[i][1].ToString(),
-                        "<=",
+                        "≤",
                         p.b[i].ToString()
                     });
                 }

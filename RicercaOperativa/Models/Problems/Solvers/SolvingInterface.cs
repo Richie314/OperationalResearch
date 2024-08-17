@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,5 +19,6 @@ namespace OperationalResearch.Models.Problems.Solvers
         public Task<bool> SolveIntegerMinAsync(IEnumerable<IndentWriter?> loggers);
 
         public void SetData(TDomain domain, TCoDomain codomain);
+
     }
 }

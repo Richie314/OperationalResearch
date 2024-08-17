@@ -28,9 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
-            DataGridViewCellStyle dataGridViewCellStyle4 = new DataGridViewCellStyle();
-            DataGridViewCellStyle dataGridViewCellStyle5 = new DataGridViewCellStyle();
-            DataGridViewCellStyle dataGridViewCellStyle6 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
             label1 = new Label();
             label2 = new Label();
             xPositiveCheckbox = new CheckBox();
@@ -109,9 +109,9 @@
             // 
             // x1
             // 
-            dataGridViewCellStyle4.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle4.NullValue = "0";
-            x1.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle1.NullValue = "0";
+            x1.DefaultCellStyle = dataGridViewCellStyle1;
             x1.HeaderText = "x1";
             x1.MinimumWidth = 6;
             x1.Name = "x1";
@@ -120,20 +120,20 @@
             // 
             // Operation
             // 
-            dataGridViewCellStyle5.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle5.NullValue = "<=";
-            Operation.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle2.NullValue = "≤";
+            Operation.DefaultCellStyle = dataGridViewCellStyle2;
             Operation.HeaderText = " ";
-            Operation.Items.AddRange(new object[] { "<=", ">=", "=" });
+            Operation.Items.AddRange(new object[] { "≤", "≥", "=" });
             Operation.MinimumWidth = 6;
             Operation.Name = "Operation";
-            Operation.Width = 125;
+            Operation.Width = 50;
             // 
             // b
             // 
-            dataGridViewCellStyle6.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle6.NullValue = "0";
-            b.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle3.NullValue = "0";
+            b.DefaultCellStyle = dataGridViewCellStyle3;
             b.HeaderText = "b";
             b.MinimumWidth = 6;
             b.Name = "b";
@@ -165,6 +165,7 @@
             // fromPointsButton
             // 
             fromPointsButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            fromPointsButton.Cursor = Cursors.Hand;
             fromPointsButton.Location = new Point(491, 17);
             fromPointsButton.Name = "fromPointsButton";
             fromPointsButton.Size = new Size(94, 58);
@@ -205,9 +206,9 @@
         private DataGridView matrix;
         private NumericUpDown spaceDimension;
         private NumericUpDown equationsCount;
+        private Button fromPointsButton;
         private DataGridViewTextBoxColumn x1;
         private DataGridViewComboBoxColumn Operation;
         private DataGridViewTextBoxColumn b;
-        private Button fromPointsButton;
     }
 }

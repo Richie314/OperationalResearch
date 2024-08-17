@@ -109,7 +109,13 @@ namespace OperationalResearch.PageForms
 
             if (problem.Solver.Domain?.Cols == 2)
             {
-                var graphForm = new CartesianForm([], problem.Solver.Domain);
+                var graphForm = new CartesianForm(
+                    problem.LogsOfType<Vector>()
+                        .Select(t => Point2.FromVector(t.Value, t.Label)), 
+                    problem.Solver.Domain,
+                    problem.LogsOfType<Tuple<Vector, Vector>>()
+                        .Select(t => Point2.FromLogs(t.Value, t.Label))
+                );
                 graphForm.Show();
             }
         }

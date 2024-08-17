@@ -11,12 +11,15 @@ namespace OperationalResearch.Models.Problems
     /// <summary>
     /// Generic linear programming problem
     /// </summary>
-    public class LinearProgrammingProblem (Polyhedron p, Vector c, int[]? startBasis = null) : 
-        Problem<Polyhedron, Vector, LinearSolver>
-            (p,
-             c,
-             new LinearSolver(startBasis))
+    public class LinearProgrammingProblem : Problem<Polyhedron, Vector, LinearSolver>
     {
+        public LinearProgrammingProblem(Polyhedron p, Vector c, int[]? startBasis = null) :
+            base(p,
+             c,
+             new LinearSolver(startBasis),
+             "Linear Programming")
+        { }
+
         public LinearProgrammingProblem(string[][] polyhedron, string[] revenues, bool xPos = false, string[]? startBasis = null) :
             this(
                 Polyhedron.FromStringMatrix(polyhedron, xPos),
@@ -47,15 +50,20 @@ namespace OperationalResearch.Models.Problems
     /// <summary>
     /// Generic linear programming problem
     /// </summary>
-    public class LinearProgrammingDualProblem(Elements.Polyhedron p, Vector c, int[]? startBasis = null) :
-        Problem<Elements.Polyhedron, Vector, LinearDualSolver>
-            (p,
-             c,
-             new LinearDualSolver(startBasis))
+    public class LinearProgrammingDualProblem : Problem<Polyhedron, Vector, LinearDualSolver>
     {
+        public LinearProgrammingDualProblem(
+            Polyhedron p, 
+            Vector c, 
+            int[]? startBasis = null) :
+            base(p,
+             c,
+             new LinearDualSolver(startBasis),
+             "Linear Programming in dual form")
+        { }
         public LinearProgrammingDualProblem(string[][] polyhedron, string[] revenues, bool xPos = false, string[]? startBasis = null) :
             this(
-                Elements.Polyhedron.FromStringMatrix(polyhedron, xPos),
+                Polyhedron.FromStringMatrix(polyhedron, xPos),
                 Vector.FromString(revenues) ?? Vector.Empty,
                 startBasis is not null ?
                     startBasis.Select(x => Convert.ToInt32(x.Trim()) - 1).ToArray() :
@@ -71,9 +79,13 @@ namespace OperationalResearch.Models.Problems
     /// Travelling salesman problem (TSP) -> find hamiltonian cycle
     /// https://en.wikipedia.org/wiki/Travelling_salesman_problem
     /// </summary>
-    public class TravellingSalesManProblem (TSP<CostEdge> graph, Tuple<int?, int?, string?> startNodeKAndBnB) : 
-        Problem<TSP<CostEdge>, Tuple<int?, int?, string?>, TspSolver> (graph, startNodeKAndBnB, new TspSolver())
+    public class TravellingSalesManProblem : Problem<TSP<CostEdge>, Tuple<int?, int?, string?>, TspSolver>
     { 
+        public TravellingSalesManProblem(
+            TSP<CostEdge> graph, 
+            Tuple<int?, int?, string?> startNodeKAndBnB) :
+            base(graph, startNodeKAndBnB, new TspSolver(), "TSP")
+        { }
         public TravellingSalesManProblem(Matrix m, int? startNode, int? k, string? BnB, bool bidirectional = false) :
             this(
                 new TSP<CostEdge>(CostGraph<CostEdge>.FromMatrix(m).Edges, bidirectional), 
@@ -92,12 +104,14 @@ namespace OperationalResearch.Models.Problems
     /// Knapsnack problem
     /// https://en.wikipedia.org/wiki/Knapsack_problem
     /// </summary>
-    public class KnapsnakProblem(Elements.Polyhedron p, Vector c, bool isBoolean = false) : 
-        Problem<Elements.Polyhedron, Vector, KnapsnackProblemSolver>
-            (p,
-             c,
-             new KnapsnackProblemSolver(isBoolean))
+    public class KnapsnakProblem : Problem<Polyhedron, Vector, KnapsnackProblemSolver>
     {
+        public KnapsnakProblem(Polyhedron p, Vector c, bool isBoolean = false) : 
+            base(
+                p,
+                c,
+                new KnapsnackProblemSolver(isBoolean),
+                "Knapsnack") { }
         public KnapsnakProblem(
             Vector revenues,
             Vector volumes, 
@@ -105,9 +119,9 @@ namespace OperationalResearch.Models.Problems
             Vector? weights, 
             Fraction? totalWeight, 
             bool isBoolean = false) : this(
-                Elements.Polyhedron.FromRow(volumes, totalVolume) & 
+                Polyhedron.FromRow(volumes, totalVolume) & 
                     (weights is not null && totalWeight.HasValue ?
-                Elements.Polyhedron.FromRow(weights, totalWeight.Value) : null), 
+                Polyhedron.FromRow(weights, totalWeight.Value) : null), 
                 revenues, 
                 isBoolean) { }
 
@@ -132,9 +146,15 @@ namespace OperationalResearch.Models.Problems
     /// </summary>
     /// <param name="costs">The cost of the row-th task to be done by the col-th worker</param>
     /// <param name="fillWorkers">If every worker should be filled</param>
-    public class SimpleMinimumCostAssignmentProblem(Matrix costs, bool fillWorkers = true) :
-        Problem<Matrix, bool, SimpleMinimumCostAssignSolver> (costs, fillWorkers, new SimpleMinimumCostAssignSolver())
+    public class SimpleMinimumCostAssignmentProblem :
+        Problem<Matrix, bool, SimpleMinimumCostAssignSolver>
     { 
+        public SimpleMinimumCostAssignmentProblem(Matrix costs, bool fillWorkers = true) : 
+            base(
+                costs, 
+                fillWorkers, 
+                new SimpleMinimumCostAssignSolver(), 
+                "Minimum cost assignemnt") { }
         public SimpleMinimumCostAssignmentProblem(string[][] costs, bool fillWorkers = true) :
             this(new Matrix(costs), fillWorkers) { }
     }
@@ -146,7 +166,7 @@ namespace OperationalResearch.Models.Problems
         Problem<Tuple<Matrix, Matrix, Vector>, bool, GeneralizedMinimumCostAssignSolver>
     {
         public GeneralizedMinimumCostAssignmentProblem(Tuple<Matrix, Matrix, Vector> domain, bool fillWorkers = false) :
-            base(domain, fillWorkers, new GeneralizedMinimumCostAssignSolver())
+            base(domain, fillWorkers, new GeneralizedMinimumCostAssignSolver(), "Generalized Minimum Cost Assignment")
         { }
 
         public GeneralizedMinimumCostAssignmentProblem(Matrix costs, Matrix times, Vector timeLimits, bool fillWorkers = false) :
@@ -163,15 +183,18 @@ namespace OperationalResearch.Models.Problems
 
     #region NetworkProgramming
 
-    public class MinimumCostFlowProblem(
-        MinimumCostFlow<BoundedCostEdge> g,
-        Tuple<int?, int?, string?> startNodeEndNodeAndUnused,
-        IEnumerable<BoundedCostEdge>? T,
-        IEnumerable<BoundedCostEdge>? U,
-        bool UseBounds = true) : 
+    public class MinimumCostFlowProblem: 
         Problem<MinimumCostFlow<BoundedCostEdge>, Tuple<int?, int?, string?>, McfpSolver>
-            (g, startNodeEndNodeAndUnused, new McfpSolver(T, U, UseBounds))
     {
+        public MinimumCostFlowProblem(
+            MinimumCostFlow<BoundedCostEdge> g,
+            Tuple<int?, int?, string?> startNodeEndNodeAndUnused,
+            IEnumerable<BoundedCostEdge>? T,
+            IEnumerable<BoundedCostEdge>? U,
+            bool UseBounds = true) :
+            base(g, startNodeEndNodeAndUnused, new McfpSolver(T, U, UseBounds), "MCFP")
+        { }
+
         public MinimumCostFlowProblem(
             IEnumerable<BoundedCostEdge> edges, 
             Vector balances,
@@ -214,9 +237,14 @@ namespace OperationalResearch.Models.Problems
     /// <summary>
     /// Analize a function inside a polyhedron. The function, as well as its gradient, must be written in python
     /// </summary>
-    public class NonLinearProblem(Polyhedron p, string s, Vector? startingPoint = null) : 
-        Problem<Polyhedron, string, NonLinearSolver>(p, s, new NonLinearSolver(startingPoint))
+    public class NonLinearProblem : Problem<Polyhedron, string, NonLinearSolver>
     {
+        public NonLinearProblem(
+            Polyhedron p, 
+            string s, 
+            Vector? startingPoint = null) : 
+            base(p, s, new NonLinearSolver(startingPoint), "Non linear Programming")
+        { }
         public NonLinearProblem(string[][] polyhedron, string s, string[]? startingPoint = null) :
             this(Polyhedron.FromStringMatrix(polyhedron), s, Vector.FromString(startingPoint)) { }
     }
@@ -224,12 +252,15 @@ namespace OperationalResearch.Models.Problems
     /// <summary>
     /// Analyze a poliynomial function of multiple variables inside a polyhedron
     /// </summary>
-    public class QuadraticProblem(Polyhedron p, Matrix Hessian, Vector Linear, Vector? PointToStudy = null) : 
-        Problem<Polyhedron, Tuple<Matrix, Vector, Vector?>, QuadraticSolver>
-            (p,
-             new Tuple<Matrix, Vector, Vector?>(Hessian, Linear, PointToStudy),
-             new QuadraticSolver())
+    public class QuadraticProblem : Problem<Polyhedron, Tuple<Matrix, Vector, Vector?>, QuadraticSolver>
     {
+        public QuadraticProblem(Polyhedron p, Matrix Hessian, Vector Linear, Vector? PointToStudy = null) :
+            base(p,
+             new Tuple<Matrix, Vector, Vector?>(Hessian, Linear, PointToStudy),
+             new QuadraticSolver(),
+             "Quadratic Programming")
+        { }
+
         public QuadraticProblem(string[][] polyhedron, string[][] hessian, string[]? linear, string[]? pointToStudy = null) :
             this(Polyhedron.FromStringMatrix(polyhedron), 
                 new Matrix(hessian), 
