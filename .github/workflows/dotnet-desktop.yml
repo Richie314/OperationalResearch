@@ -157,6 +157,12 @@ jobs:
       contents: write
 
     steps:
+      # Parse version tag, if present
+      - name: Get tag
+        id: tag
+        uses: dawidd6/action-get-tag@v1
+        with:
+          strip_v: true
 
       # Download all the artifacts (already unzips them)
       - name: Download artifacts
@@ -167,21 +173,21 @@ jobs:
           merge-multiple: true
 
       # Create the actual release
-      - name: Create Release ${{ needs.build.outputs.version }}
+      - name: Create Release ${{ steps.tag.outputs.tag }}
         id: create_release
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ needs.build.outputs.version }}
-          release_name: Release v${{ needs.build.outputs.version }}
+          tag_name: ${{ steps.tag.outputs.tag }}
+          release_name: Release v${{ steps.tag.outputs.tag }}
           draft: false
           prerelease: false
           body: |
-            Version ${{ needs.build.outputs.version }} is here
+            Version ${{ steps.tag.outputs.tag }} is here
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Upload release assets
-      - name: Upload installer to Release  ${{ needs.build.outputs.version }}
+      - name: Upload installer to Release  ${{ steps.tag.outputs.tag }}
         uses: AButler/upload-release-assets@v3.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
