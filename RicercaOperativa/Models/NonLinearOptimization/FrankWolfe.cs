@@ -99,9 +99,15 @@ namespace OperationalResearch.Models.NonLinearOptimization
                     return xk;
                 }
 
+                string? phi = optimizer.FindPhiRepresentation(xk, dk);
+                if (!string.IsNullOrWhiteSpace(phi))
+                {
+                    await Writer.WriteLineAsync($"ϕ(t) = {phi}");
+                }
+
                 Fraction tk = optimizer.FindArgOfFunction(IsMin,
                     Fraction.Zero, Fraction.One, 5000, xk, dk);
-                await Writer.WriteLineAsync($"t_{k} = {Models.Function.Print(tk)}");
+                await Writer.WriteLineAsync($"t_{k} = {Function.Print(tk)}");
                 if (tk.IsZero)
                 {
                     await Writer.Red.WriteLineAsync($"Internal error (t_{k} = 0).");

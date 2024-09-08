@@ -32,6 +32,7 @@ namespace OperationalResearch.Models.NonLinearOptimization.Python
             var outPut = (double)function(x.ToDouble().ToList());
             return Fraction.FromDouble(outPut);
         }
+        public override string? FindPhiRepresentation(Vector x, Vector d) => null;
 
         public PythonFunctionAnalyzer(Polyhedron P, string python) : base(P)
         {

@@ -67,7 +67,7 @@ namespace OperationalResearch.Models.NonLinearOptimization
                 }
 
                 IEnumerable<int> J = A.RowsIndeces.Where(i => A[i] * xk == b[i]);
-                await Writer.WriteLineAsync($"J = {Models.Function.Print(J)}");
+                await Writer.WriteLineAsync($"J = {Function.Print(J)}");
 
                 Matrix M = A[J];
                 await Writer.WriteLineAsync($"M = {M}");
@@ -144,7 +144,7 @@ namespace OperationalResearch.Models.NonLinearOptimization
                     $"inside [0, {Function.Print(tMax)}]. {PointsToPlot} points considered");
                 
                 Fraction tk = optimizer.FindArgOfFunction(IsMin, 0, tMax, PointsToPlot, xk, dk);
-                await Writer.WriteLineAsync($"t_{k} = {Models.Function.Print(tk)}");
+                await Writer.WriteLineAsync($"t_{k} = {Function.Print(tk)}");
                 if (tk.IsZero)
                 {
                     // We won't move

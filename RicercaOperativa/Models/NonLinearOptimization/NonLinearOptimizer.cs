@@ -21,6 +21,7 @@ namespace OperationalResearch.Models.NonLinearOptimization
         #region MethodsToImplement
         public abstract Fraction Function(Vector x);
         public abstract Vector Gradient(Vector x);
+        public abstract string? FindPhiRepresentation(Vector x, Vector d);
 
         #endregion
 
