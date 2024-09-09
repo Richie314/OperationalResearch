@@ -47,31 +47,29 @@
             hessianMatrix.AllowUserToDeleteRows = false;
             hessianMatrix.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             hessianMatrix.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            hessianMatrix.Location = new Point(9, 247);
+            hessianMatrix.Location = new Point(8, 185);
             hessianMatrix.Margin = new Padding(0);
             hessianMatrix.Name = "hessianMatrix";
             hessianMatrix.RowHeadersWidth = 50;
             hessianMatrix.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
-            hessianMatrix.Size = new Size(343, 325);
+            hessianMatrix.Size = new Size(229, 244);
             hessianMatrix.TabIndex = 0;
             // 
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(15, 12);
+            label3.Location = new Point(13, 9);
             label3.Name = "label3";
-            label3.Size = new Size(129, 20);
+            label3.Size = new Size(103, 15);
             label3.TabIndex = 10;
             label3.Text = "Linear coefficients";
             // 
             // maximizeBtn
             // 
-            maximizeBtn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             maximizeBtn.Cursor = Cursors.Hand;
-            maximizeBtn.Location = new Point(237, 173);
-            maximizeBtn.Margin = new Padding(3, 4, 3, 4);
+            maximizeBtn.Location = new Point(116, 117);
             maximizeBtn.Name = "maximizeBtn";
-            maximizeBtn.Size = new Size(115, 62);
+            maximizeBtn.Size = new Size(101, 59);
             maximizeBtn.TabIndex = 11;
             maximizeBtn.Text = "Maximize";
             maximizeBtn.UseVisualStyleBackColor = true;
@@ -79,12 +77,10 @@
             // 
             // minimizeBtn
             // 
-            minimizeBtn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             minimizeBtn.Cursor = Cursors.Hand;
-            minimizeBtn.Location = new Point(121, 173);
-            minimizeBtn.Margin = new Padding(3, 4, 3, 4);
+            minimizeBtn.Location = new Point(8, 117);
             minimizeBtn.Name = "minimizeBtn";
-            minimizeBtn.Size = new Size(100, 62);
+            minimizeBtn.Size = new Size(88, 41);
             minimizeBtn.TabIndex = 12;
             minimizeBtn.Text = "Minimize";
             minimizeBtn.UseVisualStyleBackColor = true;
@@ -93,55 +89,56 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(9, 215);
+            label4.Location = new Point(8, 161);
             label4.Name = "label4";
-            label4.Size = new Size(106, 20);
+            label4.Size = new Size(85, 15);
             label4.TabIndex = 14;
             label4.Text = "Hessian matrix";
             // 
             // polyhedronControl1
             // 
-            polyhedronControl1.Location = new Point(358, 156);
-            polyhedronControl1.Margin = new Padding(3, 4, 3, 4);
-            polyhedronControl1.MinimumSize = new Size(589, 416);
+            polyhedronControl1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            polyhedronControl1.Location = new Point(240, 117);
+            polyhedronControl1.MinimumSize = new Size(717, 320);
             polyhedronControl1.Name = "polyhedronControl1";
-            polyhedronControl1.Size = new Size(736, 427);
+            polyhedronControl1.Size = new Size(717, 320);
             polyhedronControl1.TabIndex = 15;
             // 
             // linearFunctionControl1
             // 
-            linearFunctionControl1.Location = new Point(9, 36);
-            linearFunctionControl1.Margin = new Padding(3, 4, 3, 4);
-            linearFunctionControl1.MinimumSize = new Size(585, 90);
+            linearFunctionControl1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            linearFunctionControl1.Location = new Point(8, 27);
+            linearFunctionControl1.MinimumSize = new Size(512, 68);
             linearFunctionControl1.Name = "linearFunctionControl1";
-            linearFunctionControl1.Size = new Size(1085, 112);
+            linearFunctionControl1.Size = new Size(949, 84);
             linearFunctionControl1.TabIndex = 16;
             linearFunctionControl1.Vector = null;
             // 
             // linearFunctionControl2
             // 
-            linearFunctionControl2.Location = new Point(9, 611);
-            linearFunctionControl2.Margin = new Padding(3, 4, 3, 4);
-            linearFunctionControl2.MinimumSize = new Size(585, 90);
+            linearFunctionControl2.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            linearFunctionControl2.Location = new Point(8, 458);
+            linearFunctionControl2.MinimumSize = new Size(512, 68);
             linearFunctionControl2.Name = "linearFunctionControl2";
-            linearFunctionControl2.Size = new Size(1085, 112);
+            linearFunctionControl2.Size = new Size(949, 84);
             linearFunctionControl2.TabIndex = 17;
             linearFunctionControl2.Vector = null;
             // 
             // label1
             // 
+            label1.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label1.AutoSize = true;
-            label1.Location = new Point(15, 587);
+            label1.Location = new Point(13, 440);
             label1.Name = "label1";
-            label1.Size = new Size(587, 20);
+            label1.Size = new Size(467, 15);
             label1.TabIndex = 18;
             label1.Text = "Point of Interest (starting point for iterative methods and needs multipliers to be found)";
             // 
             // QuadraticProgrammingForm
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1108, 736);
+            ClientSize = new Size(970, 558);
             Controls.Add(label1);
             Controls.Add(linearFunctionControl2);
             Controls.Add(linearFunctionControl1);
@@ -152,8 +149,7 @@
             Controls.Add(label3);
             Controls.Add(hessianMatrix);
             Icon = (Icon)resources.GetObject("$this.Icon");
-            Margin = new Padding(3, 4, 3, 4);
-            MinimumSize = new Size(1093, 783);
+            MinimumSize = new Size(958, 597);
             Name = "QuadraticProgrammingForm";
             Text = "Quadratic Programming";
             Load += LinearProgrammingForm_Load;
