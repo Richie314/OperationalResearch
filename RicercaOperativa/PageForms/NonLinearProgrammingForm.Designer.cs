@@ -41,9 +41,10 @@
             // 
             solveMinButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             solveMinButton.Cursor = Cursors.Hand;
-            solveMinButton.Location = new Point(284, 440);
+            solveMinButton.Location = new Point(325, 587);
+            solveMinButton.Margin = new Padding(3, 4, 3, 4);
             solveMinButton.Name = "solveMinButton";
-            solveMinButton.Size = new Size(344, 34);
+            solveMinButton.Size = new Size(393, 45);
             solveMinButton.TabIndex = 7;
             solveMinButton.Text = "Minimize with all methods";
             solveMinButton.UseVisualStyleBackColor = true;
@@ -53,9 +54,9 @@
             // 
             label3.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             label3.AutoSize = true;
-            label3.Location = new Point(634, 7);
+            label3.Location = new Point(725, 9);
             label3.Name = "label3";
-            label3.Size = new Size(289, 15);
+            label3.Size = new Size(363, 20);
             label3.TabIndex = 8;
             label3.Text = "Starting Point, if empty a random one will be guessed";
             // 
@@ -63,9 +64,10 @@
             // 
             solveMaxButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             solveMaxButton.Cursor = Cursors.Hand;
-            solveMaxButton.Location = new Point(10, 440);
+            solveMaxButton.Location = new Point(11, 587);
+            solveMaxButton.Margin = new Padding(3, 4, 3, 4);
             solveMaxButton.Name = "solveMaxButton";
-            solveMaxButton.Size = new Size(268, 34);
+            solveMaxButton.Size = new Size(306, 45);
             solveMaxButton.TabIndex = 10;
             solveMaxButton.Text = "Maximize with all methods";
             solveMaxButton.UseVisualStyleBackColor = true;
@@ -74,36 +76,37 @@
             // pythonFunctionControl1
             // 
             pythonFunctionControl1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
-            pythonFunctionControl1.Location = new Point(634, 100);
-            pythonFunctionControl1.Margin = new Padding(3, 2, 3, 2);
+            pythonFunctionControl1.Location = new Point(725, 133);
             pythonFunctionControl1.Name = "pythonFunctionControl1";
-            pythonFunctionControl1.Size = new Size(678, 374);
+            pythonFunctionControl1.Size = new Size(775, 499);
             pythonFunctionControl1.TabIndex = 11;
             // 
             // polyhedronControl1
             // 
             polyhedronControl1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            polyhedronControl1.Location = new Point(10, 10);
-            polyhedronControl1.MinimumSize = new Size(515, 312);
+            polyhedronControl1.Location = new Point(11, 13);
+            polyhedronControl1.Margin = new Padding(3, 5, 3, 5);
+            polyhedronControl1.MinimumSize = new Size(589, 416);
             polyhedronControl1.Name = "polyhedronControl1";
-            polyhedronControl1.Size = new Size(618, 424);
+            polyhedronControl1.Size = new Size(707, 565);
             polyhedronControl1.TabIndex = 12;
             // 
             // linearFunctionControl1
             // 
             linearFunctionControl1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            linearFunctionControl1.Location = new Point(634, 28);
-            linearFunctionControl1.MinimumSize = new Size(512, 68);
+            linearFunctionControl1.Location = new Point(725, 37);
+            linearFunctionControl1.Margin = new Padding(3, 5, 3, 5);
+            linearFunctionControl1.MinimumSize = new Size(585, 91);
             linearFunctionControl1.Name = "linearFunctionControl1";
-            linearFunctionControl1.Size = new Size(674, 68);
+            linearFunctionControl1.Size = new Size(770, 91);
             linearFunctionControl1.TabIndex = 13;
             linearFunctionControl1.Vector = null;
             // 
             // NonLinearProgrammingForm
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1318, 489);
+            ClientSize = new Size(1506, 652);
             Controls.Add(linearFunctionControl1);
             Controls.Add(polyhedronControl1);
             Controls.Add(pythonFunctionControl1);
@@ -111,7 +114,8 @@
             Controls.Add(label3);
             Controls.Add(solveMinButton);
             Icon = (Icon)resources.GetObject("$this.Icon");
-            MinimumSize = new Size(1334, 528);
+            Margin = new Padding(3, 4, 3, 4);
+            MinimumSize = new Size(1522, 688);
             Name = "NonLinearProgrammingForm";
             Text = "Non Linear Programming";
             Load += NonLinearProgrammingForm_Load;
